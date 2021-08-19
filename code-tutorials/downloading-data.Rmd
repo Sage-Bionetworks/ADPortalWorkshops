@@ -1,0 +1,51 @@
+---
+title: "Downloading Data from the AD Knowledge Portal"
+output: 
+  html_notebook:
+    toc: yes
+---
+
+# Introduction
+
+This tutorial will demonstrate the steps to download data programmatically from the AD Knowledge Portal. 
+
+We will assume that you have used the search facets in the [Explore Studies](https://adknowledgeportal.synapse.org/Explore/Studies) or [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) portal pages to identify the files you want to download. For more information on how to locate data in the AD Portal, see (link to other docs here). 
+
+## Bulk Download Data
+
+Example 1: We want to download the raw bulk RNAseq files obtained from dorsolateral prefrontal cortex brain tissue (DLPFC) from ROSMAP donors. There have been several contributions of bulk RNAseq data from multiple tissues to the ROSMAP study over the years, including BAM files and FASTQ files. 
+
+### Bulk download contents of Synapse folders via R or Python client
+
+If we know all the files we want are in a particular Synapse directory, we can recursively download all the contents of that folder using the `syncFromSynapse` command in the R or Python client. 
+
+By default, `syncFromSynapse` will download files to your Synapse cache. For a bulk file download (more than a handful of files) we strongly recommend you specify a directory for the download, which will automatically create a SYNAPSE_METADATA_MANIFEST.tsv file in that directory. This manifest file will list all the files you downloaded, plus their metadata, such as synIDs and any file annotations. Preserving these annotations for each file will be key to linking files to biospecimen and individual metadata!
+
+```{r}
+# Load the synapser and synapserutils packages
+
+library(synapser)
+library(synapserutils)
+
+# recursively download the contents of a Synapse folder (synID) to a specified directory
+syncFromSynapse()
+
+```
+
+```{python}
+
+```
+
+### Bulk download from table query using command line client from Portal
+
+```{bash}
+
+```
+
+
+### Bulk download via R client using exported table from AD Portal 
+
+```{r}
+
+```
+
