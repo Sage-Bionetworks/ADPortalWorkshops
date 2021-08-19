@@ -219,9 +219,8 @@ pre code {
 <ul>
 <li><a href="#bulk-download-data">Bulk Download Data</a>
 <ul>
-<li><a href="#bulk-download-contents-of-synapse-folders-via-r-or-python-client">Bulk download contents of Synapse folders via R or Python client</a></li>
-<li><a href="#bulk-download-from-table-query-using-command-line-client-from-portal">Bulk download from table query using command line client from Portal</a></li>
-<li><a href="#bulk-download-via-r-client-using-exported-table-from-ad-portal">Bulk download via R client using exported table from AD Portal</a></li>
+<li><a href="#bulk-download-synapse-folder-contents">Bulk download Synapse folder contents</a></li>
+<li><a href="#method-2-using-the-ad-knowledge-portal.">Method 2: Using the AD Knowledge Portal.</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -234,49 +233,127 @@ pre code {
 <p>We will assume that you have used the search facets in the <a href="https://adknowledgeportal.synapse.org/Explore/Studies">Explore Studies</a> or <a href="https://adknowledgeportal.synapse.org/Explore/Data">Explore Data</a> portal pages to identify the files you want to download. For more information on how to locate data in the AD Portal, see (link to other docs here).</p>
 <div id="bulk-download-data" class="section level2">
 <h2>Bulk Download Data</h2>
-<p>Example 1: We want to download the raw bulk RNAseq files obtained from dorsolateral prefrontal cortex brain tissue (DLPFC) from ROSMAP donors. There have been several contributions of bulk RNAseq data from multiple tissues to the ROSMAP study over the years, including BAM files and FASTQ files.</p>
-<div id="bulk-download-contents-of-synapse-folders-via-r-or-python-client" class="section level3">
-<h3>Bulk download contents of Synapse folders via R or Python client</h3>
+<p>Goal: Download the raw bulk RNAseq files obtained from dorsolateral prefrontal cortex brain tissue (DLPFC) from ROSMAP donors. There have been several contributions of bulk RNAseq data from multiple tissues to the ROSMAP study over the years, including BAM files and FASTQ files.</p>
+<div id="bulk-download-synapse-folder-contents" class="section level3">
+<h3>Bulk download Synapse folder contents</h3>
 <p>If we know all the files we want are in a particular Synapse directory, we can recursively download all the contents of that folder using the <code>syncFromSynapse</code> command in the R or Python client.</p>
 <p>By default, <code>syncFromSynapse</code> will download files to your Synapse cache. For a bulk file download (more than a handful of files) we strongly recommend you specify a directory for the download, which will automatically create a SYNAPSE_METADATA_MANIFEST.tsv file in that directory. This manifest file will list all the files you downloaded, plus their metadata, such as synIDs and any file annotations. Preserving these annotations for each file will be key to linking files to biospecimen and individual metadata!</p>
+<p>ROSMAP bulk brain RNAseq files can be found in the two folders here:</p>
+<ul>
+<li><a href="https://www.synapse.org/#!Synapse:syn22333035">ROSMAP bulk brain BAMs: syn22333035</a></li>
+<li><a href="https://www.synapse.org/#!Synapse:syn21589959">ROSMAP bulk brain FASTQs: syn21589959</a></li>
+</ul>
+<p>These folders contain files from tissues other than the DLPFC, but because we are bulk downloading the folders, there is no way to filter those files before download.</p>
+<div id="option-1-r-client" class="section level4">
+<h4>Option 1: R client</h4>
+<p>In the R client, make sure the <code>synapser</code> and <code>synapserutils</code> packages are loaded and you are logged into synapse.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBMb2FkIHRoZSBzeW5hcHNlciBhbmQgc3luYXBzZXJ1dGlscyBwYWNrYWdlc1xuXG5saWJyYXJ5KHN5bmFwc2VyKVxubGlicmFyeShzeW5hcHNlcnV0aWxzKVxuXG4jIHJlY3Vyc2l2ZWx5IGRvd25sb2FkIHRoZSBjb250ZW50cyBvZiBhIFN5bmFwc2UgZm9sZGVyIChzeW5JRCkgdG8gYSBzcGVjaWZpZWQgZGlyZWN0b3J5XG5zeW5jRnJvbVN5bmFwc2UoKVxuXG5gYGAifQ== -->
-<pre class="r"><code># Load the synapser and synapserutils packages
-
-library(synapser)
-library(synapserutils)
-
-# recursively download the contents of a Synapse folder (synID) to a specified directory
-syncFromSynapse()
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShoZXJlKVxuXG5gYGAifQ== -->
+<pre class="r"><code>library(here)
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiaGVyZSgpIHN0YXJ0cyBhdCAvVXNlcnMvYWxpbmRlbi9EZXNrdG9wL0FEUG9ydGFsV29ya3Nob3BzXG4ifQ== -->
+<pre><code>here() starts at /Users/alinden/Desktop/ADPortalWorkshops</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyByZWN1cnNpdmVseSBkb3dubG9hZCB0aGUgY29udGVudHMgb2YgYSBTeW5hcHNlIGZvbGRlciB0byBhIHNwZWNpZmllZCBkaXJlY3RvcnkgdXNpbmcgdGhlIHN5bklEXG4jIHdlJ2xsIHVzZSB0aGUgUk9TTUFQIEJBTXMgZm9sZGVyOiBcInN5bjIyMzMzMDM1XCJcbnN5bmNGcm9tU3luYXBzZShcInN5bjIyMzMzMDM1XCIsIFwicGF0aC90by9wdXQvZGF0YVwiKVxuXG5gYGAifQ== -->
+<pre class="r"><code># recursively download the contents of a Synapse folder to a specified directory using the synID
+# we&#39;ll use the ROSMAP BAMs folder: &quot;syn22333035&quot;
+syncFromSynapse(&quot;syn22333035&quot;, &quot;path/to/put/data&quot;)
 </code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
+<p>The download should begin. <code>syncToSynapse</code> also lets you determine how to handle file collisions if you are downloading to a directory that already has files in it. You can use the <code>ifcollision</code> argument to specify whether you keep or overwrite a file that already exists.</p>
 </div>
-<div id="bulk-download-from-table-query-using-command-line-client-from-portal" class="section level3">
-<h3>Bulk download from table query using command line client from Portal</h3>
+<div id="option-2-python-client" class="section level4">
+<h4>Option 2: Python client</h4>
+<p>In the Python client, make sure you have installed the <code>synapseclient</code> package and the <code>synapseutils</code> package.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgcHl0aG9uXG4jIGltcG9ydCBzeW5hcHNlY2xpZW50IGFuZCBsb2cgaW4gdG8gU3luYXBzZVxuaW1wb3J0IHN5bmFwc2VjbGllbnRcbnN5biA9IHN5bmFwc2VjbGllbnQuU3luYXBzZSgpXG5zeW4ubG9naW4oKVxuXG4jIGltcG9ydCBzeW5hcHNldXRpbHMgYW5kIGJ1bGsgZG93bmxvYWRcbmltcG9ydCBzeW5hcHNldXRpbHNcbnN5bmFwc2V1dGlscy5zeW5jLnN5bmNGcm9tU3luYXBzZShzeW4sIFwic3luMjIzMzMwMzVcIiwgXCJwYXRoL3RvL3B1dC9kYXRhXCIpXG5cbmBgYCJ9 -->
+<pre class="python"><code># import synapseclient and log in to Synapse
+import synapseclient
+syn = synapseclient.Synapse()
+syn.login()
+
+# import synapseutils and bulk download
+import synapseutils
+synapseutils.sync.syncFromSynapse(syn, &quot;syn22333035&quot;, &quot;path/to/put/data&quot;)
+</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+<p><strong>Note:</strong> If you don’t specify an output directory with <code>syncFromSynapse</code>, the default download location is your .synapseCache folder, and a manifest will NOT be generated.</p>
+<p>If you have already downloaded the contents of a Synapse folder, but did not specify a directory or did not get a manifest with the file metadata, you can use <code>syncFromSynapse</code> with <code>ifcollision = keep.local</code> to avoid re-downloading any data files, but still get a manifest.</p>
 </div>
-<div id="bulk-download-via-r-client-using-exported-table-from-ad-portal" class="section level3">
-<h3>Bulk download via R client using exported table from AD Portal</h3>
+</div>
+<div id="method-2-using-the-ad-knowledge-portal." class="section level3">
+<h3>Method 2: Using the AD Knowledge Portal.</h3>
+<ol style="list-style-type: decimal">
+<li><p>Go to <a href="https://adknowledgeportal.synapse.org/" class="uri">https://adknowledgeportal.synapse.org/</a>, click ‘EXPLORE’, and select ‘Data’ from the drop-down menu. This will take you to a page with a table showing every single file available in the AD Knowledge Portal. These files are hosted in Synapse, and clicking on the link represented by a file name will take you to the Synapse page where it is located. The Portal is a useful tool for identifying and filtering data without having to know the directory structure of a project in Synapse ahead of time.</p></li>
+<li><p>Use the facet panels to the left of the table to filter data files.</p></li>
+<li><p>Once you’ve identified the subset of files you want to download, you can choose one of the following options:</p></li>
+</ol>
+<div id="option-1-bulk-download-the-contents-of-your-portal-table-query-using-the-synapse-command-line-client" class="section level4">
+<h4>Option 1: Bulk download the contents of your Portal table query using the Synapse command line client</h4>
+<p>Click the download arrow at the top right of the Explore Data table and select “Programmatic Options”. A pop-up window will appear with a command you can run from your terminal to download the files you have selected in the AD Portal table. Make sure you have the Synapse command line client installed and are logged into Synapse, then execute the provided command in the directory where you want to store the files.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgYmFzaFxuXG4jIGxvZyBpbiB3aXRoIHlvdXIgdXNlcm5hbWUgYW5kIHBhc3N3b3JkIG9yIGEgc3luYXBzZSBhY2Nlc3MgdG9rZW5cbnN5bmFwc2UgbG9naW4gLXUgPHVzZXJuYW1lPiAtcCA8cGFzc3dvcmQ+IC0tcmVtZW1iZXJNZVxuXG4jIG9yXG5zeW5hcHNlIGxvZ2luIC1wIDxhY2Nlc3MgdG9rZW4+IC0tcmVtZW1iZXJNZVxuXG4jIGV4ZWN1dGUgdGhlIHByb3ZpZGVkIGNvbW1hbmQgZnJvbSB0aGUgcG9ydGFsIFxuc3luYXBzZSBnZXQgLXEgXCJTRUxFQ1QgKiBGUk9NIHN5bjExMzQ2MDYzLjE2IFdIRVJFICggKCBcXFwic3R1ZHlcXFwiIEhBUyAoICdST1NNQVAnICkgKSBBTkQgKCBcXFwiYXNzYXlcXFwiID0gJ3JuYVNlcScgKSBBTkQgKCBcXFwidGlzc3VlXFxcIiBIQVMgKCAnZG9yc29sYXRlcmFsIHByZWZyb250YWwgY29ydGV4JyApICkgQU5EICggXFxcImNlbGxUeXBlXFxcIiBJUyBOVUxMICkgQU5EICggXFxcImZpbGVGb3JtYXRcXFwiID0gJ2JhbScgT1IgXFxcImZpbGVGb3JtYXRcXFwiID0gJ2Zhc3RxJyApIClcIlxuXG5gYGAifQ== -->
+<pre class="bash"><code>
+# log in with your username and password or a synapse access token
+synapse login -u &lt;username&gt; -p &lt;password&gt; --rememberMe
+
+# or
+synapse login -p &lt;access token&gt; --rememberMe
+
+# execute the provided command from the portal 
+synapse get -q &quot;SELECT * FROM syn11346063.16 WHERE ( ( \&quot;study\&quot; HAS ( &#39;ROSMAP&#39; ) ) AND ( \&quot;assay\&quot; = &#39;rnaSeq&#39; ) AND ( \&quot;tissue\&quot; HAS ( &#39;dorsolateral prefrontal cortex&#39; ) ) AND ( \&quot;cellType\&quot; IS NULL ) AND ( \&quot;fileFormat\&quot; = &#39;bam&#39; OR \&quot;fileFormat\&quot; = &#39;fastq&#39; ) )&quot;
+</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+<p>After the download, you will find a SYNAPSE_TABLE_QUERY_###.csv file in your working directory that lists the annotations associated with each downloaded file.</p>
+</div>
+<div id="option-2-bulk-download-using-an-exported-table-of-file-synids-and-the-r-or-python-client." class="section level4">
+<h4>Option 2: Bulk download using an exported table of file synIDs and the R or Python client.</h4>
+<p>Once you’ve identified the files you want to download, click on the download arrow icon on the top right of the Explore Data table and select “Export Table” from the drop-down menu. You can choose whether to download this file as a csv or tsv.</p>
+<p>A file named <code>Job-#long-string-of-numbers#.csv</code> will download to your local environment. This file contains the file names, their synIDs, and all the file metadata and annotations associated with each file (similar to the manifest file you get from <code>syncFromSynapse</code> or the SYNAPSE_TABLE_QUERY.csv file you get from <code>synapse get -q</code> in the command line client).</p>
+<p>Move this file to your working directory and use the R or Python client to download the list of synIDs in the exported table using <code>synGet()</code>(R) or <code>syn.get()</code>(Python).</p>
+<p>R:</p>
 <!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZXhwb3J0ZWRfdGFibGUgPC0gcmVhZC5jc3YoXCJKb2ItIyMjIy5jc3ZcIilcbmRpci5jcmVhdGUoXCJmaWxlc1wiKVxubGFwcGx5KGV4cG9ydGVkX3RhYmxlJGlkLCBzeW5HZXQsIGRvd25sb2FkTG9jYXRpb24gPSBcIi4vZmlsZXNcIilcblxuYGBgIn0= -->
+<pre class="r"><code>exported_table &lt;- read.csv(&quot;Job-####.csv&quot;)
+dir.create(&quot;files&quot;)
+lapply(exported_table$id, synGet, downloadLocation = &quot;./files&quot;)
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Python:</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgcHl0aG9uXG5leHBvcnRlZF90YWJsZSA9IHBhbmRhcy5yZWFkX2NzdihcIkpvYi0jIyMjLmNzdlwiKVxub3MubWtkaXIoXCJmaWxlc1wiKVxuW3N5bi5nZXQoeCwgZG93bmxvYWRMb2NhdGlvbiA9IFwiLi9maWxlc1wiKSBmb3IgeCBpbiBleHBvcnRlZF90YWJsZS5pZF1cbmBgYCJ9 -->
+<pre class="python"><code>exported_table = pandas.read_csv(&quot;Job-####.csv&quot;)
+os.mkdir(&quot;files&quot;)
+[syn.get(x, downloadLocation = &quot;./files&quot;) for x in exported_table.id]</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Note that the Python client supports multi-threaded downloads and is substantially faster than the R client.</p>
+<!-- rnb-text-end -->
+</div>
 </div>
 </div>
 </div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiRG93bmxvYWRpbmcgRGF0YSBmcm9tIHRoZSBBRCBLbm93bGVkZ2UgUG9ydGFsIgpvdXRwdXQ6IAogIGh0bWxfbm90ZWJvb2s6CiAgICB0b2M6IHllcwotLS0KCiMgSW50cm9kdWN0aW9uCgpUaGlzIHR1dG9yaWFsIHdpbGwgZGVtb25zdHJhdGUgdGhlIHN0ZXBzIHRvIGRvd25sb2FkIGRhdGEgcHJvZ3JhbW1hdGljYWxseSBmcm9tIHRoZSBBRCBLbm93bGVkZ2UgUG9ydGFsLiAKCldlIHdpbGwgYXNzdW1lIHRoYXQgeW91IGhhdmUgdXNlZCB0aGUgc2VhcmNoIGZhY2V0cyBpbiB0aGUgW0V4cGxvcmUgU3R1ZGllc10oaHR0cHM6Ly9hZGtub3dsZWRnZXBvcnRhbC5zeW5hcHNlLm9yZy9FeHBsb3JlL1N0dWRpZXMpIG9yIFtFeHBsb3JlIERhdGFdKGh0dHBzOi8vYWRrbm93bGVkZ2Vwb3J0YWwuc3luYXBzZS5vcmcvRXhwbG9yZS9EYXRhKSBwb3J0YWwgcGFnZXMgdG8gaWRlbnRpZnkgdGhlIGZpbGVzIHlvdSB3YW50IHRvIGRvd25sb2FkLiBGb3IgbW9yZSBpbmZvcm1hdGlvbiBvbiBob3cgdG8gbG9jYXRlIGRhdGEgaW4gdGhlIEFEIFBvcnRhbCwgc2VlIChsaW5rIHRvIG90aGVyIGRvY3MgaGVyZSkuIAoKIyMgQnVsayBEb3dubG9hZCBEYXRhCgpFeGFtcGxlIDE6IFdlIHdhbnQgdG8gZG93bmxvYWQgdGhlIHJhdyBidWxrIFJOQXNlcSBmaWxlcyBvYnRhaW5lZCBmcm9tIGRvcnNvbGF0ZXJhbCBwcmVmcm9udGFsIGNvcnRleCBicmFpbiB0aXNzdWUgKERMUEZDKSBmcm9tIFJPU01BUCBkb25vcnMuIFRoZXJlIGhhdmUgYmVlbiBzZXZlcmFsIGNvbnRyaWJ1dGlvbnMgb2YgYnVsayBSTkFzZXEgZGF0YSBmcm9tIG11bHRpcGxlIHRpc3N1ZXMgdG8gdGhlIFJPU01BUCBzdHVkeSBvdmVyIHRoZSB5ZWFycywgaW5jbHVkaW5nIEJBTSBmaWxlcyBhbmQgRkFTVFEgZmlsZXMuIAoKIyMjIEJ1bGsgZG93bmxvYWQgY29udGVudHMgb2YgU3luYXBzZSBmb2xkZXJzIHZpYSBSIG9yIFB5dGhvbiBjbGllbnQKCklmIHdlIGtub3cgYWxsIHRoZSBmaWxlcyB3ZSB3YW50IGFyZSBpbiBhIHBhcnRpY3VsYXIgU3luYXBzZSBkaXJlY3RvcnksIHdlIGNhbiByZWN1cnNpdmVseSBkb3dubG9hZCBhbGwgdGhlIGNvbnRlbnRzIG9mIHRoYXQgZm9sZGVyIHVzaW5nIHRoZSBgc3luY0Zyb21TeW5hcHNlYCBjb21tYW5kIGluIHRoZSBSIG9yIFB5dGhvbiBjbGllbnQuIAoKQnkgZGVmYXVsdCwgYHN5bmNGcm9tU3luYXBzZWAgd2lsbCBkb3dubG9hZCBmaWxlcyB0byB5b3VyIFN5bmFwc2UgY2FjaGUuIEZvciBhIGJ1bGsgZmlsZSBkb3dubG9hZCAobW9yZSB0aGFuIGEgaGFuZGZ1bCBvZiBmaWxlcykgd2Ugc3Ryb25nbHkgcmVjb21tZW5kIHlvdSBzcGVjaWZ5IGEgZGlyZWN0b3J5IGZvciB0aGUgZG93bmxvYWQsIHdoaWNoIHdpbGwgYXV0b21hdGljYWxseSBjcmVhdGUgYSBTWU5BUFNFX01FVEFEQVRBX01BTklGRVNULnRzdiBmaWxlIGluIHRoYXQgZGlyZWN0b3J5LiBUaGlzIG1hbmlmZXN0IGZpbGUgd2lsbCBsaXN0IGFsbCB0aGUgZmlsZXMgeW91IGRvd25sb2FkZWQsIHBsdXMgdGhlaXIgbWV0YWRhdGEsIHN1Y2ggYXMgc3luSURzIGFuZCBhbnkgZmlsZSBhbm5vdGF0aW9ucy4gUHJlc2VydmluZyB0aGVzZSBhbm5vdGF0aW9ucyBmb3IgZWFjaCBmaWxlIHdpbGwgYmUga2V5IHRvIGxpbmtpbmcgZmlsZXMgdG8gYmlvc3BlY2ltZW4gYW5kIGluZGl2aWR1YWwgbWV0YWRhdGEhCgpgYGB7cn0KIyBMb2FkIHRoZSBzeW5hcHNlciBhbmQgc3luYXBzZXJ1dGlscyBwYWNrYWdlcwoKbGlicmFyeShzeW5hcHNlcikKbGlicmFyeShzeW5hcHNlcnV0aWxzKQoKIyByZWN1cnNpdmVseSBkb3dubG9hZCB0aGUgY29udGVudHMgb2YgYSBTeW5hcHNlIGZvbGRlciAoc3luSUQpIHRvIGEgc3BlY2lmaWVkIGRpcmVjdG9yeQpzeW5jRnJvbVN5bmFwc2UoKQoKYGBgCgpgYGB7cHl0aG9ufQoKYGBgCgojIyMgQnVsayBkb3dubG9hZCBmcm9tIHRhYmxlIHF1ZXJ5IHVzaW5nIGNvbW1hbmQgbGluZSBjbGllbnQgZnJvbSBQb3J0YWwKCmBgYHtiYXNofQoKYGBgCgoKIyMjIEJ1bGsgZG93bmxvYWQgdmlhIFIgY2xpZW50IHVzaW5nIGV4cG9ydGVkIHRhYmxlIGZyb20gQUQgUG9ydGFsIAoKYGBge3J9CgpgYGAKCg==</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiRG93bmxvYWRpbmcgRGF0YSBmcm9tIHRoZSBBRCBLbm93bGVkZ2UgUG9ydGFsIgpvdXRwdXQ6IAogIGh0bWxfbm90ZWJvb2s6CiAgICB0b2M6IHllcwotLS0KCiMgSW50cm9kdWN0aW9uCgpUaGlzIHR1dG9yaWFsIHdpbGwgZGVtb25zdHJhdGUgdGhlIHN0ZXBzIHRvIGRvd25sb2FkIGRhdGEgcHJvZ3JhbW1hdGljYWxseSBmcm9tIHRoZSBBRCBLbm93bGVkZ2UgUG9ydGFsLgoKV2Ugd2lsbCBhc3N1bWUgdGhhdCB5b3UgaGF2ZSB1c2VkIHRoZSBzZWFyY2ggZmFjZXRzIGluIHRoZSBbRXhwbG9yZSBTdHVkaWVzXShodHRwczovL2Fka25vd2xlZGdlcG9ydGFsLnN5bmFwc2Uub3JnL0V4cGxvcmUvU3R1ZGllcykgb3IgW0V4cGxvcmUgRGF0YV0oaHR0cHM6Ly9hZGtub3dsZWRnZXBvcnRhbC5zeW5hcHNlLm9yZy9FeHBsb3JlL0RhdGEpIHBvcnRhbCBwYWdlcyB0byBpZGVudGlmeSB0aGUgZmlsZXMgeW91IHdhbnQgdG8gZG93bmxvYWQuIEZvciBtb3JlIGluZm9ybWF0aW9uIG9uIGhvdyB0byBsb2NhdGUgZGF0YSBpbiB0aGUgQUQgUG9ydGFsLCBzZWUgKGxpbmsgdG8gb3RoZXIgZG9jcyBoZXJlKS4KCiMjIEJ1bGsgRG93bmxvYWQgRGF0YQoKR29hbDogRG93bmxvYWQgdGhlIHJhdyBidWxrIFJOQXNlcSBmaWxlcyBvYnRhaW5lZCBmcm9tIGRvcnNvbGF0ZXJhbCBwcmVmcm9udGFsIGNvcnRleCBicmFpbiB0aXNzdWUgKERMUEZDKSBmcm9tIFJPU01BUCBkb25vcnMuIFRoZXJlIGhhdmUgYmVlbiBzZXZlcmFsIGNvbnRyaWJ1dGlvbnMgb2YgYnVsayBSTkFzZXEgZGF0YSBmcm9tIG11bHRpcGxlIHRpc3N1ZXMgdG8gdGhlIFJPU01BUCBzdHVkeSBvdmVyIHRoZSB5ZWFycywgaW5jbHVkaW5nIEJBTSBmaWxlcyBhbmQgRkFTVFEgZmlsZXMuCgojIyMgQnVsayBkb3dubG9hZCBTeW5hcHNlIGZvbGRlciBjb250ZW50cwoKSWYgd2Uga25vdyBhbGwgdGhlIGZpbGVzIHdlIHdhbnQgYXJlIGluIGEgcGFydGljdWxhciBTeW5hcHNlIGRpcmVjdG9yeSwgd2UgY2FuIHJlY3Vyc2l2ZWx5IGRvd25sb2FkIGFsbCB0aGUgY29udGVudHMgb2YgdGhhdCBmb2xkZXIgdXNpbmcgdGhlIGBzeW5jRnJvbVN5bmFwc2VgIGNvbW1hbmQgaW4gdGhlIFIgb3IgUHl0aG9uIGNsaWVudC4KCkJ5IGRlZmF1bHQsIGBzeW5jRnJvbVN5bmFwc2VgIHdpbGwgZG93bmxvYWQgZmlsZXMgdG8geW91ciBTeW5hcHNlIGNhY2hlLiBGb3IgYSBidWxrIGZpbGUgZG93bmxvYWQgKG1vcmUgdGhhbiBhIGhhbmRmdWwgb2YgZmlsZXMpIHdlIHN0cm9uZ2x5IHJlY29tbWVuZCB5b3Ugc3BlY2lmeSBhIGRpcmVjdG9yeSBmb3IgdGhlIGRvd25sb2FkLCB3aGljaCB3aWxsIGF1dG9tYXRpY2FsbHkgY3JlYXRlIGEgU1lOQVBTRV9NRVRBREFUQV9NQU5JRkVTVC50c3YgZmlsZSBpbiB0aGF0IGRpcmVjdG9yeS4gVGhpcyBtYW5pZmVzdCBmaWxlIHdpbGwgbGlzdCBhbGwgdGhlIGZpbGVzIHlvdSBkb3dubG9hZGVkLCBwbHVzIHRoZWlyIG1ldGFkYXRhLCBzdWNoIGFzIHN5bklEcyBhbmQgYW55IGZpbGUgYW5ub3RhdGlvbnMuIFByZXNlcnZpbmcgdGhlc2UgYW5ub3RhdGlvbnMgZm9yIGVhY2ggZmlsZSB3aWxsIGJlIGtleSB0byBsaW5raW5nIGZpbGVzIHRvIGJpb3NwZWNpbWVuIGFuZCBpbmRpdmlkdWFsIG1ldGFkYXRhIQoKUk9TTUFQIGJ1bGsgYnJhaW4gUk5Bc2VxIGZpbGVzIGNhbiBiZSBmb3VuZCBpbiB0aGUgdHdvIGZvbGRlcnMgaGVyZToKCi0gICBbUk9TTUFQIGJ1bGsgYnJhaW4gQkFNczogc3luMjIzMzMwMzVdKGh0dHBzOi8vd3d3LnN5bmFwc2Uub3JnLyMhU3luYXBzZTpzeW4yMjMzMzAzNSkKLSAgIFtST1NNQVAgYnVsayBicmFpbiBGQVNUUXM6IHN5bjIxNTg5OTU5XShodHRwczovL3d3dy5zeW5hcHNlLm9yZy8jIVN5bmFwc2U6c3luMjE1ODk5NTkpCgpUaGVzZSBmb2xkZXJzIGNvbnRhaW4gZmlsZXMgZnJvbSB0aXNzdWVzIG90aGVyIHRoYW4gdGhlIERMUEZDLCBidXQgYmVjYXVzZSB3ZSBhcmUgYnVsayBkb3dubG9hZGluZyB0aGUgZm9sZGVycywgdGhlcmUgaXMgbm8gd2F5IHRvIGZpbHRlciB0aG9zZSBmaWxlcyBiZWZvcmUgZG93bmxvYWQuCgojIyMjIE9wdGlvbiAxOiBSIGNsaWVudAoKSW4gdGhlIFIgY2xpZW50LCBtYWtlIHN1cmUgdGhlIGBzeW5hcHNlcmAgYW5kIGBzeW5hcHNlcnV0aWxzYCBwYWNrYWdlcyBhcmUgbG9hZGVkIGFuZCB5b3UgYXJlIGxvZ2dlZCBpbnRvIHN5bmFwc2UuCgpgYGB7cn0KIyBMb2FkIHRoZSBzeW5hcHNlciBhbmQgc3luYXBzZXJ1dGlscyBwYWNrYWdlcwpsaWJyYXJ5KHN5bmFwc2VyKQpsaWJyYXJ5KHN5bmFwc2VydXRpbHMpCgojIGxvZyBpbiB0byBTeW5hcHNlCnN5bkxvZ2luKCkKYGBgCgpgYGB7cn0KIyByZWN1cnNpdmVseSBkb3dubG9hZCB0aGUgY29udGVudHMgb2YgYSBTeW5hcHNlIGZvbGRlciB0byBhIHNwZWNpZmllZCBkaXJlY3RvcnkgdXNpbmcgdGhlIHN5bklECiMgd2UnbGwgdXNlIHRoZSBST1NNQVAgQkFNcyBmb2xkZXI6ICJzeW4yMjMzMzAzNSIKc3luY0Zyb21TeW5hcHNlKCJzeW4yMjMzMzAzNSIsICJwYXRoL3RvL3B1dC9kYXRhIikKCmBgYAoKVGhlIGRvd25sb2FkIHNob3VsZCBiZWdpbi4gYHN5bmNUb1N5bmFwc2VgIGFsc28gbGV0cyB5b3UgZGV0ZXJtaW5lIGhvdyB0byBoYW5kbGUgZmlsZSBjb2xsaXNpb25zIGlmIHlvdSBhcmUgZG93bmxvYWRpbmcgdG8gYSBkaXJlY3RvcnkgdGhhdCBhbHJlYWR5IGhhcyBmaWxlcyBpbiBpdC4gWW91IGNhbiB1c2UgdGhlIGBpZmNvbGxpc2lvbmAgYXJndW1lbnQgdG8gc3BlY2lmeSB3aGV0aGVyIHlvdSBrZWVwIG9yIG92ZXJ3cml0ZSBhIGZpbGUgdGhhdCBhbHJlYWR5IGV4aXN0cy4KCiMjIyMgT3B0aW9uIDI6IFB5dGhvbiBjbGllbnQKCkluIHRoZSBQeXRob24gY2xpZW50LCBtYWtlIHN1cmUgeW91IGhhdmUgaW5zdGFsbGVkIHRoZSBgc3luYXBzZWNsaWVudGAgcGFja2FnZSBhbmQgdGhlIGBzeW5hcHNldXRpbHNgIHBhY2thZ2UuCgpgYGB7cHl0aG9ufQojIGltcG9ydCBzeW5hcHNlY2xpZW50IGFuZCBsb2cgaW4gdG8gU3luYXBzZQppbXBvcnQgc3luYXBzZWNsaWVudApzeW4gPSBzeW5hcHNlY2xpZW50LlN5bmFwc2UoKQpzeW4ubG9naW4oKQoKIyBpbXBvcnQgc3luYXBzZXV0aWxzIGFuZCBidWxrIGRvd25sb2FkCmltcG9ydCBzeW5hcHNldXRpbHMKc3luYXBzZXV0aWxzLnN5bmMuc3luY0Zyb21TeW5hcHNlKHN5biwgInN5bjIyMzMzMDM1IiwgInBhdGgvdG8vcHV0L2RhdGEiKQoKYGBgCgoqKk5vdGU6KiogSWYgeW91IGRvbid0IHNwZWNpZnkgYW4gb3V0cHV0IGRpcmVjdG9yeSB3aXRoIGBzeW5jRnJvbVN5bmFwc2VgLCB0aGUgZGVmYXVsdCBkb3dubG9hZCBsb2NhdGlvbiBpcyB5b3VyIC5zeW5hcHNlQ2FjaGUgZm9sZGVyLCBhbmQgYSBtYW5pZmVzdCB3aWxsIE5PVCBiZSBnZW5lcmF0ZWQuCgpJZiB5b3UgaGF2ZSBhbHJlYWR5IGRvd25sb2FkZWQgdGhlIGNvbnRlbnRzIG9mIGEgU3luYXBzZSBmb2xkZXIsIGJ1dCBkaWQgbm90IHNwZWNpZnkgYSBkaXJlY3Rvcnkgb3IgZGlkIG5vdCBnZXQgYSBtYW5pZmVzdCB3aXRoIHRoZSBmaWxlIG1ldGFkYXRhLCB5b3UgY2FuIHVzZSBgc3luY0Zyb21TeW5hcHNlYCB3aXRoIGBpZmNvbGxpc2lvbiA9IGtlZXAubG9jYWxgIHRvIGF2b2lkIHJlLWRvd25sb2FkaW5nIGFueSBkYXRhIGZpbGVzLCBidXQgc3RpbGwgZ2V0IGEgbWFuaWZlc3QuCgojIyMgTWV0aG9kIDI6IFVzaW5nIHRoZSBBRCBLbm93bGVkZ2UgUG9ydGFsLgoKMS4gIEdvIHRvIDxodHRwczovL2Fka25vd2xlZGdlcG9ydGFsLnN5bmFwc2Uub3JnLz4sIGNsaWNrICdFWFBMT1JFJywgYW5kIHNlbGVjdCAnRGF0YScgZnJvbSB0aGUgZHJvcC1kb3duIG1lbnUuIFRoaXMgd2lsbCB0YWtlIHlvdSB0byBhIHBhZ2Ugd2l0aCBhIHRhYmxlIHNob3dpbmcgZXZlcnkgc2luZ2xlIGZpbGUgYXZhaWxhYmxlIGluIHRoZSBBRCBLbm93bGVkZ2UgUG9ydGFsLiBUaGVzZSBmaWxlcyBhcmUgaG9zdGVkIGluIFN5bmFwc2UsIGFuZCBjbGlja2luZyBvbiB0aGUgbGluayByZXByZXNlbnRlZCBieSBhIGZpbGUgbmFtZSB3aWxsIHRha2UgeW91IHRvIHRoZSBTeW5hcHNlIHBhZ2Ugd2hlcmUgaXQgaXMgbG9jYXRlZC4gVGhlIFBvcnRhbCBpcyBhIHVzZWZ1bCB0b29sIGZvciBpZGVudGlmeWluZyBhbmQgZmlsdGVyaW5nIGRhdGEgd2l0aG91dCBoYXZpbmcgdG8ga25vdyB0aGUgZGlyZWN0b3J5IHN0cnVjdHVyZSBvZiBhIHByb2plY3QgaW4gU3luYXBzZSBhaGVhZCBvZiB0aW1lLgoKMi4gIFVzZSB0aGUgZmFjZXQgcGFuZWxzIHRvIHRoZSBsZWZ0IG9mIHRoZSB0YWJsZSB0byBmaWx0ZXIgZGF0YSBmaWxlcy4KCjMuICBPbmNlIHlvdSd2ZSBpZGVudGlmaWVkIHRoZSBzdWJzZXQgb2YgZmlsZXMgeW91IHdhbnQgdG8gZG93bmxvYWQsIHlvdSBjYW4gY2hvb3NlIG9uZSBvZiB0aGUgZm9sbG93aW5nIG9wdGlvbnM6CgojIyMjIE9wdGlvbiAxOiBCdWxrIGRvd25sb2FkIHRoZSBjb250ZW50cyBvZiB5b3VyIFBvcnRhbCB0YWJsZSBxdWVyeSB1c2luZyB0aGUgU3luYXBzZSBjb21tYW5kIGxpbmUgY2xpZW50CgpDbGljayB0aGUgZG93bmxvYWQgYXJyb3cgYXQgdGhlIHRvcCByaWdodCBvZiB0aGUgRXhwbG9yZSBEYXRhIHRhYmxlIGFuZCBzZWxlY3QgIlByb2dyYW1tYXRpYyBPcHRpb25zIi4gQSBwb3AtdXAgd2luZG93IHdpbGwgYXBwZWFyIHdpdGggYSBjb21tYW5kIHlvdSBjYW4gcnVuIGZyb20geW91ciB0ZXJtaW5hbCB0byBkb3dubG9hZCB0aGUgZmlsZXMgeW91IGhhdmUgc2VsZWN0ZWQgaW4gdGhlIEFEIFBvcnRhbCB0YWJsZS4gTWFrZSBzdXJlIHlvdSBoYXZlIHRoZSBTeW5hcHNlIGNvbW1hbmQgbGluZSBjbGllbnQgaW5zdGFsbGVkIGFuZCBhcmUgbG9nZ2VkIGludG8gU3luYXBzZSwgdGhlbiBleGVjdXRlIHRoZSBwcm92aWRlZCBjb21tYW5kIGluIHRoZSBkaXJlY3Rvcnkgd2hlcmUgeW91IHdhbnQgdG8gc3RvcmUgdGhlIGZpbGVzLgoKYGBge2Jhc2h9CgojIGxvZyBpbiB3aXRoIHlvdXIgdXNlcm5hbWUgYW5kIHBhc3N3b3JkIG9yIGEgc3luYXBzZSBhY2Nlc3MgdG9rZW4Kc3luYXBzZSBsb2dpbiAtdSA8dXNlcm5hbWU+IC1wIDxwYXNzd29yZD4gLS1yZW1lbWJlck1lCgojIG9yCnN5bmFwc2UgbG9naW4gLXAgPGFjY2VzcyB0b2tlbj4gLS1yZW1lbWJlck1lCgojIGV4ZWN1dGUgdGhlIHByb3ZpZGVkIGNvbW1hbmQgZnJvbSB0aGUgcG9ydGFsIApzeW5hcHNlIGdldCAtcSAiU0VMRUNUICogRlJPTSBzeW4xMTM0NjA2My4xNiBXSEVSRSAoICggXCJzdHVkeVwiIEhBUyAoICdST1NNQVAnICkgKSBBTkQgKCBcImFzc2F5XCIgPSAncm5hU2VxJyApIEFORCAoIFwidGlzc3VlXCIgSEFTICggJ2RvcnNvbGF0ZXJhbCBwcmVmcm9udGFsIGNvcnRleCcgKSApIEFORCAoIFwiY2VsbFR5cGVcIiBJUyBOVUxMICkgQU5EICggXCJmaWxlRm9ybWF0XCIgPSAnYmFtJyBPUiBcImZpbGVGb3JtYXRcIiA9ICdmYXN0cScgKSApIgoKYGBgCgpBZnRlciB0aGUgZG93bmxvYWQsIHlvdSB3aWxsIGZpbmQgYSBTWU5BUFNFX1RBQkxFX1FVRVJZXF9cI1wjXCMuY3N2IGZpbGUgaW4geW91ciB3b3JraW5nIGRpcmVjdG9yeSB0aGF0IGxpc3RzIHRoZSBhbm5vdGF0aW9ucyBhc3NvY2lhdGVkIHdpdGggZWFjaCBkb3dubG9hZGVkIGZpbGUuCgojIyMjIE9wdGlvbiAyOiBCdWxrIGRvd25sb2FkIHVzaW5nIGFuIGV4cG9ydGVkIHRhYmxlIG9mIGZpbGUgc3luSURzIGFuZCB0aGUgUiBvciBQeXRob24gY2xpZW50LgoKT25jZSB5b3UndmUgaWRlbnRpZmllZCB0aGUgZmlsZXMgeW91IHdhbnQgdG8gZG93bmxvYWQsIGNsaWNrIG9uIHRoZSBkb3dubG9hZCBhcnJvdyBpY29uIG9uIHRoZSB0b3AgcmlnaHQgb2YgdGhlIEV4cGxvcmUgRGF0YSB0YWJsZSBhbmQgc2VsZWN0ICJFeHBvcnQgVGFibGUiIGZyb20gdGhlIGRyb3AtZG93biBtZW51LiBZb3UgY2FuIGNob29zZSB3aGV0aGVyIHRvIGRvd25sb2FkIHRoaXMgZmlsZSBhcyBhIGNzdiBvciB0c3YuCgpBIGZpbGUgbmFtZWQgYEpvYi0jbG9uZy1zdHJpbmctb2YtbnVtYmVycyMuY3N2YCB3aWxsIGRvd25sb2FkIHRvIHlvdXIgbG9jYWwgZW52aXJvbm1lbnQuIFRoaXMgZmlsZSBjb250YWlucyB0aGUgZmlsZSBuYW1lcywgdGhlaXIgc3luSURzLCBhbmQgYWxsIHRoZSBmaWxlIG1ldGFkYXRhIGFuZCBhbm5vdGF0aW9ucyBhc3NvY2lhdGVkIHdpdGggZWFjaCBmaWxlIChzaW1pbGFyIHRvIHRoZSBtYW5pZmVzdCBmaWxlIHlvdSBnZXQgZnJvbSBgc3luY0Zyb21TeW5hcHNlYCBvciB0aGUgU1lOQVBTRV9UQUJMRV9RVUVSWS5jc3YgZmlsZSB5b3UgZ2V0IGZyb20gYHN5bmFwc2UgZ2V0IC1xYCBpbiB0aGUgY29tbWFuZCBsaW5lIGNsaWVudCkuCgpNb3ZlIHRoaXMgZmlsZSB0byB5b3VyIHdvcmtpbmcgZGlyZWN0b3J5IGFuZCB1c2UgdGhlIFIgb3IgUHl0aG9uIGNsaWVudCB0byBkb3dubG9hZCB0aGUgbGlzdCBvZiBzeW5JRHMgaW4gdGhlIGV4cG9ydGVkIHRhYmxlIHVzaW5nIGBzeW5HZXQoKWAoUikgb3IgYHN5bi5nZXQoKWAoUHl0aG9uKS4KClI6CgpgYGB7cn0KZXhwb3J0ZWRfdGFibGUgPC0gcmVhZC5jc3YoIkpvYi0jIyMjLmNzdiIpCmRpci5jcmVhdGUoImZpbGVzIikKbGFwcGx5KGV4cG9ydGVkX3RhYmxlJGlkLCBzeW5HZXQsIGRvd25sb2FkTG9jYXRpb24gPSAiLi9maWxlcyIpCgpgYGAKClB5dGhvbjoKCmBgYHtweXRob259CmV4cG9ydGVkX3RhYmxlID0gcGFuZGFzLnJlYWRfY3N2KCJKb2ItIyMjIy5jc3YiKQpvcy5ta2RpcigiZmlsZXMiKQpbc3luLmdldCh4LCBkb3dubG9hZExvY2F0aW9uID0gIi4vZmlsZXMiKSBmb3IgeCBpbiBleHBvcnRlZF90YWJsZS5pZF0KYGBgCgpOb3RlIHRoYXQgdGhlIFB5dGhvbiBjbGllbnQgc3VwcG9ydHMgbXVsdGktdGhyZWFkZWQgZG93bmxvYWRzIGFuZCBpcyBzdWJzdGFudGlhbGx5IGZhc3RlciB0aGFuIHRoZSBSIGNsaWVudC4K</div>
 
 
 
