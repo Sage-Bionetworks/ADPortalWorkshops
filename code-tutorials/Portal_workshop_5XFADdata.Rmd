@@ -1,22 +1,67 @@
 ---
-title: "AD Knowledge Portal: Upload and explore 5XFAD mouse data in Rstudio"
-output: html_notebook
+title: 'AD Knowledge Portal: Download and explore 5XFAD mouse data in Rstudio'
+output:
+  html_document:
+    df_print: paged
 ---
 
+### Setup
 
-Upload the normalized counts matrix for 5XFAD mice and related metadata
+Install `synapser`, the [Synapse R client](https://r-docs.synapse.org/articles/synapser.html).
+```{r}
+install.packages("synapser", repos = c("http://ran.synapse.org", "http://cran.fhcrc.org"))
+```
+
+You may already have some or all of these packages installed, but if not, install these as well!
+
+```{r}
+install.packages("purrr")
+install.packages("dplyr")
+install.packages("ggplot2")
+```
+
+Next, you will need to log in to your Synapse account. In the code below, replace the <> with your Synapse username and password. 
+
+```{r}
+synapser::synLogin(username = "<username>", password = "<password>")
+```
+
+If you usually log in to Synapse with your Google account, you will need to use a Synapser Personal Access Token (PAT) to log in with the R client. Follow these instructions to [generate a personal access token](https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin), then paste the PAT into the code bewlow. *Note*: make sure you scope your access token to allow you to View, Download, and Modify 
+
+```{r}
+synapser::synLogin(authToken = "<paste your personal access token here>")
+```
+
+
+### Download data
+
+Bulk download using an exported table of file synIDs and the R or Python client.
+
+Once you've identified the files you want to download, click on the download arrow icon on the top right of the Explore Data table and select "Export Table" from the drop-down menu. For this example, choose to download the file as a csv. 
+
+A file named `Job-#long-string-of-numbers#.csv` will download to your local environment. This file contains the file names, their synIDs, and all the file metadata and annotations associated with each file.
+
+We'll use the R client to walk through the list of synID in the exported table using and download the associated file using `synGet()`. 
+
+R:
+
+```{r}
+exported_table <- read.csv("Job-####.csv")
+purrr::walk(exported_table$id, ~synapser::synGet(.x, downloadLocation = "files/"))
+```
+
+Read the downloaded files into R.
 ```{r}
 #counts matrix
-p <- synapser::synGet('syn22108848')
-counts <- read.delim(p$path)
+counts <- read.delim("files/tpm_gene_5XFAD.txt")
 
 #individual metadata
-p1 <- synapser::synGet('syn22103212')
-ind_meta <- read.csv(p1$path, sep=",")
+ind_meta <- read.csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv")
 
 #biospecimen metadata
-p2 <- synapser::synGet('syn22103213')
-bio_meta <- read.csv(p2$path, sep=",")
+bio_meta <- read.csv("files/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv")
+
+#assay metadata
 
 ```
 
