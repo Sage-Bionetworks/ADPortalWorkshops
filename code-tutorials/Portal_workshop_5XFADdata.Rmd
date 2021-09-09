@@ -8,6 +8,7 @@ output:
 ### Setup
 
 Install `synapser`, the [Synapse R client](https://r-docs.synapse.org/articles/synapser.html).
+
 ```{r}
 install.packages("synapser", repos = c("http://ran.synapse.org", "http://cran.fhcrc.org"))
 ```
@@ -15,42 +16,68 @@ install.packages("synapser", repos = c("http://ran.synapse.org", "http://cran.fh
 You may already have some or all of these packages installed, but if not, install these as well!
 
 ```{r}
-install.packages("purrr")
-install.packages("dplyr")
-install.packages("ggplot2")
+install.packages(c("purrr", "dplyr", "ggplot2"))
 ```
 
-Next, you will need to log in to your Synapse account. In the code below, replace the <> with your Synapse username and password. 
+Next, you will need to log in to your Synapse account.
+
+#### Login Option 1: Synapse username and password
+
+In the code below, replace the \<\> with your Synapse username and password.
 
 ```{r}
-synapser::synLogin(username = "<username>", password = "<password>")
+# load the synapser package
+library(synapser)
+
+# login with your Synapser username and password
+synLogin(username = "<username>", password = "<password>")
 ```
 
-If you usually log in to Synapse with your Google account, you will need to use a Synapser Personal Access Token (PAT) to log in with the R client. Follow these instructions to [generate a personal access token](https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin), then paste the PAT into the code bewlow. *Note*: make sure you scope your access token to allow you to View, Download, and Modify 
+#### Login Option 2: Synapse PAT
+
+If you usually log in to Synapse with your Google account, you will need to use a Synapser Personal Access Token (PAT) to log in with the R client. Follow these instructions to [generate a personal access token](https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin), then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.
 
 ```{r}
+library(synapser)
 synapser::synLogin(authToken = "<paste your personal access token here>")
 ```
 
-
 ### Download data
 
-Bulk download using an exported table of file synIDs and the R or Python client.
+Use the facets and search bar to look for data you want to download from the AD Knowledge Portal. Once you've identified the files you want, click on the download arrow icon on the top right of the Explore Data table and select "Programmatic Options" from the drop-down menu.
 
-Once you've identified the files you want to download, click on the download arrow icon on the top right of the Explore Data table and select "Export Table" from the drop-down menu. For this example, choose to download the file as a csv. 
+![](images/download-programmatic-options.png){width="300"}
 
-A file named `Job-#long-string-of-numbers#.csv` will download to your local environment. This file contains the file names, their synIDs, and all the file metadata and annotations associated with each file.
+In the window that pops up, select the "R" tab from the top menu bar. This will display some R code that constructs a SQL query of the Synapse data table that drives the AD Knowledge Portal. This query will allow us to download only the files that meet our search criteria.
 
-We'll use the R client to walk through the list of synID in the exported table using and download the associated file using `synGet()`. 
+![](images/download-R-instructions.png){width="500"}
 
-R:
+Copy and paste this code into R, then execute it.
+
+1.  The function `synTableQuery()` returns a Synapse object wrapper around a CSV file that is automatically downloaded to a Synapse cache directory `.synapseCache` in your home directory. You can use `query$filepath` to see the path to the file in the Synapse cache.
+
+2.  We will use `read.csv` to read the CSV file into R. We can explore the `download_table` object and see that it contains information on all of the AD Portal data files we want to download. Some columns like the "id" and "parentId" columns contain info about where the file is in Synapse, and some columns contain AD Portal annotations for each file, like "dataType", "specimenID", and "assay". This annotation table will later allow us to link downloaded files to additional metadata variables!
+
+3.  Finally, we use a mapping function from the `purrr` package to loop through the "id" column and apply the `synGet()` function to each file's synID. In this case, we use the `purrr::walk()` because it lets us call `synGet()` for its side effect (downloading files to a location we specify), and returns nothing.
 
 ```{r}
-exported_table <- read.csv("Job-####.csv")
-purrr::walk(exported_table$id, ~synapser::synGet(.x, downloadLocation = "files/"))
+# download the results of the filtered table query
+query <- synTableQuery("SELECT * FROM syn11346063.17 WHERE ( ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( \"resourceType\" = 'metadata' ) AND ( \"dataType\" IS NULL OR \"dataType\" = 'geneExpression' ) )")
+
+# read in the table query csv file
+download_table <- read.csv(query$filepath)
+
+# loop through the column of synIDs and download each file
+# if downloadLocation is not specified, files are downloaded to the Synapse cache by default
+purrr::walk(download_table$id, ~synapser::synGet(.x, downloadLocation = "files/"))
 ```
 
+Congratulations, you have bulk downloaded data from the AD Knowledge Portal!
+
+**An important note:** for situations where you are downloading many large files, the R client performs substantially slower than the command line client or the Python client. In these cases, you can use the instructions and code snippets for the command line or Python client provided in the "Programmatic Options" menu.
+
 Read the downloaded files into R.
+
 ```{r}
 #counts matrix
 counts <- read.delim("files/tpm_gene_5XFAD.txt")
@@ -66,6 +93,7 @@ bio_meta <- read.csv("files/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv")
 ```
 
 Identify the individual specimens in the matrix, create an ID key to join the biospecimen IDs and individual IDs. The resulting metadata file will contain only the individuals in the matrix
+
 ```{r}
 #first remove the leading X from the column names, which are the specimenIDs
 colnames(counts) <- gsub("X","",colnames(counts))
@@ -80,20 +108,24 @@ IDkey <- dplyr::left_join(specimenID, IDkey, by="specimenID")
 #the biospecimens metadata has both IDs needed to join the ind_meta and counts matrix
 ind_meta2 <- dplyr::left_join(IDkey, ind_meta, by="individualID")
 ```
+
 Add a column with simplified time points (4, 6, and 12 months).
+
 ```{r}
 #take a look at time point designations:
 table(ind_meta2$jobNumber)
 ```
-#recode for 4, 6, 12 months
+
+\#recode for 4, 6, 12 months
+
 ```{r}
 ind_meta2$timepoint <- ifelse(ind_meta2$jobNumber=='JAX 5xFAD 12mo', '12mo',
                               ifelse(ind_meta2$jobNumber=='JAX DMP 5xFAD 6month', '6mo', '4mo'))
 table(ind_meta2$sex, ind_meta2$timepoint)
 ```
 
-
 Transform the ensemblIDs in the matrix to common gene names, using the R package biomaRt (note: must use mouse database, though two genes in the 5XFAD are humanized and won't be translated by the program)
+
 ```{r}
 #functions to convert ensemblIDs to gene names
 convertEnsemblToHgnc <- function(ensemblIds){
@@ -127,7 +159,9 @@ Make.Gene.Symb <- function(GeneENSG){
 #call the functions and add a new column
 counts$gene_short_name <- Make.Gene.Symb(counts$gene_id)
 ```
+
 Need to clean up the gene names a little, and assign them as row names
+
 ```{r}
 #The first two genes in the matrix are the humanized genes PSEN1 (ENSG00000080815) and APP (	ENSG00000142192). Set these manually:
 counts[1, "gene_short_name"] <- "PSEN1"
@@ -151,6 +185,7 @@ View(counts2)
 ```
 
 Create simple box plots showing normalized counts by genotype and time point, faceted by sex
+
 ```{r}
 library(ggplot2)
 
@@ -165,6 +200,7 @@ g
 ```
 
 Examine any gene of interest by calling it
+
 ```{r}
 g <- ggplot(counts2, aes(x=timepoint, y=Cst7, color=genotype))
 g <- g + geom_boxplot() + geom_point(position=position_jitterdodge())
@@ -172,13 +208,13 @@ g <- g + facet_wrap(~sex)
 g
 ```
 
-
 ```{r}
 g <- ggplot(counts2, aes(x=timepoint, y=Apoe, color=genotype))
 g <- g + geom_boxplot() + geom_point(position=position_jitterdodge())
 g <- g + facet_wrap(~sex)
 g
 ```
+
 ```{r}
 g <- ggplot(counts2, aes(x=timepoint, y=Kirrel2, color=genotype))
 g <- g + geom_boxplot() + geom_point(position=position_jitterdodge())
@@ -186,11 +222,8 @@ g <- g + facet_wrap(~sex)
 g
 ```
 
-
 ```{r}
 ```
 
-
 ```{r}
 ```
-
