@@ -40,3 +40,6 @@ vignettes/*.pdf
 
 # R project 
 *.Rproj
+
+# downloaded files
+code-tutorials/files/*
