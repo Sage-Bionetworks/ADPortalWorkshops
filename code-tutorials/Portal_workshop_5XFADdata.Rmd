@@ -7,22 +7,30 @@ output:
 
 ### Setup
 
-Install `synapser`, the [Synapse R client](https://r-docs.synapse.org/articles/synapser.html).
+If you haven't already, install `synapser`, the [Synapse R client](https://r-docs.synapse.org/articles/synapser.html), as well as the `tidyverse` family of packages. 
 
 ```{r message=FALSE, warning=FALSE}
+# install synapser
 install.packages("synapser", repos = c("http://ran.synapse.org", "http://cran.fhcrc.org"))
-```
 
-```{r include=FALSE}
+# install tidyverse if you don't already have it
+install.packages("tidyverse")
+
+# load package libraries
 library(synapser)
-synLogin()
+library(tidyverse)
+
 ```
 
-You may already have some or all of these packages installed, but if not, install these as well!
+We will also use the BioconductoR package manager to install `biomaRt`, which will help us with gene count data later.
 
 ```{r message=FALSE, warning=FALSE}
-install.packages(c("purrr", "dplyr", "ggplot2"))
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("biomaRt")
 ```
+
 
 Next, you will need to log in to your Synapse account.
 
@@ -230,15 +238,6 @@ table(ind_meta2$sex, ind_meta2$timepoint, ind_meta2$genotype)
 ```
 
 Transform the ensemblIDs in the matrix to common gene names, using the R package `biomaRt` (note: must use mouse database, though two genes in the 5XFAD are humanized and won't be translated by the program).
-
-We will use the BioconductoR package manager to install `biomaRt`.
-
-```{r}
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-BiocManager::install("biomaRt")
-```
 
 We will use two custom functions to convert ensemblIDs to gene names.
 
