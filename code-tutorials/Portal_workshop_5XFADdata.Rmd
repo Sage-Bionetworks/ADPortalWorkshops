@@ -9,23 +9,28 @@ output:
 
 Install `synapser`, the [Synapse R client](https://r-docs.synapse.org/articles/synapser.html).
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 install.packages("synapser", repos = c("http://ran.synapse.org", "http://cran.fhcrc.org"))
+```
+
+```{r include=FALSE}
+library(synapser)
+synLogin()
 ```
 
 You may already have some or all of these packages installed, but if not, install these as well!
 
-```{r}
-install.packages(c("purrr", "dplyr", "ggplot2", "biomaRt"))
+```{r message=FALSE, warning=FALSE}
+install.packages(c("purrr", "dplyr", "ggplot2"))
 ```
 
 Next, you will need to log in to your Synapse account.
 
-#### Login Option 1: Synapse username and password
+#### Login option 1: Synapse username and password
 
 In the code below, replace the \<\> with your Synapse username and password.
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 # load the synapser package
 library(synapser)
 
@@ -33,11 +38,11 @@ library(synapser)
 synLogin(username = "<username>", password = "<password>")
 ```
 
-#### Login Option 2: Synapse PAT
+#### Login option 2: Synapse PAT
 
 If you usually log in to Synapse with your Google account, you will need to use a Synapser Personal Access Token (PAT) to log in with the R client. Follow these instructions to [generate a personal access token](https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin), then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 library(synapser)
 synapser::synLogin(authToken = "<paste your personal access token here>")
 ```
