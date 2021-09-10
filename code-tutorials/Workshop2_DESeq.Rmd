@@ -1,0 +1,94 @@
+---
+title: "Differential Analysis of 5xFAD mouse models"
+output: html_notebook
+---
+Author: Ravi Pandey, Jackson Laboratories
+ 
+The following code will take the raw counts matrix you uploaded in the first part of the workshop (Portal_workshop_5xFADdata.Rmd) and the metadata file you created that also contains the specimen IDs to run a basic differential expression analysis on a single time point (12 months) in male mice. You can amend the code to compare wild type and 5XFAD mice from either sex, at any time point.
+
+We will need several new packages from Bioconductor to run this analysis
+```{r}
+BiocManager::install(c("DESeq2", "org.Mm.eg.db","GO.db", "EnhancedVolcano", "AnnotationDbi"))
+install.packages(c("tidyverse", "ggplot2", "dplyr"))
+
+library("DESeq2")
+library("ggplot2")
+library("AnnotationDbi")
+library("org.Mm.eg.db")
+library("GO.db")
+library("EnhancedVolcano")
+library(tidyverse)
+library(dplyr)
+```
+
+You can use the original counts matrix and joined metadata you uploaded in the Portal_workshop_5XFADdata.Rmd
+```{r}
+counts_id <- "syn22108847"
+synGet(counts_id, downloadLocation = "files/")
+counts <- read.delim("files/htseqcounts_5XFAD.txt", check.names = FALSE)
+head(counts)
+rownames(ind_meta2) <- ind_meta2$specimenID  #use metadata file you created that contains specimenID
+head(ind_meta2)
+```
+
+This time, we'll use a different package to translate mouse ENSEMBL IDS to gene names. Run these two functions and they will be called up when assembling results from the differential expression analysis
+```{r}
+# functions to extract entrezid and symbols from ENSEMBL IDs
+map_symbol.rname <- function(x){  mapIds(org.Mm.eg.db,keys=row.names(x),column="SYMBOL",keytype="ENSEMBL",multiVals="first")}
+map_eid.rname <- function(x) {mapIds(org.Mm.eg.db,keys=row.names(x),column="ENTREZID",keytype="ENSEMBL",multiVals="first")}
+
+```
+
+Order the data (so counts and metadata match), and subset the counts matrix and metadata to include only 12 month old male mice
+
+```{r}
+
+rownames(counts) <- counts$gene_id
+counts <- counts[-1]
+rawdata <- counts[,sort(colnames(counts))]
+
+metadata <- ind_meta2[sort(rownames(ind_meta2)),]
+
+meta.12M.Male <- metadata[(metadata$sex=="male" & metadata$timepoint=='12mo'),]
+dat <- as.matrix(rawdata[,colnames(rawdata) %in% rownames(meta.12M.Male)])
+
+```
+
+Differentail Analysis using DESeq2
+```{r}
+
+ddsHTSeq <- DESeqDataSetFromMatrix(countData=dat, colData=meta.12M.Male, design = ~genotype)
+ddsHTSeq <- ddsHTSeq[rowSums(counts(ddsHTSeq)) >= 1,]        # filtering low count genes
+ddsHTSeq$genotype <- relevel(ddsHTSeq$genotype,ref="5XFAD_noncarrier")     #selecting WT mice as reference genotype
+dds <- DESeq(ddsHTSeq,parallel = TRUE)
+  
+res <- results(dds,alpha=0.05)                        # setting 0.05 as significant threshold
+summary(res)
+res_sub <- subset(res[order(res$padj),], padj < 0.05)  # extracting significant genes
+  
+# generating differential genes result table for all genes
+All_res <- as.data.frame(res) %>% mutate(symbol = map_symbol.rname(res)) %>% mutate(EntrezGene = map_eid.rname(res)) %>%  dplyr::select("symbol", "EntrezGene","baseMean", "log2FoldChange", "lfcSE", "stat", "pvalue", "padj")
+
+
+# generating differential genes result table for significant genes
+dseq_res <- as.data.frame(res_sub) %>% mutate(symbol = map_symbol.rname(res_sub)) %>% mutate(EntrezGene = map_eid.rname(res_sub)) %>%   dplyr::select("symbol", "EntrezGene","baseMean", "log2FoldChange", "lfcSE", "stat", "pvalue", "padj")
+  
+
+```
+
+Volcano plot of differential results
+```{r}
+
+  plot_DEGvolcano <- EnhancedVolcano(All_res,
+                                     lab = (All_res$symbol),
+                                     x = 'log2FoldChange',
+                                     y = 'padj',legendPosition = 'none',
+                                     title = 'Volcano plot:Differential Expression Results',
+                                     subtitle = '',
+                                     FCcutoff = 0.1,
+                                     pCutoff = 0.05,
+                                     xlim = c(-3, 6)
+                                     )
+  plot_DEGvolcano
+```
+
