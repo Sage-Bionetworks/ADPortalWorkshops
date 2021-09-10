@@ -5,24 +5,35 @@ output:
     df_print: paged
 ---
 
-### Setup
+## Setup
 
-Install `synapser`, the [Synapse R client](https://r-docs.synapse.org/articles/synapser.html).
+### Install and load packages
 
-```{r message=FALSE, warning=FALSE}
+If you haven't already, install `synapser`, the [Synapse R client](https://r-docs.synapse.org/articles/synapser.html), as well as the `tidyverse` family of packages. 
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# install synapser
 install.packages("synapser", repos = c("http://ran.synapse.org", "http://cran.fhcrc.org"))
-```
 
-```{r include=FALSE}
+# install tidyverse if you don't already have it
+install.packages("tidyverse")
+
+# load package libraries
 library(synapser)
-synLogin()
+library(tidyverse)
+
 ```
 
-You may already have some or all of these packages installed, but if not, install these as well!
+We will also use the BioconductoR package manager to install `biomaRt`, which will help us with gene count data later.
 
 ```{r message=FALSE, warning=FALSE}
-install.packages(c("purrr", "dplyr", "ggplot2"))
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("biomaRt")
 ```
+
+### Login to Synapse
 
 Next, you will need to log in to your Synapse account.
 
@@ -31,10 +42,6 @@ Next, you will need to log in to your Synapse account.
 In the code below, replace the \<\> with your Synapse username and password.
 
 ```{r eval=FALSE, include=FALSE}
-# load the synapser package
-library(synapser)
-
-# login with your Synapser username and password
 synLogin(username = "<username>", password = "<password>")
 ```
 
@@ -43,11 +50,10 @@ synLogin(username = "<username>", password = "<password>")
 If you usually log in to Synapse with your Google account, you will need to use a Synapser Personal Access Token (PAT) to log in with the R client. Follow these instructions to [generate a personal access token](https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin), then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.
 
 ```{r eval=FALSE, include=FALSE}
-library(synapser)
-synapser::synLogin(authToken = "<paste your personal access token here>")
+synLogin(authToken = "<paste your personal access token here>")
 ```
 
-### Download data
+## Download data
 
 Single download:
 
@@ -73,11 +79,11 @@ Copy and paste this query into the next chunk of R code in this document, then e
 query <- synTableQuery("SELECT * FROM syn11346063.17 WHERE ( ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( \"resourceType\" = 'metadata' ) AND ( \"dataType\" IS NULL OR \"dataType\" = 'geneExpression' ) )")
 
 # read in the table query csv file
-download_table <- read.csv(query$filepath)
+download_table <- read_csv(query$filepath)
 
 # loop through the column of synIDs and download each file
 # if downloadLocation is not specified, files are downloaded to the Synapse cache by default
-purrr::walk(download_table$id, ~synapser::synGet(.x, downloadLocation = "files/"))
+purrr::walk(download_table$id, ~synGet(.x, downloadLocation = "files/"))
 ```
 
 The above code does three things:
@@ -92,24 +98,24 @@ Congratulations, you have bulk downloaded data from the AD Knowledge Portal!
 
 **An important note:** for situations where you are downloading many large files, the R client performs substantially slower than the command line client or the Python client. In these cases, you can use the instructions and code snippets for the command line or Python client provided in the "Programmatic Options" menu.
 
-### Understanding metadata 
+## Working with AD Portal metadata
 
 #### Read in data files
 
 We have now downloaded three metadata files and an RNAseq counts file from the portal. For our next exercises, we want to read those files in as R data so we can work with them.
 
-```{r}
+```{r include=FALSE}
 # counts matrix
-counts <- read.delim("files/tpm_gene_5XFAD.txt")
+counts <- read_delim("files/tpm_gene_5XFAD.txt")
 
 # individual metadata
-ind_meta <- read.csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv")
+ind_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv")
 
 # biospecimen metadata
-bio_meta <- read.csv("files/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv")
+bio_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv")
 
 #assay metadata
-rna_meta <- read.csv("files/Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv")
+rna_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv")
 ```
 
 Let's examine the data and metadata files a bit before we begin our analyses.
@@ -117,25 +123,39 @@ Let's examine the data and metadata files a bit before we begin our analyses.
 #### Counts data
 
 ```{r}
-head(counts)
+counts
 ```
 
 The data file has a column of ENSEMBL gene ids and then a bunch of columns with count data, where the column headers correspond to the specimenIDs. These specimenIDs should all be in the RNAseq assay metadata file, so let's check.
 
 ```{r}
 # what does the RNAseq assay metadata look like?
-head(rna_meta)
+rna_meta
 ```
 
-Glancing at the `rna_meta$specimenID` column, it looks like the column headers in our counts file have somehow acquired an extra 'X'. We'll have to remove that in our downstream analysis in order to join the counts data to the metadata.
+```{r}
+# are all the column headers from the counts matrix (except the first "gene_id" column) in the assay metadata?
+all(colnames(counts[-1]) %in% rna_meta$specimenID)
+```
+
 
 #### Assay metadata
 
-The assay metadata contains information about how data was generated on each sample in the assay. Each specimenID represents a unique sample. For example, if we wanted to know whether the samples were sequenced in different batches, or using different platforms, we could run.
+The assay metadata contains information about how data was generated on each sample in the assay. Each specimenID represents a unique sample. We can use some tools from dplyr to explore the metadata.
 
 ```{r}
-unique(rna_meta$sequencingBatch) # all sequenced in one batch
-unique(rna_meta$platform) # all run on the Illumina Novaseq 6000 platform
+# how many unique specimens were sequenced?
+n_distinct(rna_meta$specimenID)
+```
+
+```{r}
+# were the samples all sequenced on the same platform?
+distinct(rna_meta, platform)
+```
+
+```{r}
+# were there multiple sequencing batches reported?
+distinct(rna_meta, sequencingBatch) 
 ```
 
 #### Biospecimen metadata
@@ -159,99 +179,109 @@ The individual metadata contains information about all the individuals in the st
 # all individualIDs in the biospecimen file should be in the individual file
 all(bio_meta$individualID %in% ind_meta$individualID)
 
-# how many different model genotypes are in this study?
-unique(ind_meta$genotype)
+# which model genotypes are in this study?
+distinct(ind_meta, genotype)
 ```
 
 #### Joining metadata 
 
-We use the three-file structure for our metadata because it allows us to store metadata for each study in a tidy format. Every line in the assay and biospecimen files represents a unique specimen, and every line in the individual file represents a unique individual. This means the files can be easily joined by specimenID and individualID to get all levels of metadata that apply to a particular data file. We will use the `left_join()` function from the `dplyr` package.
+We use the three-file structure for our metadata because it allows us to store metadata for each study in a tidy format. Every line in the assay and biospecimen files represents a unique specimen, and every line in the individual file represents a unique individual. This means the files can be easily joined by specimenID and individualID to get all levels of metadata that apply to a particular data file. We will use the `left_join()` function from the `dplyr` package, and the `%>%` operator from the `magrittr` package. _If you are unfamiliar with the pipe, thing of it as a shorthand for "take this (the preceding object) and do that (the subsequent command)". See [here](https://magrittr.tidyverse.org/) for more info on piping in R._
 
 ```{r}
-library(dplyr)
-
 # join all the rows in the assay metadata that have a match in the biospecimen metadata
-left_join(rna_meta, bio_meta, by = "specimenID")
-
-# join the resulting dataframe from above with the individual metadata and store
-joined_meta <- left_join(left_join(rna_meta, bio_meta, by = "specimenID"), ind_meta, by = "individualID")
+joined_meta <- rna_meta %>% #start with the rnaseq assay metadata
+  left_join(bio_meta, by = "specimenID") %>%  #join rows from biospecimen that match specimenID 
+  left_join(ind_meta, by = "individualID") # join rows from individual that match individualID
 ```
 
 We now have a very wide dataframe that contains all the available metadata on each specimen in the RNAseq data from this study. This procedure can be used to join the three types of metadata files for every study in the AD Knowledge Portal, allowing you to filter individuals and specimens as needed based on your analysis criteria!
 
+### Single-specimen files
+
+### Multispecimen files
+
 ------------------------------------------------------------------------
 
-### RNASeq data exploration
+## RNASeq data exploration
 
 We will use the counts data and metadata to do some basic exploratory analysis of gene expression in the Jax 5XFAD mouse model.
 
-#### Join metadata to counts matrix
+### Explore covariates
 
-Identify the individual specimens in the matrix, create an ID key to join the biospecimen IDs and individual IDs. The resulting metadata file will contain only the individuals in the matrix. (This is where we'll get rid of that extra "X" in the counts file column names).
+Which covariates from the metadata are we interested in?
 
 ```{r}
-#first remove the leading X from the column names, which are the specimenIDs
-colnames(counts) <- gsub("X","",colnames(counts))
+# all samples are from the same organ and tissue, so we can probably discard those
+distinct(joined_meta, organ, tissue, sampleStatus)
 
-#create a dataframe of the specimenIDs in the study from the counts matrix column headers, removing the first column named "gene_id"
-specimenID <- data.frame(specimenID = colnames(counts)[-1])
-
-# join the specimenIDs from the counts matrix to the biospecimen metadata, keeping only rows in the biospecimen metadata that have a match in the RNAseq assay metadatda and filtering out specimens used in other assays
-IDkey <- dplyr::left_join(specimenID, bio_meta, by="specimenID")
-
-# all these specimens are from the same organ and tissue, so we will remove the biosepcimen metadata variables except for individualID
-IDkey <- subset(IDkey, select=c(individualID, specimenID))
-
-# we can join this IDkey dataframe to the individual metadata by individualID, and later to the counts data by specimenID
-ind_meta2 <- dplyr::left_join(IDkey, ind_meta, by="individualID")
+distinct(joined_meta, sex, genotype)
 ```
+#### Create timepoint column
 
-The MODEL-AD individual mouse metadata contains columns with birth date and death date for each mouse. Rather than deal with converting the strings in these columns to dttm values and subtracting birth from death to get the individual's age at death, we will use information in the "jobNumber" column to pull out simplified ages.
+The MODEL-AD individual mouse metadata contains columns with birth date and death date for each mouse. Using the **RNASeq methods description** from the [Jax 5XFAD study page in the AD Portal](https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage?Study=syn21983020), we expect this data to have equal numbers of individuals sampled at 4, 6, and 12 month timepoints. We can create a new column that captures this info in our joined metadata. 
 
 *Note: MODEL-AD studies added to the portal after June 2021 include an 'ageDeath' column that makes this simpler.*
 
 ```{r}
-#take a look at time point designations:
-table(ind_meta2$jobNumber)
+# load the lubridate package (comes with tidyverse)
+library(lubridate)
 
-```
-
-Based on this table, we have "jobNumber" categories for 4, 6, and 12 timepoints, plus a category labelled "4/6 month backups". The **RNASeq methods description** from the [Jax 5XFAD study page in the AD Portal](https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage?Study=syn21983020) indicates that these individuals belong to the 4 month timepoint. We will add a new column to the dataframe with simplified time points based on the values in the jobNumber column -- e.g., `jobNumber = 'JAX 5xFAD 12mo'` will be `timepoint = '12mo'`.
-
-```{r}
-ind_meta2$timepoint <- ifelse(ind_meta2$jobNumber=='JAX 5xFAD 12mo', '12mo',
-                              ifelse(ind_meta2$jobNumber=='JAX DMP 5xFAD 6month', '6mo', '4mo'))
+# convert columns of strings to month-date-year format
+joined_meta <- joined_meta %>% 
+  mutate(dateBirth = mdy(dateBirth), dateDeath = mdy(dateDeath)) %>% 
+  # create a new column that subtracts dateBirth from dateDeath in days, then divide by 30 to get months
+  mutate(timepoint = as.numeric(difftime(dateDeath, dateBirth, units ="days"))/30) %>% 
+  # convert numeric ages to timepoint categories
+  mutate(timepoint = case_when(timepoint > 10 ~ "12 mo",
+                               timepoint < 10 & timepoint > 5 ~ "6 mo",
+                               timepoint < 5 ~ "4 mo"))
 ```
 
 We now have balanced samples across sex, genotype, and age:
 
 ```{r}
-table(ind_meta2$sex, ind_meta2$timepoint, ind_meta2$genotype)
+joined_meta %>% 
+  group_by(sex, genotype, timepoint) %>% 
+  count()
 ```
+#### Subset covariates
 
-Transform the ensemblIDs in the matrix to common gene names, using the R package `biomaRt` (note: must use mouse database, though two genes in the 5XFAD are humanized and won't be translated by the program).
-
-We will use the BioconductoR package manager to install `biomaRt`.
+To reduce the width of the dataframe, we will subset only the columns that contain covariates we're interested in exploring further. Retaining the individualID and specimenID columns will make sure we can map the covariates to the data and back to the original metadata if needed!
 
 ```{r}
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-BiocManager::install("biomaRt")
+covars <- joined_meta %>% 
+  dplyr::select(individualID, specimenID, sex, genotype, timepoint)
 ```
 
-We will use two custom functions to convert ensemblIDs to gene names.
+
+### Join metadata to counts matrix
+
+Return to the gene counts matrix we read in earlier. 
+
+```{r}
+counts
+
+# check how many gene_ids are NOT from the mouse genome
+counts %>% 
+  filter(!str_detect(gene_id, "MUS"))
+
+```
+
+
+#### Convert ensembleIDs to common gene names
+
+Transform the ensemblIDs in the matrix to common gene names, using the R package `biomaRt` (note: must specify to use the mouse database, although the two genes in the 5XFAD model we identified above are humanized and won't be translated by the program).
+
+We will use the two custom functions below to convert ensemblIDs to gene names:
 
 ```{r}
 library(biomaRt)
 
 #this function converts ensemblIDs to HGNC names
 convertEnsemblToHgnc <- function(ensemblIds){
-  
   ensembl=biomaRt::useMart('ENSEMBL_MART_ENSEMBL',
                            dataset = 'mmusculus_gene_ensembl',
                            host='useast.ensembl.org')
-  
   genes<-getBM(attributes = c('ensembl_gene_id','external_gene_name'),
                filters='ensembl_gene_id',
                values=ensemblIds,
@@ -263,16 +293,13 @@ convertEnsemblToHgnc <- function(ensemblIds){
 Make.Gene.Symb <- function(GeneENSG){
   GeneConv <- convertEnsemblToHgnc(GeneENSG)
   Symb <- as.character(c(1:length(GeneENSG)))
-  
   for (i in 1:length(GeneENSG)){
     In <- which(GeneConv$ensembl_gene_id == GeneENSG[i])
     if (length(In)>0){
       Symb[i] <- GeneConv$external_gene_name[In]
     }
   }
-  
   return(Symb)
-  
 }
 
 ```
@@ -280,39 +307,47 @@ Make.Gene.Symb <- function(GeneENSG){
 Call the `Make.Gene.Symb()` function to add a new column with short gene names to our counts dataframe. This will take a minute -- there are over 55k genes in our matrix!
 
 ```{r}
-counts$gene_short_name <- Make.Gene.Symb(counts$gene_id)
+counts <- counts %>% 
+  mutate(gene_name = Make.Gene.Symb(gene_id))
 ```
 
-We need to clean up the gene names a little, and assign them as row names of the data frame.
 
+```{r}
+# are all the gene names unique?
+length(counts$gene_name) - n_distinct(counts$gene_name) 
+
+# 98 duplicate gene names
+```
+
+We need to clean up the hummanized gene names and append unique identifiers to the duplicate names.
 ```{r}
 #The first two genes in the matrix are the humanized genes PSEN1 (ENSG00000080815) and APP (	ENSG00000142192). Set these manually:
-counts[1, "gene_short_name"] <- "PSEN1"
-counts[2, "gene_short_name"] <- "APP"
+counts[1, "gene_name"] <- "PSEN1"
+counts[2, "gene_name"] <- "APP"
 
-#make all gene names unique and assign them as row names:
-counts$gene_short_name <- make.unique(counts$gene_short_name)
-rownames(counts) <- counts$gene_short_name
+#make all gene names unique and remove unneeded column
+counts <- counts %>% 
+  mutate(gene_name = make.unique(gene_name)) %>% 
+  dplyr::select(-gene_id) %>% 
+  column_to_rownames(var = "gene_name")
 
-#delete unnecessary columns
-counts$gene_id<-NULL
-counts$gene_short_name<-NULL
 ```
 
-Now we can transpose the dataframe so that each row contains count data cross all genes for an individual, and join our individual metadata by specimenID.
+Now we can transpose the dataframe so that each row contains count data cross all genes for an individual, and join our covariates by specimenID.
 
 ```{r}
-#transpose the matrix, so genes are columns and individuals are rows
-counts2 <- as.data.frame(t(counts))
+counts2 <- counts %>% 
+  t() %>% 
+  as_tibble(rownames = "specimenID") %>% 
+  left_join(covars, by = "specimenID")
+```
 
-#add back a specimenID column to the dataframe
-counts2$specimenID <- row.names(counts2)
 
-# join the transposed data frame to our filtered individual metadata
-counts2 <- dplyr::left_join(counts2, ind_meta2, by="specimenID")
-
+```{r}
 # to view the final data matrix in RStudio, run:
 View(counts2)
+
+# this may take a while to load in the viewer
 
 ```
 
@@ -322,10 +357,11 @@ Create simple box plots showing normalized counts by genotype and time point, fa
 library(ggplot2)
 
 #re-order time points
-counts2$timepoint <- factor(counts2$timepoint, levels=c("4mo","6mo","12mo"))
+counts2$timepoint <- factor(counts2$timepoint, levels=c("4 mo","6 mo","12 mo"))
 
 #Look at Trem2 levels
-g <- ggplot(counts2, aes(x=timepoint, y=Trem2, color=genotype)) +
+g <- counts2 %>% 
+  ggplot(aes(x=timepoint, y=Trem2, color=genotype)) +
     geom_boxplot() + 
     geom_point(position=position_jitterdodge()) +
     facet_wrap(~sex)
@@ -333,40 +369,40 @@ g <- ggplot(counts2, aes(x=timepoint, y=Trem2, color=genotype)) +
 g
 ```
 
-Examine any gene of interest by setting the y argument in the `ggplot(aes()` mapping equal to the gene name. Ex: `y = CstJ`
+Examine any gene of interest by setting the y argument in the `ggplot(aes()` mapping equal to the gene name. Ex: `y = Cst7`
 
 ```{r}
-g <- ggplot(counts2, aes(x=timepoint, y=Cst7, color=genotype))
-g <- g + geom_boxplot() + geom_point(position=position_jitterdodge())
-g <- g + facet_wrap(~sex)
+g <- counts2 %>% 
+  ggplot(aes(x=timepoint, y=Cst7, color=genotype)) +
+    geom_boxplot() + 
+    geom_point(position=position_jitterdodge()) +
+    facet_wrap(~sex)
+
 g
 ```
 
 Ex: `y = Apoe`
 
 ```{r}
-g <- ggplot(counts2, aes(x=timepoint, y=Apoe, color=genotype))
-g <- g + geom_boxplot() + geom_point(position=position_jitterdodge())
-g <- g + facet_wrap(~sex)
+g <- counts2 %>% 
+  ggplot(aes(x=timepoint, y=Apoe, color=genotype)) +
+    geom_boxplot() + 
+    geom_point(position=position_jitterdodge()) +
+    facet_wrap(~sex)
+
 g
 ```
 
 Ex: `y = Kirrel2`
 
 ```{r}
-g <- ggplot(counts2, aes(x=timepoint, y=Kirrel2, color=genotype))
-g <- g + geom_boxplot() + geom_point(position=position_jitterdodge())
-g <- g + facet_wrap(~sex)
+#Look at Trem2 levels
+g <- counts2 %>% 
+  ggplot(aes(x=timepoint, y=Kirrel2, color=genotype)) +
+    geom_boxplot() + 
+    geom_point(position=position_jitterdodge()) +
+    facet_wrap(~sex)
+
 g
 ```
 
-Plot Apoe expression by animal weight
-
-```{r}
-
-ggplot(counts2, aes(x = log10(brainWeight), y = log10(Apoe), color = sex)) +
-  geom_point()
-```
-
-```{r}
-```
