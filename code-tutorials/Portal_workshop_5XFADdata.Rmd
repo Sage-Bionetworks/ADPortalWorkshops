@@ -16,7 +16,7 @@ install.packages("synapser", repos = c("http://ran.synapse.org", "http://cran.fh
 You may already have some or all of these packages installed, but if not, install these as well!
 
 ```{r}
-install.packages(c("purrr", "dplyr", "ggplot2"))
+install.packages(c("purrr", "dplyr", "ggplot2", "biomaRt"))
 ```
 
 Next, you will need to log in to your Synapse account.
@@ -172,7 +172,7 @@ left_join(rna_meta, bio_meta, by = "specimenID")
 joined_meta <- left_join(left_join(rna_meta, bio_meta, by = "specimenID"), ind_meta, by = "individualID")
 ```
 
-We now have a very wide dataframe that contains all the available metadata on each specimen in the RNAseq data from this study.
+We now have a very wide dataframe that contains all the available metadata on each specimen in the RNAseq data from this study. This procedure can be used to join the three types of metadata files for every study in the AD Knowledge Portal, allowing you to filter individuals and specimens as needed based on your analysis criteria!
 
 ------------------------------------------------------------------------
 
@@ -188,35 +188,59 @@ Identify the individual specimens in the matrix, create an ID key to join the bi
 #first remove the leading X from the column names, which are the specimenIDs
 colnames(counts) <- gsub("X","",colnames(counts))
 
-#create a dataframe of the specimenIDs in the study from the counts matrix, removing the first column named "gene_id"
+#create a dataframe of the specimenIDs in the study from the counts matrix column headers, removing the first column named "gene_id"
 specimenID <- data.frame(specimenID = colnames(counts)[-1])
 
-IDkey <- subset(bio_meta, select=c(individualID, specimenID))
-#trim the IDkey down to include only those in the study:
-IDkey <- dplyr::left_join(specimenID, IDkey, by="specimenID")
-#the biospecimens metadata has both IDs needed to join the ind_meta and counts matrix
+# join the specimenIDs from the counts matrix to the biospecimen metadata, keeping only rows in the biospecimen metadata that have a match in the RNAseq assay metadatda and filtering out specimens used in other assays
+IDkey <- dplyr::left_join(specimenID, bio_meta, by="specimenID")
+
+# all these specimens are from the same organ and tissue, so we will remove the biosepcimen metadata variables except for individualID
+IDkey <- subset(IDkey, select=c(individualID, specimenID))
+
+# we can join this IDkey dataframe to the individual metadata by individualID, and later to the counts data by specimenID
 ind_meta2 <- dplyr::left_join(IDkey, ind_meta, by="individualID")
 ```
 
-Add a column with simplified time points (4, 6, and 12 months).
+The MODEL-AD individual mouse metadata contains columns with birth date and death date for each mouse. Rather than deal with converting the strings in these columns to dttm values and subtracting birth from death to get the individual's age at death, we will use information in the "jobNumber" column to pull out simplified ages.
+
+*Note: MODEL-AD studies added to the portal after June 2021 include an 'ageDeath' column that makes this simpler.*
 
 ```{r}
 #take a look at time point designations:
 table(ind_meta2$jobNumber)
+
 ```
 
-\#recode for 4, 6, 12 months
+Based on this table, we have "jobNumber" categories for 4, 6, and 12 timepoints, plus a category labelled "4/6 month backups". The **RNASeq methods description** from the [Jax 5XFAD study page in the AD Portal](https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage?Study=syn21983020) indicates that these individuals belong to the 4 month timepoint. We will add a new column to the dataframe with simplified time points based on the values in the jobNumber column -- e.g., `jobNumber = 'JAX 5xFAD 12mo'` will be `timepoint = '12mo'`.
 
 ```{r}
 ind_meta2$timepoint <- ifelse(ind_meta2$jobNumber=='JAX 5xFAD 12mo', '12mo',
                               ifelse(ind_meta2$jobNumber=='JAX DMP 5xFAD 6month', '6mo', '4mo'))
-table(ind_meta2$sex, ind_meta2$timepoint)
 ```
 
-Transform the ensemblIDs in the matrix to common gene names, using the R package biomaRt (note: must use mouse database, though two genes in the 5XFAD are humanized and won't be translated by the program)
+We now have balanced samples across sex, genotype, and age:
 
 ```{r}
-#functions to convert ensemblIDs to gene names
+table(ind_meta2$sex, ind_meta2$timepoint, ind_meta2$genotype)
+```
+
+Transform the ensemblIDs in the matrix to common gene names, using the R package `biomaRt` (note: must use mouse database, though two genes in the 5XFAD are humanized and won't be translated by the program).
+
+We will use the BioconductoR package manager to install `biomaRt`.
+
+```{r}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("biomaRt")
+```
+
+We will use two custom functions to convert ensemblIDs to gene names.
+
+```{r}
+library(biomaRt)
+
+#this function converts ensemblIDs to HGNC names
 convertEnsemblToHgnc <- function(ensemblIds){
   
   ensembl=biomaRt::useMart('ENSEMBL_MART_ENSEMBL',
@@ -229,9 +253,9 @@ convertEnsemblToHgnc <- function(ensemblIds){
                mart=ensembl)
   return(genes)
 }
+
+# this function calls the previous function and further converts HGNC names to Gene symbols
 Make.Gene.Symb <- function(GeneENSG){
-  
-  #source('convertEnsemblToHgnc.R')
   GeneConv <- convertEnsemblToHgnc(GeneENSG)
   Symb <- as.character(c(1:length(GeneENSG)))
   
@@ -245,11 +269,16 @@ Make.Gene.Symb <- function(GeneENSG){
   return(Symb)
   
 }
-#call the functions and add a new column
+
+```
+
+Call the `Make.Gene.Symb()` function to add a new column with short gene names to our counts dataframe. This will take a minute -- there are over 55k genes in our matrix!
+
+```{r}
 counts$gene_short_name <- Make.Gene.Symb(counts$gene_id)
 ```
 
-Need to clean up the gene names a little, and assign them as row names
+We need to clean up the gene names a little, and assign them as row names of the data frame.
 
 ```{r}
 #The first two genes in the matrix are the humanized genes PSEN1 (ENSG00000080815) and APP (	ENSG00000142192). Set these manually:
@@ -263,17 +292,26 @@ rownames(counts) <- counts$gene_short_name
 #delete unnecessary columns
 counts$gene_id<-NULL
 counts$gene_short_name<-NULL
-
-
-#transpose the matrix, so genes are columns and individuals are rows
-counts2 <- as.data.frame(t(counts))
-#add back a specimenID column to the matrix and join the metadata to the entire data frame:
-counts2$specimenID <- row.names(counts2)
-counts2 <- dplyr::left_join(counts2, ind_meta2, by="specimenID")
-View(counts2)
 ```
 
-Create simple box plots showing normalized counts by genotype and time point, faceted by sex
+Now we can transpose the dataframe so that each row contains count data cross all genes for an individual, and join our individual metadata by specimenID.
+
+```{r}
+#transpose the matrix, so genes are columns and individuals are rows
+counts2 <- as.data.frame(t(counts))
+
+#add back a specimenID column to the dataframe
+counts2$specimenID <- row.names(counts2)
+
+# join the transposed data frame to our filtered individual metadata
+counts2 <- dplyr::left_join(counts2, ind_meta2, by="specimenID")
+
+# to view the final data matrix in RStudio, run:
+View(counts2)
+
+```
+
+Create simple box plots showing normalized counts by genotype and time point, faceted by sex.
 
 ```{r}
 library(ggplot2)
@@ -282,13 +320,15 @@ library(ggplot2)
 counts2$timepoint <- factor(counts2$timepoint, levels=c("4mo","6mo","12mo"))
 
 #Look at Trem2 levels
-g <- ggplot(counts2, aes(x=timepoint, y=Trem2, color=genotype))
-g <- g + geom_boxplot() + geom_point(position=position_jitterdodge())
-g <- g + facet_wrap(~sex)
+g <- ggplot(counts2, aes(x=timepoint, y=Trem2, color=genotype)) +
+    geom_boxplot() + 
+    geom_point(position=position_jitterdodge()) +
+    facet_wrap(~sex)
+
 g
 ```
 
-Examine any gene of interest by calling it
+Examine any gene of interest by setting the y argument in the `ggplot(aes()` mapping equal to the gene name. Ex: `y = CstJ`
 
 ```{r}
 g <- ggplot(counts2, aes(x=timepoint, y=Cst7, color=genotype))
@@ -297,12 +337,16 @@ g <- g + facet_wrap(~sex)
 g
 ```
 
+Ex: `y = Apoe`
+
 ```{r}
 g <- ggplot(counts2, aes(x=timepoint, y=Apoe, color=genotype))
 g <- g + geom_boxplot() + geom_point(position=position_jitterdodge())
 g <- g + facet_wrap(~sex)
 g
 ```
+
+Ex: `y = Kirrel2`
 
 ```{r}
 g <- ggplot(counts2, aes(x=timepoint, y=Kirrel2, color=genotype))
@@ -311,7 +355,12 @@ g <- g + facet_wrap(~sex)
 g
 ```
 
+Plot Apoe expression by animal weight
+
 ```{r}
+
+ggplot(counts2, aes(x = log10(brainWeight), y = log10(Apoe), color = sex)) +
+  geom_point()
 ```
 
 ```{r}
