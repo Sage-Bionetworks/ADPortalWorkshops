@@ -198,7 +198,69 @@ We now have a very wide dataframe that contains all the available metadata on ea
 
 ### Single-specimen files
 
+For files that contain data from a single specimen (e.g. raw sequencing files, raw mass spectra, etc.), we can use the Synapse annotations to associate these files with the appropriate metadata.
+
+If we go to the Explore Data page in the AD Knowledge Portal and filter for data where Study = "Jax.IU.Pitt_5XFAD" and Assay = "rnaSeq", we will get a list of 148 files, including raw fastqs and processed counts data.
+
+#### Synapse entity annotations
+
+If we download a single fastq, we can see the annotations associated with that file. In the interest of saving time for this workshop, we'll use downloadFile = "FALSE" to get the Synapse entity (i.e. all the file information in Synapse) without actually downloading the 3GB-ish file.
+
+```{r}
+# download the file; set "downloadFile = FALSE"
+fastq <- synGet("syn22108503", downloadFile = FALSE)
+
+file_annotations <- synGetAnnotations(fastq)
+```
+
+The file annotations let us see which study the file is associated with (Jax.IU.Pitt.5XFAD), which species it's from (Mouse), which assay generated the file (rnaSeq), and a whole bunch of other properties. Most importantly, single-specimen files are annotated with with the specimenID of the specimen in the file, and the individualID of the individual that specimen was taken from. We can use these annotations to link files to the rest of the metadata, including metadata that is not in annotations. This is especially helpful for human studies, as potentially identifying information like age, race, and Braak score is not included in file annotations.
+
+```{r}
+# find records belonging to the individual this file maps to in our joined metadata
+joined_meta %>% 
+  filter(individualID == file_annotations$individualID[[1]])
+```
+#### Annotations during bulk download
+
+When bulk downloading many files, the best practice is to preserve the download manifest that is generated which lists all the files, their synIDs, and all their annotations. If we use the "Programmatic Options" tab in the AD Portal download menu to download all 148 rnaSeq files from the 5XFAD study, we would get a table query that looks like this: 
+
+```{r}
+query <- synTableQuery("SELECT * FROM syn11346063.17 WHERE ( ( \"assay\" = 'rnaSeq' ) AND ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) )")
+```
+
+As we saw previously, this downloads a csv file with the results of our AD Portal query. Opening that file lets us see which specimens are associated with which files:
+
+```{r}
+annotations_table <- read_csv(query$filepath)
+
+annotations_table
+```
+
+Then, once you've used the code provided earlier (or preferably the Python client or command line client, for speed) to download all the files in the `id` column, you can link those files to their annotations by the `name` column.
+
+```{r}
+# we'll use the single fastq that we already downloaded as an example
+# if we had downloaded the actual file, we could find it in the directory and search using the filename
+# since just downloaded the Synapse entity wrapper object, we'll use the file name listed in the object properties
+annotations_table %>% 
+  filter(name == fastq$properties$name)
+```
+
 ### Multispecimen files
+
+Multispecimen files in the AD Knowledge Portal are files that contain data or information from more than one specimen. They are not annotated with individualIDs or specimenIDs, since these files may contain numbers of specimens that exceed the annotation limits. These files are usually processed or summary data (gene counts, peptide quantifications, etc), and are always annotated with `isMultiSpecimen = TRUE`. 
+
+The multispecimen file should contain a row or column of specimenIDs that correspond to the specimenIDs used in a study's metadata, as we have seen with the 5XFAD counts file. 
+
+```{r}
+# In this example, we take a slice of the counts data, transpose it so that each row represents a single specimen, and then join it to the joined metadata by the specimenID
+counts %>% 
+  slice_head(n = 5) %>% 
+  t() %>% 
+  as_tibble(rownames = "specimenID") %>% 
+  left_join(joined_meta, by = "specimenID")
+```
+
 
 ------------------------------------------------------------------------
 
@@ -216,6 +278,8 @@ distinct(joined_meta, organ, tissue, sampleStatus)
 
 distinct(joined_meta, sex, genotype)
 ```
+For this example, we will plot gene expression by sex, genotype, and age.
+
 #### Create timepoint column
 
 The MODEL-AD individual mouse metadata contains columns with birth date and death date for each mouse. Using the **RNASeq methods description** from the [Jax 5XFAD study page in the AD Portal](https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage?Study=syn21983020), we expect this data to have equal numbers of individuals sampled at 4, 6, and 12 month timepoints. We can create a new column that captures this info in our joined metadata. 
