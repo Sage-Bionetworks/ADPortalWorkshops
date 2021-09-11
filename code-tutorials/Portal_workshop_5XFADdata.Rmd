@@ -53,6 +53,8 @@ If you usually log in to Synapse with your Google account, you will need to use 
 synLogin(authToken = "<paste your personal access token here>")
 ```
 
+------------------------------------------------------------------------
+
 ## Download data
 
 While you can always download data from the AD Portal website via your web browser, it's usually faster and often more convenient to download data programmatically.
@@ -76,7 +78,7 @@ counts_id <- "syn22108848"
 synGet(counts_id, downloadLocation = "files/")
 ```
 
-### Bulk download files
+### Bulk download files {#bulk-download-files}
 
 Use the facets and search bar to look for data you want to download from the AD Knowledge Portal. Once you've identified the files you want, click on the download arrow icon on the top right of the Explore Data table and select "Programmatic Options" from the drop-down menu.
 
@@ -118,9 +120,11 @@ Congratulations, you have bulk downloaded data from the AD Knowledge Portal!
 
 **An important note:** for situations where you are downloading many large files, the R client performs substantially slower than the command line client or the Python client. In these cases, you can use the instructions and code snippets for the command line or Python client provided in the "Programmatic Options" menu.
 
+------------------------------------------------------------------------
+
 ## Working with AD Portal metadata
 
-#### Read in data files
+### Metadata basics
 
 We have now downloaded three metadata files and an RNAseq counts file from the portal. For our next exercises, we want to read those files in as R data so we can work with them.
 
@@ -242,7 +246,9 @@ joined_meta %>%
 
 #### Annotations during bulk download
 
-When bulk downloading many files, the best practice is to preserve the download manifest that is generated which lists all the files, their synIDs, and all their annotations. If we use the "Programmatic Options" tab in the AD Portal download menu to download all 148 rnaSeq files from the 5XFAD study, we would get a table query that looks like this:
+When bulk downloading many files, the best practice is to preserve the download manifest that is generated which lists all the files, their synIDs, and all their annotations. If using the Synapse R client, follow the instructions in the [Bulk download files] section above.
+
+If we use the "Programmatic Options" tab in the AD Portal download menu to download all 148 rnaSeq files from the 5XFAD study, we would get a table query that looks like this:
 
 ```{r}
 query <- synTableQuery("SELECT * FROM syn11346063.17 WHERE ( ( \"assay\" = 'rnaSeq' ) AND ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) )")
@@ -269,6 +275,14 @@ annotations_table %>%
 ### Multispecimen files
 
 Multispecimen files in the AD Knowledge Portal are files that contain data or information from more than one specimen. They are not annotated with individualIDs or specimenIDs, since these files may contain numbers of specimens that exceed the annotation limits. These files are usually processed or summary data (gene counts, peptide quantifications, etc), and are always annotated with `isMultiSpecimen = TRUE`.
+
+If we look at the processed data files in the table of 5XFAD RNAseq file annotations we just downloaded , we will see that it isMultiSpecimen = TRUE, but individualID and specimenID are blank:
+
+```{r}
+annotations_table %>% 
+  filter(fileFormat == "txt") %>% 
+  dplyr::select(name, individualID, specimenID, isMultiSpecimen)
+```
 
 The multispecimen file should contain a row or column of specimenIDs that correspond to the specimenIDs used in a study's metadata, as we have seen with the 5XFAD counts file.
 
@@ -416,6 +430,8 @@ counts <- counts %>%
 
 ```
 
+#### Transpose counts matrix and join to covariates
+
 Now we can transpose the dataframe so that each row contains count data cross all genes for an individual, and join our covariates by specimenID.
 
 ```{r}
@@ -433,13 +449,19 @@ View(counts2)
 
 ```
 
+### Visualize gene count data
+
 Create simple box plots showing normalized counts by genotype and time point, faceted by sex.
 
 ```{r}
-library(ggplot2)
-
-#re-order time points
+# first make the timepoints column a factor and re-order the levels
 counts2$timepoint <- factor(counts2$timepoint, levels=c("4 mo","6 mo","12 mo"))
+```
+
+Use ggplot to plot gene counts for each specimen by age, sex, and genotype.
+
+```{r}
+library(ggplot2)
 
 #Look at Trem2 levels
 g <- counts2 %>% 
