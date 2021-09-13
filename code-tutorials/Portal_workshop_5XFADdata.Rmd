@@ -4,7 +4,7 @@ output:
   html_document: 
     toc: yes
     toc_depth: 2
-    df_print: paged
+    df_print: tibble
 ---
 
 ```{r, include=FALSE}
@@ -84,7 +84,7 @@ To download a single file from the AD Knowledge Portal, you can click the linked
 
 #### **Exercise 1:** **Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to search for `processedRNAseq` data from the `Jax.IU.Pitt_5XFAD` mouse study.**
 
-Then, if we click on the link for the `htseqcounts_5XFAD.txt` file in the AD Portal...
+This should give us a list of three files. Then, if we click on the link for the `htseqcounts_5XFAD.txt` file in the AD Portal...
 
 ![](images/portal_file_link.png){width="300"}
 
@@ -257,7 +257,7 @@ We now have a very wide dataframe that contains all the available metadata on ea
 
 For files that contain data from a single specimen (e.g. raw sequencing files, raw mass spectra, etc.), we can use the Synapse annotations to associate these files with the appropriate metadata.
 
-#### Excercise 3: Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to find *all* RNAseq files from the Jax.IU.Pitt_5XFAD study. 
+#### Excercise 3: Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to find *all* RNAseq files from the Jax.IU.Pitt_5XFAD study.
 
 If we filter for data where Study = "Jax.IU.Pitt_5XFAD" and Assay = "rnaSeq" we will get a list of 148 files, including raw fastqs and processed counts data.
 
