@@ -10,7 +10,10 @@ We will need several new packages from Bioconductor to run this analysis
 ```{r}
 BiocManager::install(c("DESeq2", "org.Mm.eg.db","GO.db", "EnhancedVolcano", "AnnotationDbi"))
 install.packages(c("tidyverse", "ggplot2", "dplyr"))
+```
 
+
+```{r}
 library("DESeq2")
 library("ggplot2")
 library("AnnotationDbi")
@@ -21,14 +24,16 @@ library(tidyverse)
 library(dplyr)
 ```
 
-You can use the original counts matrix and joined metadata you uploaded in the Portal_workshop_5XFADdata.Rmd
+You can use the original counts matrix you uploaded in the Portal_workshop_5XFADdata.Rmd, along with the subsetting metadata file with covariates of interest ('covars')
 ```{r}
 counts_id <- "syn22108847"
 synGet(counts_id, downloadLocation = "files/")
 counts <- read.delim("files/htseqcounts_5XFAD.txt", check.names = FALSE)
 head(counts)
-rownames(ind_meta2) <- ind_meta2$specimenID  #use metadata file you created that contains specimenID
-head(ind_meta2)
+#need to coerce covars to a plain data frame to retain row names
+covars <- as.data.frame(covars)
+rownames(covars) <- covars$specimenID  #need rownames to be the specimen IDs & match the counts matrix columns
+head(covars)
 ```
 
 This time, we'll use a different package to translate mouse ENSEMBL IDS to gene names. Run these two functions and they will be called up when assembling results from the differential expression analysis
@@ -47,9 +52,9 @@ rownames(counts) <- counts$gene_id
 counts <- counts[-1]
 rawdata <- counts[,sort(colnames(counts))]
 
-metadata <- ind_meta2[sort(rownames(ind_meta2)),]
+metadata <- covars[sort(rownames(covars)),]
 
-meta.12M.Male <- metadata[(metadata$sex=="male" & metadata$timepoint=='12mo'),]
+meta.12M.Male <- metadata[(metadata$sex=="male" & metadata$timepoint=='12 mo'),]
 dat <- as.matrix(rawdata[,colnames(rawdata) %in% rownames(meta.12M.Male)])
 
 ```

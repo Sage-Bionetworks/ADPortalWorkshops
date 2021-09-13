@@ -80,7 +80,7 @@ For example, if we click on the link for the `htseqcounts_5XFAD.txt` file in the
 We can then use that synID to download the file.
 
 ```{r}
-counts_id <- "syn22108848"
+counts_id <- "syn22108847"
 synGet(counts_id, downloadLocation = "files/")
 ```
 
@@ -136,7 +136,7 @@ We have now downloaded three metadata files and an RNAseq counts file from the p
 
 ```{r include=FALSE}
 # counts matrix
-counts <- read_delim("files/tpm_gene_5XFAD.txt")
+counts <- read_delim("files/htseqcounts_5XFAD.txt")
 
 # individual metadata
 ind_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv")
@@ -214,7 +214,7 @@ distinct(ind_meta, genotype)
 
 #### Joining metadata
 
-We use the three-file structure for our metadata because it allows us to store metadata for each study in a tidy format. Every line in the assay and biospecimen files represents a unique specimen, and every line in the individual file represents a unique individual. This means the files can be easily joined by specimenID and individualID to get all levels of metadata that apply to a particular data file. We will use the `left_join()` function from the `dplyr` package, and the `%>%` operator from the `magrittr` package. *If you are unfamiliar with the pipe, thing of it as a shorthand for "take this (the preceding object) and do that (the subsequent command)". See [here](https://magrittr.tidyverse.org/) for more info on piping in R.*
+We use the three-file structure for our metadata because it allows us to store metadata for each study in a tidy format. Every line in the assay and biospecimen files represents a unique specimen, and every line in the individual file represents a unique individual. This means the files can be easily joined by specimenID and individualID to get all levels of metadata that apply to a particular data file. We will use the `left_join()` function from the `dplyr` package, and the `%>%` operator from the `magrittr` package. *If you are unfamiliar with the pipe, think of it as a shorthand for "take this (the preceding object) and do that (the subsequent command)". See [here](https://magrittr.tidyverse.org/) for more info on piping in R.*
 
 ```{r}
 # join all the rows in the assay metadata that have a match in the biospecimen metadata
@@ -421,7 +421,7 @@ length(counts$gene_name) - n_distinct(counts$gene_name)
 # 98 duplicate gene names
 ```
 
-We need to clean up the hummanized gene names and append unique identifiers to the duplicate names.
+We need to clean up the humanized gene names and append unique identifiers to the duplicate names.
 
 ```{r}
 #The first two genes in the matrix are the humanized genes PSEN1 (ENSG00000080815) and APP (	ENSG00000142192). Set these manually:
