@@ -1,10 +1,14 @@
 ---
-title: 'AD Knowledge Portal: Download and explore 5XFAD mouse data in Rstudio'
+title: 'AD Knowledge Portal Workshop: Download and explore 5XFAD mouse data in RStudio'
+author: "Laura Heath & Abby Vander Linden, Sage Bionetworks"
+date: "`r Sys.Date()`"
 output:
   html_document: 
     toc: yes
     toc_depth: 2
+    toc_float: true
     df_print: tibble
+    theme: lumen
 ---
 
 ```{r, include=FALSE}
