@@ -13,7 +13,7 @@ output:
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(
-  eval = FALSE
+  eval = TRUE
 )
 ```
 
@@ -25,13 +25,15 @@ knitr::opts_chunk$set(
 
 If you haven't already, install `synapser`, the [Synapse R client](https://r-docs.synapse.org/articles/synapser.html), as well as the `tidyverse` family of packages.
 
-```{r}
+```{r eval = FALSE}
 # install synapser
 install.packages("synapser", repos = c("http://ran.synapse.org", "http://cran.fhcrc.org"))
 
 # install tidyverse if you don't already have it
-install.packages("tidyverse")s
+install.packages("tidyverse")
+```
 
+```{r}
 # load package libraries
 library(synapser)
 library(tidyverse)
@@ -39,7 +41,7 @@ library(tidyverse)
 
 We will also use the BioconductoR package manager to install `biomaRt`, which will help us with gene count data later.
 
-```{r}
+```{r eval = FALSE}
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
@@ -64,7 +66,7 @@ synLogin()
 >
 > In the code below, replace the \<\> with your Synapse username and password.
 >
-> ```{r}
+> ```{r eval = FALSE}
 > synLogin(username = "<username>", password = "<password>")
 > ```
 >
@@ -72,7 +74,7 @@ synLogin()
 >
 > If you usually log in to Synapse with your Google account, you will need to use a Synapser Personal Access Token (PAT) to log in with the R client. Follow these instructions to [generate a personal access token](https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin), then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.
 >
-> ```{r}
+> ```{r eval = FALSE}
 > synLogin(authToken = "<paste your personal access token here>")
 > ```
 >
@@ -140,7 +142,7 @@ download_table
 
 Finally, we use a mapping function from the `purrr` package to loop through the "id" column and apply the `synGet()` function to each file's synID. In this case, we use `purrr::walk()` because it lets us call `synGet()` for its side effect (downloading files to a location we specify), and returns nothing.
 
-```{r bulk-download-synIDs-with-purrr}
+```{r}
 # loop through the column of synIDs and download each file
 purrr::walk(download_table$id, ~synGet(.x, downloadLocation = "files/"))
 ```
