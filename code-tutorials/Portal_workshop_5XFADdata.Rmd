@@ -6,9 +6,10 @@ output:
   html_document: 
     toc: yes
     toc_depth: 2
-    toc_float: true
     df_print: tibble
     theme: lumen
+  md_document:
+    variant: markdown_github
 ---
 
 ```{r, include=FALSE}
