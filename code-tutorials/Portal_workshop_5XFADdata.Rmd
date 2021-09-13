@@ -44,21 +44,33 @@ BiocManager::install("biomaRt")
 
 Next, you will need to log in to your Synapse account.
 
-#### Login option 1: Synapse username and password
+#### Login option 1: Synapser takes credentials from your Synapse web session
 
-In the code below, replace the \<\> with your Synapse username and password.
-
-```{r}
-synLogin(username = "<username>", password = "<password>")
-```
-
-#### Login option 2: Synapse PAT
-
-If you usually log in to Synapse with your Google account, you will need to use a Synapser Personal Access Token (PAT) to log in with the R client. Follow these instructions to [generate a personal access token](https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin), then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.
+If you are logged into the [Synapse](https://www.synapse.org/) web browser, `synapser` will automatically use your login credentials to log you in during your R session! All you have to do is:
 
 ```{r}
-synLogin(authToken = "<paste your personal access token here>")
+synLogin()
 ```
+
+**If for whatever reason that didn't work,** try one of these options:
+
+> #### Login option 2: Synapse username and password
+>
+> In the code below, replace the \<\> with your Synapse username and password.
+>
+> ```{r}
+> synLogin(username = "<username>", password = "<password>")
+> ```
+>
+> #### Login option 3: Synapse PAT
+>
+> If you usually log in to Synapse with your Google account, you will need to use a Synapser Personal Access Token (PAT) to log in with the R client. Follow these instructions to [generate a personal access token](https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin), then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.
+>
+> ```{r}
+> synLogin(authToken = "<paste your personal access token here>")
+> ```
+>
+> For more information on managing Synapse credentials with `synapser`, see the documentation [here](https://r-docs.synapse.org/articles/manageSynapseCredentials.html).
 
 ------------------------------------------------------------------------
 
