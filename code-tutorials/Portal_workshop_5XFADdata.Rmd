@@ -17,6 +17,8 @@ knitr::opts_chunk$set(
 )
 ```
 
+------------------------------------------------------------------------
+
 ## Setup
 
 ### Install and load packages
@@ -164,7 +166,7 @@ download_table %>%
 
 We are only interested in RNAseq data, so we will only read in the individual, biospecimen, and RNAseq assay metadata files.
 
-```{r include=FALSE}
+```{r}
 # counts matrix
 counts <- read_delim("files/htseqcounts_5XFAD.txt")
 
@@ -267,7 +269,7 @@ If we filter for data where Study = "Jax.IU.Pitt_5XFAD" and Assay = "rnaSeq" we 
 
 #### Synapse entity annotations
 
-If we download a single fastq from this list (for this example, `synID = syn22108503`), we can see the annotations associated with that file. In the interest of saving time for this workshop, we'll set `downloadFile = "FALSE"` to get the Synapse entity (i.e. all the file information in Synapse) without actually downloading the 3GB-ish file.
+When we download a single fastq from this list (for this example, `synID = syn22108503`), we can see the annotations associated with that file. In the interest of saving time for this workshop, we'll set `downloadFile = "FALSE"` to get the Synapse entity (i.e. all the file information in Synapse) without actually downloading the 3GB-ish file.
 
 ```{r}
 # download the file; set "downloadFile = FALSE"
