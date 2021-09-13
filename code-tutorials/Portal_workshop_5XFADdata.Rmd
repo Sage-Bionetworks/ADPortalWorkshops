@@ -1,9 +1,16 @@
 ---
 title: 'AD Knowledge Portal: Download and explore 5XFAD mouse data in Rstudio'
 output:
-  html_document:
-    df_print: paged
+  html_document: 
+    toc: yes
+    toc_depth: 2
 ---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(
+  eval = FALSE
+)
+```
 
 ## Setup
 
@@ -11,7 +18,7 @@ output:
 
 If you haven't already, install `synapser`, the [Synapse R client](https://r-docs.synapse.org/articles/synapser.html), as well as the `tidyverse` family of packages.
 
-```{r message=FALSE, warning=FALSE, include=FALSE}
+```{r}
 # install synapser
 install.packages("synapser", repos = c("http://ran.synapse.org", "http://cran.fhcrc.org"))
 
@@ -21,12 +28,11 @@ install.packages("tidyverse")
 # load package libraries
 library(synapser)
 library(tidyverse)
-
 ```
 
 We will also use the BioconductoR package manager to install `biomaRt`, which will help us with gene count data later.
 
-```{r message=FALSE, warning=FALSE}
+```{r}
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
@@ -41,7 +47,7 @@ Next, you will need to log in to your Synapse account.
 
 In the code below, replace the \<\> with your Synapse username and password.
 
-```{r eval=FALSE, include=FALSE}
+```{r}
 synLogin(username = "<username>", password = "<password>")
 ```
 
@@ -49,7 +55,7 @@ synLogin(username = "<username>", password = "<password>")
 
 If you usually log in to Synapse with your Google account, you will need to use a Synapser Personal Access Token (PAT) to log in with the R client. Follow these instructions to [generate a personal access token](https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin), then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.
 
-```{r eval=FALSE, include=FALSE}
+```{r}
 synLogin(authToken = "<paste your personal access token here>")
 ```
 
@@ -246,7 +252,7 @@ joined_meta %>%
 
 #### Annotations during bulk download
 
-When bulk downloading many files, the best practice is to preserve the download manifest that is generated which lists all the files, their synIDs, and all their annotations. If using the Synapse R client, follow the instructions in the [Bulk download files] section above.
+When bulk downloading many files, the best practice is to preserve the download manifest that is generated which lists all the files, their synIDs, and all their annotations. If using the Synapse R client, follow the instructions in the [Bulk download files](#bulk-download-files) section above.
 
 If we use the "Programmatic Options" tab in the AD Portal download menu to download all 148 rnaSeq files from the 5XFAD study, we would get a table query that looks like this:
 
