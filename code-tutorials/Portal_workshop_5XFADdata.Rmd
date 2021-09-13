@@ -4,6 +4,7 @@ output:
   html_document: 
     toc: yes
     toc_depth: 2
+    df_print: paged
 ---
 
 ```{r, include=FALSE}
@@ -23,7 +24,7 @@ If you haven't already, install `synapser`, the [Synapse R client](https://r-doc
 install.packages("synapser", repos = c("http://ran.synapse.org", "http://cran.fhcrc.org"))
 
 # install tidyverse if you don't already have it
-install.packages("tidyverse")
+install.packages("tidyverse")s
 
 # load package libraries
 library(synapser)
@@ -69,7 +70,9 @@ While you can always download data from the AD Portal website via your web brows
 
 To download a single file from the AD Knowledge Portal, you can click the linked file name to go to a page in the Synapse platform where that file is stored. Using the synID on that page, you can call the `synGet()` function from `synapser` to download the file.
 
-For example, if we click on the link for the `htseqcounts_5XFAD.txt` file in the AD Portal...
+#### **Exercise 1:** **Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to search for `processedRNAseq` data from the `Jax.IU.Pitt_5XFAD` mouse study.**
+
+Then, if we click on the link for the `htseqcounts_5XFAD.txt` file in the AD Portal...
 
 ![](images/portal_file_link.png){width="300"}
 
@@ -86,6 +89,8 @@ synGet(counts_id, downloadLocation = "files/")
 
 ### Bulk download files {#bulk-download-files}
 
+#### Exercise 2: Use [Explore Studies](https://adknowledgeportal.synapse.org/Explore/Studies) to find all metadata files from the Jax.IU.Pitt_5XFAD study
+
 Use the facets and search bar to look for data you want to download from the AD Knowledge Portal. Once you've identified the files you want, click on the download arrow icon on the top right of the Explore Data table and select "Programmatic Options" from the drop-down menu.
 
 ![](images/download-programmatic-options.png){width="300"}
@@ -98,7 +103,7 @@ The function `synTableQuery()` returns a Synapse object wrapper around a CSV fil
 
 ```{r}
 # download the results of the filtered table query
-query <- synTableQuery("SELECT * FROM syn11346063.17 WHERE ( ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( \"resourceType\" = 'metadata' ) AND ( \"dataType\" IS NULL OR \"dataType\" = 'geneExpression' ) )")
+query <- synTableQuery("SELECT * FROM syn11346063.17 WHERE ( ( `study` HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( `resourceType` = 'metadata' ) )")
 
 ```
 
@@ -117,12 +122,12 @@ download_table
 
 Finally, we use a mapping function from the `purrr` package to loop through the "id" column and apply the `synGet()` function to each file's synID. In this case, we use `purrr::walk()` because it lets us call `synGet()` for its side effect (downloading files to a location we specify), and returns nothing.
 
-```{r}
+```{r bulk-download-synIDs-with-purrr}
 # loop through the column of synIDs and download each file
 purrr::walk(download_table$id, ~synGet(.x, downloadLocation = "files/"))
 ```
 
-Congratulations, you have bulk downloaded data from the AD Knowledge Portal!
+Congratulations, you have bulk downloaded files from the AD Knowledge Portal!
 
 **An important note:** for situations where you are downloading many large files, the R client performs substantially slower than the command line client or the Python client. In these cases, you can use the instructions and code snippets for the command line or Python client provided in the "Programmatic Options" menu.
 
@@ -132,7 +137,16 @@ Congratulations, you have bulk downloaded data from the AD Knowledge Portal!
 
 ### Metadata basics
 
-We have now downloaded three metadata files and an RNAseq counts file from the portal. For our next exercises, we want to read those files in as R data so we can work with them.
+We have now downloaded several metadata files and an RNAseq counts file from the portal. For our next exercises, we want to read those files in as R data so we can work with them.
+
+We can see from the `download_table` we got during the bulk download step that we have five metadata files. Two of these should be the individual and biospecimen files, and three of them are assay meetadata files.
+
+```{r}
+download_table %>% 
+  dplyr::select(name, metadataType, assay)
+```
+
+We are only interested in RNAseq data, so we will only read in the individual, biospecimen, and RNAseq assay metadata files.
 
 ```{r include=FALSE}
 # counts matrix
@@ -207,7 +221,9 @@ The individual metadata contains information about all the individuals in the st
 ```{r}
 # all individualIDs in the biospecimen file should be in the individual file
 all(bio_meta$individualID %in% ind_meta$individualID)
+```
 
+```{r}
 # which model genotypes are in this study?
 distinct(ind_meta, genotype)
 ```
@@ -239,7 +255,13 @@ If we download a single fastq, we can see the annotations associated with that f
 # download the file; set "downloadFile = FALSE"
 fastq <- synGet("syn22108503", downloadFile = FALSE)
 
+# file annotations are formatted as JSON strings and are a property of the Synapse object
+fastq$annotations
+
+# we can use the function synGetAnnotations() to extract the annotations as a nested list
 file_annotations <- synGetAnnotations(fastq)
+
+file_annotations
 ```
 
 The file annotations let us see which study the file is associated with (Jax.IU.Pitt.5XFAD), which species it's from (Mouse), which assay generated the file (rnaSeq), and a whole bunch of other properties. Most importantly, single-specimen files are annotated with with the specimenID of the specimen in the file, and the individualID of the individual that specimen was taken from. We can use these annotations to link files to the rest of the metadata, including metadata that is not in annotations. This is especially helpful for human studies, as potentially identifying information like age, race, and Braak score is not included in file annotations.
@@ -268,12 +290,14 @@ annotations_table <- read_csv(query$filepath)
 annotations_table
 ```
 
-Then, once you've used the code provided earlier (or preferably the Python client or command line client, for speed) to download all the files in the `id` column, you can link those files to their annotations by the `name` column.
+You could then use `purrr::walk(download_table$id, ~synGet(.x, downloadLocation = <dir>))` to walk through the column of synIDs and download all 148 files. However, because these are large files, it might be preferable to use the [Python client](https://python-docs.synapse.org/build/html/index.html) or [command line client](https://python-docs.synapse.org/build/html/CommandLineClient.html) for increased speed.
+
+Once you've downloaded all the files in the `id` column, you can link those files to their annotations by the `name` column.
 
 ```{r}
 # we'll use the single fastq that we already downloaded as an example
 # if we had downloaded the actual file, we could find it in the directory and search using the filename
-# since just downloaded the Synapse entity wrapper object, we'll use the file name listed in the object properties
+# since wejust downloaded the Synapse entity wrapper object, we'll use the file name listed in the object properties
 annotations_table %>% 
   filter(name == fastq$properties$name)
 ```
@@ -293,7 +317,7 @@ annotations_table %>%
 The multispecimen file should contain a row or column of specimenIDs that correspond to the specimenIDs used in a study's metadata, as we have seen with the 5XFAD counts file.
 
 ```{r}
-# In this example, we take a slice of the counts data, transpose it so that each row represents a single specimen, and then join it to the joined metadata by the specimenID
+# In this example, we take a slice of the counts data to reduce computation, transpose it so that each row represents a single specimen, and then join it to the joined metadata by the specimenID
 counts %>% 
   slice_head(n = 5) %>% 
   t() %>% 
@@ -326,7 +350,7 @@ The MODEL-AD individual mouse metadata contains columns with birth date and deat
 
 *Note: MODEL-AD studies added to the portal after June 2021 include an 'ageDeath' column that makes this simpler.*
 
-```{r}
+```{r, warning = FALSE, message = FALSE}
 # load the lubridate package (comes with tidyverse)
 library(lubridate)
 
@@ -448,11 +472,8 @@ counts2 <- counts %>%
 ```
 
 ```{r}
-# to view the final data matrix in RStudio, run:
-View(counts2)
-
-# this may take a while to load in the viewer
-
+# check the transposed matrix
+head(counts)
 ```
 
 ### Visualize gene count data
@@ -506,7 +527,6 @@ g
 Ex: `y = Kirrel2`
 
 ```{r}
-#Look at Trem2 levels
 g <- counts2 %>% 
   ggplot(aes(x=timepoint, y=Kirrel2, color=genotype)) +
     geom_boxplot() + 
