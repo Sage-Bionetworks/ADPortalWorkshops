@@ -245,11 +245,13 @@ We now have a very wide dataframe that contains all the available metadata on ea
 
 For files that contain data from a single specimen (e.g. raw sequencing files, raw mass spectra, etc.), we can use the Synapse annotations to associate these files with the appropriate metadata.
 
-If we go to the Explore Data page in the AD Knowledge Portal and filter for data where Study = "Jax.IU.Pitt_5XFAD" and Assay = "rnaSeq", we will get a list of 148 files, including raw fastqs and processed counts data.
+#### Excercise 3: Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to find *all* RNAseq files from the Jax.IU.Pitt_5XFAD study. 
+
+If we filter for data where Study = "Jax.IU.Pitt_5XFAD" and Assay = "rnaSeq" we will get a list of 148 files, including raw fastqs and processed counts data.
 
 #### Synapse entity annotations
 
-If we download a single fastq, we can see the annotations associated with that file. In the interest of saving time for this workshop, we'll use downloadFile = "FALSE" to get the Synapse entity (i.e. all the file information in Synapse) without actually downloading the 3GB-ish file.
+If we download a single fastq from this list (for this example, `synID = syn22108503`), we can see the annotations associated with that file. In the interest of saving time for this workshop, we'll set `downloadFile = "FALSE"` to get the Synapse entity (i.e. all the file information in Synapse) without actually downloading the 3GB-ish file.
 
 ```{r}
 # download the file; set "downloadFile = FALSE"
@@ -290,7 +292,7 @@ annotations_table <- read_csv(query$filepath)
 annotations_table
 ```
 
-You could then use `purrr::walk(download_table$id, ~synGet(.x, downloadLocation = <dir>))` to walk through the column of synIDs and download all 148 files. However, because these are large files, it might be preferable to use the [Python client](https://python-docs.synapse.org/build/html/index.html) or [command line client](https://python-docs.synapse.org/build/html/CommandLineClient.html) for increased speed.
+You could then use `purrr::walk(download_table$id, ~synGet(.x, downloadLocation = <your-download-directory>))` to walk through the column of synIDs and download all 148 files. However, because these are large files, it might be preferable to use the [Python client](https://python-docs.synapse.org/build/html/index.html) or [command line client](https://python-docs.synapse.org/build/html/CommandLineClient.html) for increased speed.
 
 Once you've downloaded all the files in the `id` column, you can link those files to their annotations by the `name` column.
 
@@ -355,7 +357,7 @@ The MODEL-AD individual mouse metadata contains columns with birth date and deat
 library(lubridate)
 
 # convert columns of strings to month-date-year format
-joined_meta <- joined_meta %>% 
+joined_meta_time <- joined_meta %>% 
   mutate(dateBirth = mdy(dateBirth), dateDeath = mdy(dateDeath)) %>% 
   # create a new column that subtracts dateBirth from dateDeath in days, then divide by 30 to get months
   mutate(timepoint = as.numeric(difftime(dateDeath, dateBirth, units ="days"))/30) %>% 
@@ -368,7 +370,7 @@ joined_meta <- joined_meta %>%
 We now have balanced samples across sex, genotype, and age:
 
 ```{r}
-joined_meta %>% 
+joined_meta_time %>% 
   group_by(sex, genotype, timepoint) %>% 
   count()
 ```
@@ -378,7 +380,7 @@ joined_meta %>%
 To reduce the width of the dataframe, we will subset only the columns that contain covariates we're interested in exploring further. Retaining the individualID and specimenID columns will make sure we can map the covariates to the data and back to the original metadata if needed!
 
 ```{r}
-covars <- joined_meta %>% 
+covars <- joined_meta_time %>% 
   dplyr::select(individualID, specimenID, sex, genotype, timepoint)
 ```
 
@@ -434,13 +436,13 @@ Make.Gene.Symb <- function(GeneENSG){
 Call the `Make.Gene.Symb()` function to add a new column with short gene names to our counts dataframe. This will take a minute -- there are over 55k genes in our matrix!
 
 ```{r}
-counts <- counts %>% 
+named_counts <- counts %>% 
   mutate(gene_name = Make.Gene.Symb(gene_id))
 ```
 
 ```{r}
 # are all the gene names unique?
-length(counts$gene_name) - n_distinct(counts$gene_name) 
+length(named_counts$gene_name) - n_distinct(named_counts$gene_name) 
 
 # 98 duplicate gene names
 ```
@@ -449,11 +451,11 @@ We need to clean up the humanized gene names and append unique identifiers to th
 
 ```{r}
 #The first two genes in the matrix are the humanized genes PSEN1 (ENSG00000080815) and APP (	ENSG00000142192). Set these manually:
-counts[1, "gene_name"] <- "PSEN1"
-counts[2, "gene_name"] <- "APP"
+named_counts[1, "gene_name"] <- "PSEN1"
+named_counts[2, "gene_name"] <- "APP"
 
 #make all gene names unique and remove unneeded column
-counts <- counts %>% 
+named_counts <- named_counts %>% 
   mutate(gene_name = make.unique(gene_name)) %>% 
   dplyr::select(-gene_id) %>% 
   column_to_rownames(var = "gene_name")
@@ -465,7 +467,7 @@ counts <- counts %>%
 Now we can transpose the dataframe so that each row contains count data cross all genes for an individual, and join our covariates by specimenID.
 
 ```{r}
-counts2 <- counts %>% 
+counts_tposed <- named_counts %>% 
   t() %>% 
   as_tibble(rownames = "specimenID") %>% 
   left_join(covars, by = "specimenID")
@@ -473,7 +475,7 @@ counts2 <- counts %>%
 
 ```{r}
 # check the transposed matrix
-head(counts)
+head(counts_tposed)
 ```
 
 ### Visualize gene count data
@@ -482,7 +484,7 @@ Create simple box plots showing normalized counts by genotype and time point, fa
 
 ```{r}
 # first make the timepoints column a factor and re-order the levels
-counts2$timepoint <- factor(counts2$timepoint, levels=c("4 mo","6 mo","12 mo"))
+counts_tposed$timepoint <- factor(counts_tposed$timepoint, levels=c("4 mo","6 mo","12 mo"))
 ```
 
 Use ggplot to plot gene counts for each specimen by age, sex, and genotype.
@@ -491,7 +493,7 @@ Use ggplot to plot gene counts for each specimen by age, sex, and genotype.
 library(ggplot2)
 
 #Look at Trem2 levels
-g <- counts2 %>% 
+g <- counts_tposed %>% 
   ggplot(aes(x=timepoint, y=Trem2, color=genotype)) +
     geom_boxplot() + 
     geom_point(position=position_jitterdodge()) +
@@ -503,7 +505,7 @@ g
 Examine any gene of interest by setting the y argument in the `ggplot(aes()` mapping equal to the gene name. Ex: `y = Cst7`
 
 ```{r}
-g <- counts2 %>% 
+g <- counts_tposed %>% 
   ggplot(aes(x=timepoint, y=Cst7, color=genotype)) +
     geom_boxplot() + 
     geom_point(position=position_jitterdodge()) +
@@ -515,7 +517,7 @@ g
 Ex: `y = Apoe`
 
 ```{r}
-g <- counts2 %>% 
+g <- counts_tposed %>% 
   ggplot(aes(x=timepoint, y=Apoe, color=genotype)) +
     geom_boxplot() + 
     geom_point(position=position_jitterdodge()) +
@@ -527,7 +529,7 @@ g
 Ex: `y = Kirrel2`
 
 ```{r}
-g <- counts2 %>% 
+g <- counts_tposed %>% 
   ggplot(aes(x=timepoint, y=Kirrel2, color=genotype)) +
     geom_boxplot() + 
     geom_point(position=position_jitterdodge()) +
