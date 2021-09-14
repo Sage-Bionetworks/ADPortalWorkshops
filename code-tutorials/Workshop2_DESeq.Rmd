@@ -2,16 +2,17 @@
 title: "Differential Analysis of 5xFAD mouse models"
 output: html_notebook
 ---
+
 Author: Ravi Pandey, Jackson Laboratories
- 
+
 The following code will take the raw counts matrix you uploaded in the first part of the workshop (Portal_workshop_5xFADdata.Rmd) and the metadata file you created that also contains the specimen IDs to run a basic differential expression analysis on a single time point (12 months) in male mice. You can amend the code to compare wild type and 5XFAD mice from either sex, at any time point.
 
 We will need several new packages from Bioconductor to run this analysis
+
 ```{r}
 BiocManager::install(c("DESeq2", "org.Mm.eg.db","GO.db", "EnhancedVolcano", "AnnotationDbi"))
 install.packages(c("tidyverse", "ggplot2", "dplyr"))
 ```
-
 
 ```{r}
 library("DESeq2")
@@ -25,6 +26,7 @@ library(dplyr)
 ```
 
 You can use the original counts matrix you uploaded in the Portal_workshop_5XFADdata.Rmd, along with the subsetting metadata file with covariates of interest ('covars')
+
 ```{r}
 counts_id <- "syn22108847"
 synGet(counts_id, downloadLocation = "files/")
@@ -37,6 +39,7 @@ head(covars)
 ```
 
 This time, we'll use a different package to translate mouse ENSEMBL IDS to gene names. Run these two functions and they will be called up when assembling results from the differential expression analysis
+
 ```{r}
 # functions to extract entrezid and symbols from ENSEMBL IDs
 map_symbol.rname <- function(x){  mapIds(org.Mm.eg.db,keys=row.names(x),column="SYMBOL",keytype="ENSEMBL",multiVals="first")}
@@ -60,6 +63,7 @@ dat <- as.matrix(rawdata[,colnames(rawdata) %in% rownames(meta.12M.Male)])
 ```
 
 Differentail Analysis using DESeq2
+
 ```{r}
 
 ddsHTSeq <- DESeqDataSetFromMatrix(countData=dat, colData=meta.12M.Male, design = ~genotype)
@@ -82,6 +86,7 @@ dseq_res <- as.data.frame(res_sub) %>% mutate(symbol = map_symbol.rname(res_sub)
 ```
 
 Volcano plot of differential results
+
 ```{r}
 
   plot_DEGvolcano <- EnhancedVolcano(All_res,
@@ -96,4 +101,3 @@ Volcano plot of differential results
                                      )
   plot_DEGvolcano
 ```
-
