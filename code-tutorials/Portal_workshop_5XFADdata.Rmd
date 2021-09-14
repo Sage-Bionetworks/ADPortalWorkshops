@@ -65,7 +65,7 @@ synLogin()
 > In the code below, replace the \<\> with your Synapse username and password.
 >
 > ```{r eval = FALSE}
-> synLogin(username = "<username>", password = "<password>")
+> synLogin("<username>", "<password>")
 > ```
 >
 > #### Login option 3: Synapse PAT
