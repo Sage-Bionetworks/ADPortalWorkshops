@@ -168,7 +168,7 @@ We are only interested in RNAseq data, so we will only read in the individual, b
 
 ```{r message=FALSE, warning=FALSE}
 # counts matrix
-counts <- read_delim("files/htseqcounts_5XFAD.txt")
+counts <- read_tsv("files/htseqcounts_5XFAD.txt")
 
 # individual metadata
 ind_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv")
