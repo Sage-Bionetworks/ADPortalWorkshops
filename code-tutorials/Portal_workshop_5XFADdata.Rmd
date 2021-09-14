@@ -4,12 +4,9 @@ author: "Laura Heath & Abby Vander Linden, Sage Bionetworks"
 date: "`r Sys.Date()`"
 output:
   html_document: 
-    toc: yes
-    toc_depth: 2
-    df_print: tibble
-    theme: lumen
-  md_document:
-    variant: markdown_github
+     toc: yes
+     toc_depth: 2
+     df_print: paged
 ---
 
 ```{r, include=FALSE}
@@ -510,7 +507,7 @@ counts_tposed$timepoint <- factor(counts_tposed$timepoint, levels=c("4 mo","6 mo
 
 Use ggplot to plot gene counts for each specimen by age, sex, and genotype.
 
-```{r}
+```{r plot-trem2}
 library(ggplot2)
 
 #Look at Trem2 levels
@@ -525,7 +522,7 @@ g
 
 Examine any gene of interest by setting the y argument in the `ggplot(aes()` mapping equal to the gene name. Ex: `y = Cst7`
 
-```{r}
+```{r plot-Cst7}
 g <- counts_tposed %>% 
   ggplot(aes(x=timepoint, y=Cst7, color=genotype)) +
     geom_boxplot() + 
@@ -537,7 +534,7 @@ g
 
 Ex: `y = Apoe`
 
-```{r}
+```{r plot-Apoe}
 g <- counts_tposed %>% 
   ggplot(aes(x=timepoint, y=Apoe, color=genotype)) +
     geom_boxplot() + 
@@ -549,7 +546,7 @@ g
 
 Ex: `y = Kirrel2`
 
-```{r}
+```{r plot-Kirrel2}
 g <- counts_tposed %>% 
   ggplot(aes(x=timepoint, y=Kirrel2, color=genotype)) +
     geom_boxplot() + 
