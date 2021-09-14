@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 
 ### Install and load packages
 
-If you haven't already, install `synapser`, the [Synapse R client](https://r-docs.synapse.org/articles/synapser.html), as well as the `tidyverse` family of packages.
+If you haven't already, install `synapser` (the [Synapse R client](https://r-docs.synapse.org/articles/synapser.html)), as well as the `tidyverse` family of packages.
 
 ```{r eval = FALSE}
 # install synapser
@@ -31,7 +31,7 @@ install.packages("synapser", repos = c("http://ran.synapse.org", "http://cran.fh
 install.packages("tidyverse")
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 # load package libraries
 library(synapser)
 library(tidyverse)
@@ -54,7 +54,7 @@ Next, you will need to log in to your Synapse account.
 
 If you are logged into the [Synapse](https://www.synapse.org/) web browser, `synapser` will automatically use your login credentials to log you in during your R session! All you have to do is:
 
-```{r}
+```{r results = hide}
 synLogin()
 ```
 
@@ -88,7 +88,7 @@ While you can always download data from the AD Portal website via your web brows
 
 To download a single file from the AD Knowledge Portal, you can click the linked file name to go to a page in the Synapse platform where that file is stored. Using the synID on that page, you can call the `synGet()` function from `synapser` to download the file.
 
-#### **Exercise 1:** **Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to search for `processedRNAseq` data from the `Jax.IU.Pitt_5XFAD` mouse study.**
+#### **Exercise 1:** **Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to search for processed RNAseq data from the `Jax.IU.Pitt_5XFAD` mouse study.**
 
 This should give us a list of three files. Then, if we click on the link for the `htseqcounts_5XFAD.txt` file in the AD Portal...
 
@@ -100,7 +100,7 @@ This should give us a list of three files. Then, if we click on the link for the
 
 We can then use that synID to download the file.
 
-```{r}
+```{r results = hide}
 counts_id <- "syn22108847"
 synGet(counts_id, downloadLocation = "files/")
 ```
@@ -166,7 +166,7 @@ download_table %>%
 
 We are only interested in RNAseq data, so we will only read in the individual, biospecimen, and RNAseq assay metadata files.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 # counts matrix
 counts <- read_delim("files/htseqcounts_5XFAD.txt")
 
@@ -304,7 +304,7 @@ query <- synTableQuery("SELECT * FROM syn11346063.17 WHERE ( ( \"assay\" = 'rnaS
 
 As we saw previously, this downloads a csv file with the results of our AD Portal query. Opening that file lets us see which specimens are associated with which files:
 
-```{r}
+```{r warning = FALSE, message = FALSE}
 annotations_table <- read_csv(query$filepath)
 
 annotations_table
