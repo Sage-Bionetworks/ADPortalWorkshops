@@ -54,7 +54,7 @@ Next, you will need to log in to your Synapse account.
 
 If you are logged into the [Synapse](https://www.synapse.org/) web browser, `synapser` will automatically use your login credentials to log you in during your R session! All you have to do is:
 
-```{r results = hide}
+```{r results = "hide"}
 synLogin()
 ```
 
@@ -100,7 +100,7 @@ This should give us a list of three files. Then, if we click on the link for the
 
 We can then use that synID to download the file.
 
-```{r results = hide}
+```{r results = "hide"}
 counts_id <- "syn22108847"
 synGet(counts_id, downloadLocation = "files/")
 ```
