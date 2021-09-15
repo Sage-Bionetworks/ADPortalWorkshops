@@ -9,7 +9,7 @@ output:
      df_print: paged
 ---
 
-```{r, include=FALSE}
+```{r, set-opts, include=FALSE}
 knitr::opts_chunk$set(
   eval = TRUE
 )
@@ -23,7 +23,7 @@ knitr::opts_chunk$set(
 
 If you haven't already, install `synapser` (the [Synapse R client](https://r-docs.synapse.org/articles/synapser.html)), as well as the `tidyverse` family of packages.
 
-```{r eval = FALSE}
+```{r install-synapser, eval = FALSE}
 # install synapser
 install.packages("synapser", repos = c("http://ran.synapse.org", "http://cran.fhcrc.org"))
 
@@ -31,7 +31,7 @@ install.packages("synapser", repos = c("http://ran.synapse.org", "http://cran.fh
 install.packages("tidyverse")
 ```
 
-```{r message=FALSE, warning=FALSE}
+```{r load-libraries, message=FALSE, warning=FALSE}
 # load package libraries
 library(synapser)
 library(tidyverse)
@@ -39,7 +39,8 @@ library(tidyverse)
 
 We will also use the BioconductoR package manager to install `biomaRt`, which will help us with gene count data later.
 
-```{r eval = FALSE}
+```{r install-biomaRt, eval = FALSE}
+
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
@@ -54,7 +55,7 @@ Next, you will need to log in to your Synapse account.
 
 If you are logged into the [Synapse](https://www.synapse.org/) web browser, `synapser` will automatically use your login credentials to log you in during your R session! All you have to do is:
 
-```{r results = "hide"}
+```{r synlogin, results = "hide"}
 synLogin()
 ```
 
@@ -100,7 +101,7 @@ This should give us a list of three files. Then, if we click on the link for the
 
 We can then use that synID to download the file.
 
-```{r results = "hide"}
+```{r single-synGet, results = "hide"}
 counts_id <- "syn22108847"
 synGet(counts_id, downloadLocation = "files/")
 ```
@@ -119,19 +120,19 @@ In the window that pops up, select the "R" tab from the top menu bar. This will 
 
 The function `synTableQuery()` returns a Synapse object wrapper around a CSV file that is automatically downloaded to a Synapse cache directory `.synapseCache` in your home directory. You can use `query$filepath` to see the path to the file in the Synapse cache.
 
-```{r}
+```{r portal-query}
 # download the results of the filtered table query
 query <- synTableQuery("SELECT * FROM syn11346063.17 WHERE ( ( `study` HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( `resourceType` = 'metadata' ) )")
 
 ```
 
-```{r}
+```{r query-filepath}
 query$filepath
 ```
 
 We'll use `read.csv` to read the CSV file into R (although the provided `read.table` or any other base R version is also fine!). We can explore the `download_table` object and see that it contains information on all of the AD Portal data files we want to download. Some columns like the "id" and "parentId" columns contain info about where the file is in Synapse, and some columns contain AD Portal annotations for each file, like "dataType", "specimenID", and "assay". This annotation table will later allow us to link downloaded files to additional metadata variables!
 
-```{r}
+```{r download-query-table}
 # read in the table query csv file
 download_table <- read_csv(query$filepath)
 
@@ -140,7 +141,7 @@ download_table
 
 Finally, we use a mapping function from the `purrr` package to loop through the "id" column and apply the `synGet()` function to each file's synID. In this case, we use `purrr::walk()` because it lets us call `synGet()` for its side effect (downloading files to a location we specify), and returns nothing.
 
-```{r}
+```{r bulk-download-purrr}
 # loop through the column of synIDs and download each file
 purrr::walk(download_table$id, ~synGet(.x, downloadLocation = "files/"))
 ```
@@ -159,14 +160,14 @@ We have now downloaded several metadata files and an RNAseq counts file from the
 
 We can see from the `download_table` we got during the bulk download step that we have five metadata files. Two of these should be the individual and biospecimen files, and three of them are assay meetadata files.
 
-```{r}
+```{r explore-download-table}
 download_table %>% 
   dplyr::select(name, metadataType, assay)
 ```
 
 We are only interested in RNAseq data, so we will only read in the individual, biospecimen, and RNAseq assay metadata files.
 
-```{r message=FALSE, warning=FALSE}
+```{r read-data-files, message=FALSE, warning=FALSE}
 # counts matrix
 counts <- read_tsv("files/htseqcounts_5XFAD.txt")
 
@@ -184,18 +185,18 @@ Let's examine the data and metadata files a bit before we begin our analyses.
 
 #### Counts data
 
-```{r}
+```{r view-counts}
 counts
 ```
 
 The data file has a column of ENSEMBL gene ids and then a bunch of columns with count data, where the column headers correspond to the specimenIDs. These specimenIDs should all be in the RNAseq assay metadata file, so let's check.
 
-```{r}
+```{r view-assay}
 # what does the RNAseq assay metadata look like?
 rna_meta
 ```
 
-```{r}
+```{r check-specIDs-data}
 # are all the column headers from the counts matrix (except the first "gene_id" column) in the assay metadata?
 all(colnames(counts[-1]) %in% rna_meta$specimenID)
 ```
@@ -204,17 +205,13 @@ all(colnames(counts[-1]) %in% rna_meta$specimenID)
 
 The assay metadata contains information about how data was generated on each sample in the assay. Each specimenID represents a unique sample. We can use some tools from dplyr to explore the metadata.
 
-```{r}
+```{r check-assay}
 # how many unique specimens were sequenced?
 n_distinct(rna_meta$specimenID)
-```
 
-```{r}
 # were the samples all sequenced on the same platform?
 distinct(rna_meta, platform)
-```
 
-```{r}
 # were there multiple sequencing batches reported?
 distinct(rna_meta, sequencingBatch) 
 ```
@@ -223,7 +220,7 @@ distinct(rna_meta, sequencingBatch)
 
 The biospecimen metadata contains specimen-level information, including organ and tissue the specimen was taken from, how it was prepared, etc. Each specimenID is mapped to an individualID.
 
-```{r}
+```{r check-biospecimen}
 # all specimens from the RNAseq assay metadata file should be in the biospecimen file
 all(rna_meta$specimenID %in% bio_meta$specimenID)
 
@@ -236,12 +233,10 @@ all(bio_meta$specimenID %in% rna_meta$specimenID)
 
 The individual metadata contains information about all the individuals in the study, represented by unique individualIDs. For humans, this includes information on age, sex, race, diagnosis, etc. For MODEL-AD mouse models, the individual metadata has information on model genotypes, stock numbers, diet, and more.
 
-```{r}
+```{r check-individual}
 # all individualIDs in the biospecimen file should be in the individual file
 all(bio_meta$individualID %in% ind_meta$individualID)
-```
 
-```{r}
 # which model genotypes are in this study?
 distinct(ind_meta, genotype)
 ```
@@ -250,7 +245,7 @@ distinct(ind_meta, genotype)
 
 We use the three-file structure for our metadata because it allows us to store metadata for each study in a tidy format. Every line in the assay and biospecimen files represents a unique specimen, and every line in the individual file represents a unique individual. This means the files can be easily joined by specimenID and individualID to get all levels of metadata that apply to a particular data file. We will use the `left_join()` function from the `dplyr` package, and the `%>%` operator from the `magrittr` package. *If you are unfamiliar with the pipe, think of it as a shorthand for "take this (the preceding object) and do that (the subsequent command)". See [here](https://magrittr.tidyverse.org/) for more info on piping in R.*
 
-```{r}
+```{r join-metadata}
 # join all the rows in the assay metadata that have a match in the biospecimen metadata
 joined_meta <- rna_meta %>% #start with the rnaseq assay metadata
   left_join(bio_meta, by = "specimenID") %>%  #join rows from biospecimen that match specimenID 
@@ -271,7 +266,7 @@ If we filter for data where Study = "Jax.IU.Pitt_5XFAD" and Assay = "rnaSeq" we 
 
 When we download a single fastq from this list (for this example, `synID = syn22108503`), we can see the annotations associated with that file. In the interest of saving time for this workshop, we'll set `downloadFile = "FALSE"` to get the Synapse entity (i.e. all the file information in Synapse) without actually downloading the 3GB-ish file.
 
-```{r}
+```{r single-file-annotations}
 # download the file; set "downloadFile = FALSE"
 fastq <- synGet("syn22108503", downloadFile = FALSE)
 
@@ -286,7 +281,7 @@ file_annotations
 
 The file annotations let us see which study the file is associated with (Jax.IU.Pitt.5XFAD), which species it's from (Mouse), which assay generated the file (rnaSeq), and a whole bunch of other properties. Most importantly, single-specimen files are annotated with with the specimenID of the specimen in the file, and the individualID of the individual that specimen was taken from. We can use these annotations to link files to the rest of the metadata, including metadata that is not in annotations. This is especially helpful for human studies, as potentially identifying information like age, race, and Braak score is not included in file annotations.
 
-```{r}
+```{r join-annotations-to-metadata}
 # find records belonging to the individual this file maps to in our joined metadata
 joined_meta %>% 
   filter(individualID == file_annotations$individualID[[1]])
@@ -298,13 +293,13 @@ When bulk downloading many files, the best practice is to preserve the download 
 
 If we use the "Programmatic Options" tab in the AD Portal download menu to download all 148 rnaSeq files from the 5XFAD study, we would get a table query that looks like this:
 
-```{r}
+```{r all-rnaseq-portal-query}
 query <- synTableQuery("SELECT * FROM syn11346063.17 WHERE ( ( \"assay\" = 'rnaSeq' ) AND ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) )")
 ```
 
 As we saw previously, this downloads a csv file with the results of our AD Portal query. Opening that file lets us see which specimens are associated with which files:
 
-```{r warning = FALSE, message = FALSE}
+```{r read-annotations-table, warning = FALSE, message = FALSE}
 annotations_table <- read_csv(query$filepath)
 
 annotations_table
@@ -314,7 +309,7 @@ You could then use `purrr::walk(download_table$id, ~synGet(.x, downloadLocation 
 
 Once you've downloaded all the files in the `id` column, you can link those files to their annotations by the `name` column.
 
-```{r}
+```{r match-annotations-to-file}
 # we'll use the single fastq that we already downloaded as an example
 # if we had downloaded the actual file, we could find it in the directory and search using the filename
 # since wejust downloaded the Synapse entity wrapper object, we'll use the file name listed in the object properties
@@ -328,7 +323,7 @@ Multispecimen files in the AD Knowledge Portal are files that contain data or in
 
 If we look at the processed data files in the table of 5XFAD RNAseq file annotations we just downloaded , we will see that it isMultiSpecimen = TRUE, but individualID and specimenID are blank:
 
-```{r}
+```{r filter-multispecimen-files}
 annotations_table %>% 
   filter(fileFormat == "txt") %>% 
   dplyr::select(name, individualID, specimenID, isMultiSpecimen)
@@ -336,7 +331,7 @@ annotations_table %>%
 
 The multispecimen file should contain a row or column of specimenIDs that correspond to the specimenIDs used in a study's metadata, as we have seen with the 5XFAD counts file.
 
-```{r}
+```{r join-multispecimen-metadata}
 # In this example, we take a slice of the counts data to reduce computation, transpose it so that each row represents a single specimen, and then join it to the joined metadata by the specimenID
 counts %>% 
   slice_head(n = 5) %>% 
@@ -355,10 +350,11 @@ We will use the counts data and metadata to do some basic exploratory analysis o
 
 Which covariates from the metadata are we interested in?
 
-```{r}
+```{r distinct-meta-covars}
 # all samples are from the same organ and tissue, so we can probably discard those
 distinct(joined_meta, organ, tissue, sampleStatus)
 
+# we have different sexes and genotypes, so we are probably interested in those
 distinct(joined_meta, sex, genotype)
 ```
 
@@ -370,7 +366,7 @@ The MODEL-AD individual mouse metadata contains columns with birth date and deat
 
 *Note: MODEL-AD studies added to the portal after June 2021 include an 'ageDeath' column that makes this simpler.*
 
-```{r, warning = FALSE, message = FALSE}
+```{r, add-timepoint-column, warning = FALSE, message = FALSE}
 # load the lubridate package (comes with tidyverse)
 library(lubridate)
 
@@ -387,7 +383,7 @@ joined_meta_time <- joined_meta %>%
 
 We now have balanced samples across sex, genotype, and age:
 
-```{r}
+```{r group-metadata-by-covars}
 joined_meta_time %>% 
   group_by(sex, genotype, timepoint) %>% 
   count()
@@ -397,7 +393,7 @@ joined_meta_time %>%
 
 To reduce the width of the dataframe, we will subset only the columns that contain covariates we're interested in exploring further. Retaining the individualID and specimenID columns will make sure we can map the covariates to the data and back to the original metadata if needed!
 
-```{r}
+```{r subset-covars}
 covars <- joined_meta_time %>% 
   dplyr::select(individualID, specimenID, sex, genotype, timepoint)
 ```
@@ -406,7 +402,7 @@ covars <- joined_meta_time %>%
 
 Return to the gene counts matrix we read in earlier.
 
-```{r}
+```{r check-non-mouse-genes}
 counts
 
 # check how many gene_ids are NOT from the mouse genome
@@ -421,7 +417,7 @@ Transform the ensemblIDs in the matrix to common gene names, using the R package
 
 We will use the two custom functions below to convert ensemblIDs to gene names:
 
-```{r}
+```{r gene-name-conversion-functions}
 library(biomaRt)
 
 #this function converts ensemblIDs to HGNC names
@@ -453,12 +449,12 @@ Make.Gene.Symb <- function(GeneENSG){
 
 Call the `Make.Gene.Symb()` function to add a new column with short gene names to our counts dataframe. This will take a minute -- there are over 55k genes in our matrix!
 
-```{r}
+```{r convert-gene-ids}
 named_counts <- counts %>% 
   mutate(gene_name = Make.Gene.Symb(gene_id))
 ```
 
-```{r}
+```{r check-unique-genes}
 # are all the gene names unique?
 length(named_counts$gene_name) - n_distinct(named_counts$gene_name) 
 
@@ -467,7 +463,7 @@ length(named_counts$gene_name) - n_distinct(named_counts$gene_name)
 
 We need to clean up the humanized gene names and append unique identifiers to the duplicate names.
 
-```{r}
+```{r clean-gene-names}
 #The first two genes in the matrix are the humanized genes PSEN1 (ENSG00000080815) and APP (	ENSG00000142192). Set these manually:
 named_counts[1, "gene_name"] <- "PSEN1"
 named_counts[2, "gene_name"] <- "APP"
@@ -484,14 +480,14 @@ named_counts <- named_counts %>%
 
 Now we can transpose the dataframe so that each row contains count data cross all genes for an individual, and join our covariates by specimenID.
 
-```{r}
+```{r transpose-counts}
 counts_tposed <- named_counts %>% 
   t() %>% 
   as_tibble(rownames = "specimenID") %>% 
   left_join(covars, by = "specimenID")
 ```
 
-```{r}
+```{r check-transposed-counts}
 # check the transposed matrix
 head(counts_tposed)
 ```
@@ -500,7 +496,7 @@ head(counts_tposed)
 
 Create simple box plots showing normalized counts by genotype and time point, faceted by sex.
 
-```{r}
+```{r refactor-timepoints}
 # first make the timepoints column a factor and re-order the levels
 counts_tposed$timepoint <- factor(counts_tposed$timepoint, levels=c("4 mo","6 mo","12 mo"))
 ```
