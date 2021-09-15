@@ -4,9 +4,10 @@ author: "Laura Heath & Abby Vander Linden, Sage Bionetworks"
 date: "`r Sys.Date()`"
 output:
   html_document: 
-     toc: yes
-     toc_depth: 2
-     df_print: paged
+    pandoc_args: "--self-contained"
+    toc: yes
+    toc_depth: 2
+    df_print: paged
 ---
 
 ```{r, set-opts, include=FALSE}
@@ -89,7 +90,7 @@ While you can always download data from the AD Portal website via your web brows
 
 To download a single file from the AD Knowledge Portal, you can click the linked file name to go to a page in the Synapse platform where that file is stored. Using the synID on that page, you can call the `synGet()` function from `synapser` to download the file.
 
-#### **Exercise 1:** **Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to search for processed RNAseq data from the `Jax.IU.Pitt_5XFAD` mouse study.**
+#### Exercise 1: Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to find processed RNAseq data from the Jax.IU.Pitt_5XFAD 
 
 This should give us a list of three files. Then, if we click on the link for the `htseqcounts_5XFAD.txt` file in the AD Portal...
 
@@ -266,13 +267,16 @@ If we filter for data where Study = "Jax.IU.Pitt_5XFAD" and Assay = "rnaSeq" we 
 
 When we download a single fastq from this list (for this example, `synID = syn22108503`), we can see the annotations associated with that file. In the interest of saving time for this workshop, we'll set `downloadFile = "FALSE"` to get the Synapse entity (i.e. all the file information in Synapse) without actually downloading the 3GB-ish file.
 
-```{r single-file-annotations}
+```{r json-single-file-annotations}
 # download the file; set "downloadFile = FALSE"
 fastq <- synGet("syn22108503", downloadFile = FALSE)
 
 # file annotations are formatted as JSON strings and are a property of the Synapse object
 fastq$annotations
+```
 
+
+```{r list-single-file-annotations}
 # we can use the function synGetAnnotations() to extract the annotations as a nested list
 file_annotations <- synGetAnnotations(fastq)
 
