@@ -57,6 +57,7 @@ Next, you will need to log in to your Synapse account.
 If you are logged into the [Synapse](https://www.synapse.org/) web browser, `synapser` will automatically use your login credentials to log you in during your R session! All you have to do is:
 
 ```{r synlogin, results = "hide"}
+
 synLogin()
 ```
 
@@ -67,6 +68,7 @@ synLogin()
 > In the code below, replace the \<\> with your Synapse username and password.
 >
 > ```{r eval = FALSE}
+>
 > synLogin("<username>", "<password>")
 > ```
 >
@@ -75,6 +77,7 @@ synLogin()
 > If you usually log in to Synapse with your Google account, you will need to use a Synapser Personal Access Token (PAT) to log in with the R client. Follow these instructions to [generate a personal access token](https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin), then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.
 >
 > ```{r eval = FALSE}
+>
 > synLogin(authToken = "<paste your personal access token here>")
 > ```
 >
@@ -90,7 +93,7 @@ While you can always download data from the AD Portal website via your web brows
 
 To download a single file from the AD Knowledge Portal, you can click the linked file name to go to a page in the Synapse platform where that file is stored. Using the synID on that page, you can call the `synGet()` function from `synapser` to download the file.
 
-#### Exercise 1: Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to find processed RNAseq data from the Jax.IU.Pitt_5XFAD 
+#### Exercise 1: Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to find processed RNAseq data from the Jax.IU.Pitt_5XFAD
 
 This should give us a list of three files. Then, if we click on the link for the `htseqcounts_5XFAD.txt` file in the AD Portal...
 
@@ -103,6 +106,7 @@ This should give us a list of three files. Then, if we click on the link for the
 We can then use that synID to download the file.
 
 ```{r single-synGet, results = "hide"}
+
 counts_id <- "syn22108847"
 synGet(counts_id, downloadLocation = "files/")
 ```
@@ -128,6 +132,7 @@ query <- synTableQuery("SELECT * FROM syn11346063.17 WHERE ( ( `study` HAS ( 'Ja
 ```
 
 ```{r query-filepath}
+
 query$filepath
 ```
 
@@ -135,7 +140,7 @@ We'll use `read.csv` to read the CSV file into R (although the provided `read.ta
 
 ```{r download-query-table}
 # read in the table query csv file
-download_table <- read_csv(query$filepath)
+download_table <- read_csv(query$filepath, show_col_types = FALSE)
 
 download_table
 ```
@@ -162,6 +167,7 @@ We have now downloaded several metadata files and an RNAseq counts file from the
 We can see from the `download_table` we got during the bulk download step that we have five metadata files. Two of these should be the individual and biospecimen files, and three of them are assay meetadata files.
 
 ```{r explore-download-table}
+#
 download_table %>% 
   dplyr::select(name, metadataType, assay)
 ```
@@ -170,16 +176,16 @@ We are only interested in RNAseq data, so we will only read in the individual, b
 
 ```{r read-data-files, message=FALSE, warning=FALSE}
 # counts matrix
-counts <- read_tsv("files/htseqcounts_5XFAD.txt")
+counts <- read_tsv("files/htseqcounts_5XFAD.txt", show_col_types = FALSE)
 
 # individual metadata
-ind_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv")
+ind_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv", show_col_types = FALSE)
 
 # biospecimen metadata
-bio_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv")
+bio_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv", show_col_types = FALSE)
 
 #assay metadata
-rna_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv")
+rna_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv", show_col_types = FALSE)
 ```
 
 Let's examine the data and metadata files a bit before we begin our analyses.
@@ -187,6 +193,7 @@ Let's examine the data and metadata files a bit before we begin our analyses.
 #### Counts data
 
 ```{r view-counts}
+# Calling a tibble object will print the first ten rows in a nice tidy output; doing the same for a base R dataframe will print the whole thing until it runs out of memory. If you want to inspect a large dataframe, use `head(df)`
 counts
 ```
 
@@ -251,6 +258,8 @@ We use the three-file structure for our metadata because it allows us to store m
 joined_meta <- rna_meta %>% #start with the rnaseq assay metadata
   left_join(bio_meta, by = "specimenID") %>%  #join rows from biospecimen that match specimenID 
   left_join(ind_meta, by = "individualID") # join rows from individual that match individualID
+
+joined_meta
 ```
 
 We now have a very wide dataframe that contains all the available metadata on each specimen in the RNAseq data from this study. This procedure can be used to join the three types of metadata files for every study in the AD Knowledge Portal, allowing you to filter individuals and specimens as needed based on your analysis criteria!
@@ -275,7 +284,6 @@ fastq <- synGet("syn22108503", downloadFile = FALSE)
 fastq$annotations
 ```
 
-
 ```{r list-single-file-annotations}
 # we can use the function synGetAnnotations() to extract the annotations as a nested list
 file_annotations <- synGetAnnotations(fastq)
@@ -298,13 +306,15 @@ When bulk downloading many files, the best practice is to preserve the download 
 If we use the "Programmatic Options" tab in the AD Portal download menu to download all 148 rnaSeq files from the 5XFAD study, we would get a table query that looks like this:
 
 ```{r all-rnaseq-portal-query}
+#
 query <- synTableQuery("SELECT * FROM syn11346063.17 WHERE ( ( \"assay\" = 'rnaSeq' ) AND ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) )")
 ```
 
 As we saw previously, this downloads a csv file with the results of our AD Portal query. Opening that file lets us see which specimens are associated with which files:
 
 ```{r read-annotations-table, warning = FALSE, message = FALSE}
-annotations_table <- read_csv(query$filepath)
+#
+annotations_table <- read_csv(query$filepath, show_col_types = FALSE)
 
 annotations_table
 ```
@@ -328,6 +338,7 @@ Multispecimen files in the AD Knowledge Portal are files that contain data or in
 If we look at the processed data files in the table of 5XFAD RNAseq file annotations we just downloaded , we will see that it isMultiSpecimen = TRUE, but individualID and specimenID are blank:
 
 ```{r filter-multispecimen-files}
+#
 annotations_table %>% 
   filter(fileFormat == "txt") %>% 
   dplyr::select(name, individualID, specimenID, isMultiSpecimen)
@@ -388,6 +399,7 @@ joined_meta_time <- joined_meta %>%
 We now have balanced samples across sex, genotype, and age:
 
 ```{r group-metadata-by-covars}
+# check that the timepoint column looks ok
 joined_meta_time %>% 
   group_by(sex, genotype, timepoint) %>% 
   count()
@@ -398,8 +410,12 @@ joined_meta_time %>%
 To reduce the width of the dataframe, we will subset only the columns that contain covariates we're interested in exploring further. Retaining the individualID and specimenID columns will make sure we can map the covariates to the data and back to the original metadata if needed!
 
 ```{r subset-covars}
+# many packages have a "select" function that masks dplyr so we have to specify
 covars <- joined_meta_time %>% 
   dplyr::select(individualID, specimenID, sex, genotype, timepoint)
+
+# check the result
+covars
 ```
 
 ### Join metadata to counts matrix
@@ -407,9 +423,7 @@ covars <- joined_meta_time %>%
 Return to the gene counts matrix we read in earlier.
 
 ```{r check-non-mouse-genes}
-counts
-
-# check how many gene_ids are NOT from the mouse genome
+# check how many gene_ids are NOT from the mouse genome by searching for the string "MUS" (as in Mus musculus) in the gene_id column
 counts %>% 
   filter(!str_detect(gene_id, "MUS"))
 
@@ -422,6 +436,7 @@ Transform the ensemblIDs in the matrix to common gene names, using the R package
 We will use the two custom functions below to convert ensemblIDs to gene names:
 
 ```{r gene-name-conversion-functions}
+# load biomaRt package
 library(biomaRt)
 
 #this function converts ensemblIDs to HGNC names
@@ -454,6 +469,7 @@ Make.Gene.Symb <- function(GeneENSG){
 Call the `Make.Gene.Symb()` function to add a new column with short gene names to our counts dataframe. This will take a minute -- there are over 55k genes in our matrix!
 
 ```{r convert-gene-ids}
+# use the mutate function from dplyr
 named_counts <- counts %>% 
   mutate(gene_name = Make.Gene.Symb(gene_id))
 ```
@@ -485,14 +501,15 @@ named_counts <- named_counts %>%
 Now we can transpose the dataframe so that each row contains count data cross all genes for an individual, and join our covariates by specimenID.
 
 ```{r transpose-counts}
+#
 counts_tposed <- named_counts %>% 
-  t() %>% 
-  as_tibble(rownames = "specimenID") %>% 
-  left_join(covars, by = "specimenID")
+  t() %>%  #transposing forces the df to a matrix
+  as_tibble(rownames = "specimenID") %>% #reconvert to tibble and specify rownames
+  left_join(covars, by = "specimenID") #join covariates by specimenID
 ```
 
 ```{r check-transposed-counts}
-# check the transposed matrix
+# check the transposed matrix looks ok
 head(counts_tposed)
 ```
 
@@ -508,6 +525,7 @@ counts_tposed$timepoint <- factor(counts_tposed$timepoint, levels=c("4 mo","6 mo
 Use ggplot to plot gene counts for each specimen by age, sex, and genotype.
 
 ```{r plot-trem2}
+# load ggplot2
 library(ggplot2)
 
 #Look at Trem2 levels
@@ -523,6 +541,7 @@ g
 Examine any gene of interest by setting the y argument in the `ggplot(aes()` mapping equal to the gene name. Ex: `y = Cst7`
 
 ```{r plot-Cst7}
+#
 g <- counts_tposed %>% 
   ggplot(aes(x=timepoint, y=Cst7, color=genotype)) +
     geom_boxplot() + 
@@ -535,6 +554,7 @@ g
 Ex: `y = Apoe`
 
 ```{r plot-Apoe}
+#
 g <- counts_tposed %>% 
   ggplot(aes(x=timepoint, y=Apoe, color=genotype)) +
     geom_boxplot() + 
@@ -547,6 +567,7 @@ g
 Ex: `y = Kirrel2`
 
 ```{r plot-Kirrel2}
+#
 g <- counts_tposed %>% 
   ggplot(aes(x=timepoint, y=Kirrel2, color=genotype)) +
     geom_boxplot() + 
