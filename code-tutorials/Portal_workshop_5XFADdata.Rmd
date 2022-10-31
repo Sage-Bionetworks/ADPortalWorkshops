@@ -41,13 +41,17 @@ library(tidyverse)
 We will also use the BioconductoR package manager to install `biomaRt`, which will help us with gene count data later.
 
 ```{r install-biomaRt, eval = FALSE}
+#install.packages("XML")
 
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
 BiocManager::install("biomaRt")
 ```
+```{r load-libraries, message=FALSE, warning=FALSE}
 
+library(biomaRt)
+```
 ### Login to Synapse
 
 Next, you will need to log in to your Synapse account.
@@ -437,13 +441,13 @@ We will use the two custom functions below to convert ensemblIDs to gene names:
 
 ```{r gene-name-conversion-functions}
 # load biomaRt package
-library(biomaRt)
+#library(biomaRt)
 
 #this function converts ensemblIDs to HGNC names
 convertEnsemblToHgnc <- function(ensemblIds){
   ensembl=biomaRt::useMart('ENSEMBL_MART_ENSEMBL',
                            dataset = 'mmusculus_gene_ensembl',
-                           host='useast.ensembl.org')
+                           host='https:useast.ensembl.org')
   genes<-getBM(attributes = c('ensembl_gene_id','external_gene_name'),
                filters='ensembl_gene_id',
                values=ensemblIds,
