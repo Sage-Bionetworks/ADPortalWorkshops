@@ -48,6 +48,9 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 
 BiocManager::install("biomaRt")
 ```
+
+Load biomaRt library
+
 ```{r load-libraries, message=FALSE, warning=FALSE}
 
 library(biomaRt)
@@ -440,10 +443,7 @@ Transform the ensemblIDs in the matrix to common gene names, using the R package
 We will use the two custom functions below to convert ensemblIDs to gene names:
 
 ```{r gene-name-conversion-functions}
-# load biomaRt package
-#library(biomaRt)
-
-#this function converts ensemblIDs to HGNC names
+#this function uses biomaRt and converts ensemblIDs to HGNC names
 convertEnsemblToHgnc <- function(ensemblIds){
   ensembl=biomaRt::useMart('ENSEMBL_MART_ENSEMBL',
                            dataset = 'mmusculus_gene_ensembl',
@@ -482,7 +482,7 @@ named_counts <- counts %>%
 # are all the gene names unique?
 length(named_counts$gene_name) - n_distinct(named_counts$gene_name) 
 
-# 98 duplicate gene names
+# 71 duplicate gene names
 ```
 
 We need to clean up the humanized gene names and append unique identifiers to the duplicate names.
