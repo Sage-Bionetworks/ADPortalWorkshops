@@ -32,12 +32,6 @@ install.packages("synapser", repos = c("http://ran.synapse.org", "http://cran.fh
 install.packages("tidyverse")
 ```
 
-```{r load-libraries, message=FALSE, warning=FALSE}
-# load package libraries
-library(synapser)
-library(tidyverse)
-```
-
 We will also use the BioconductoR package manager to install `biomaRt`, which will help us with gene count data later.
 
 ```{r install-biomaRt, eval = FALSE}
@@ -49,10 +43,11 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("biomaRt")
 ```
 
-Load biomaRt library
+Load libraries
 
 ```{r load-libraries, message=FALSE, warning=FALSE}
-
+library(synapser)
+library(tidyverse)
 library(biomaRt)
 ```
 ### Login to Synapse
