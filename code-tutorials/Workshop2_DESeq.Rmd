@@ -1,10 +1,17 @@
 ---
 title: "Differential Analysis of 5xFAD mouse models"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 Author: Ravi Pandey, Jackson Laboratories
 
+```{r, set-opts, include=FALSE}
+knitr::opts_chunk$set(
+  eval = TRUE
+)
+```
 The following code will take the raw counts matrix you uploaded in the first part of the workshop (Portal_workshop_5xFADdata.Rmd) and the metadata file you created that also contains the specimen IDs to run a basic differential expression analysis on a single time point (12 months) in male mice. You can amend the code to compare wild type and 5XFAD mice from either sex, at any time point.
 
 We will need several new packages from Bioconductor to run this analysis
@@ -35,10 +42,69 @@ counts_id <- "syn22108847"
 synGet(counts_id, downloadLocation = "files/")
 counts <- read.delim("files/htseqcounts_5XFAD.txt", check.names = FALSE)
 head(counts)
-#need to coerce covars to a plain data frame to retain row names
+```
+
+Upload the three metadata files we need, in order to join specimen IDs from the counts matrix to individual IDs in the clinical metadata 
+(Note: you could use the 'covars' file you created in the previous exercise)
+
+```{r}
+#upload the three metadata files we need and join them (or use 'covars' from Portal_workshop_5XFADdata.Rmd)
+
+rna_metaID <- "syn22110328"
+synGet(rna_metaID, downloadLocation = "files/")
+rna_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv", show_col_types = FALSE)
+
+bio_metaID <- "syn22103213"
+synGet(bio_metaID, downloadLocation = "files/")
+bio_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv", show_col_types = FALSE)
+
+ind_metaID <- "syn22103212"
+synGet(ind_metaID, downloadLocation = "files/")
+ind_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv", show_col_types = FALSE)
+```
+
+Join the three metadata files by IDs in common
+
+```{r}
+#join the metadata files
+joined_meta <- rna_meta %>% #start with the rnaseq assay metadata
+  left_join(bio_meta, by = "specimenID") %>%  #join rows from biospecimen that match specimenID 
+  left_join(ind_meta, by = "individualID") # join rows from individual that match individualID
+
+joined_meta
+```
+
+Create a timepoint variable (Months since birth)
+
+```{r}
+library(lubridate)
+
+# convert columns of strings to month-date-year format
+joined_meta_time <- joined_meta %>% 
+  mutate(dateBirth = mdy(dateBirth), dateDeath = mdy(dateDeath)) %>% 
+  # create a new column that subtracts dateBirth from dateDeath in days, then divide by 30 to get months
+  mutate(timepoint = as.numeric(difftime(dateDeath, dateBirth, units ="days"))/30) %>% 
+  # convert numeric ages to timepoint categories
+  mutate(timepoint = case_when(timepoint > 10 ~ "12 mo",
+                               timepoint < 10 & timepoint > 5 ~ "6 mo",
+                               timepoint < 5 ~ "4 mo"))
+
+# check that the timepoint column looks ok (should be 6 mice in each group)
+joined_meta_time %>% 
+  dplyr::group_by(sex, genotype, timepoint) %>% 
+  dplyr::count()
+```
+
+Select the covariates needed for the analysis
+
+```{r}
+covars <- joined_meta_time %>% 
+  dplyr::select(individualID, specimenID, sex, genotype, timepoint)
+
+# coerce covars into a dataframe, label the rows by specimenID, and check the result
 covars <- as.data.frame(covars)
-rownames(covars) <- covars$specimenID  #need rownames to be the specimen IDs & match the counts matrix columns
-head(covars)
+rownames(covars) <- covars$specimenID
+covars
 ```
 
 This time, we'll use a different package to translate mouse ENSEMBL IDS to gene names. Run these two functions and they will be called up when assembling results from the differential expression analysis
@@ -52,7 +118,7 @@ map_eid.rname <- function(x) {mapIds(org.Mm.eg.db,keys=row.names(x),column="ENTR
 
 ```
 
-Order the data (so counts and metadata match), and subset the counts matrix and metadata to include only 12 month old male mice
+Order the data (counts columns and metadata rows MUST be in the same order), and subset the counts matrix and metadata to include only 12 month old male mice
 
 ```{r}
 
@@ -94,7 +160,7 @@ res <- results(dds,alpha=0.05)
 summary(res)
 
 
-# generating differential genes result table for all genes, and map mouse gene names to ensembl labels
+# generating differential expression results table for all genes, and map mouse short gene names to ensembl labels
 All_res <- as.data.frame(res) %>% mutate(symbol = map_symbol.rname(res)) %>% mutate(EntrezGene = map_eid.rname(res)) %>%  dplyr::select("symbol", "EntrezGene","baseMean", "log2FoldChange", "lfcSE", "stat", "pvalue", "padj")
 
 #label human gene names
@@ -119,7 +185,8 @@ Volcano plot of differential expression results: all genes with p < 0.05 and log
                                      )
   plot_DEGvolcano
 ```
-save results table and plot:
+
+Save results table and plot:
 
 ```{r}
 All_res$ensembl <- row.names(All_res)
