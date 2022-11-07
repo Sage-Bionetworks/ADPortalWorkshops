@@ -50,6 +50,7 @@ library(synapser)
 library(tidyverse)
 library(biomaRt)
 ```
+
 ### Login to Synapse
 
 Next, you will need to log in to your Synapse account.
@@ -70,7 +71,7 @@ synLogin()
 > In the code below, replace the \<\> with your Synapse username and password.
 >
 > ```{r eval = FALSE}
->
+> >
 > synLogin("<username>", "<password>")
 > ```
 >
@@ -79,7 +80,7 @@ synLogin()
 > If you usually log in to Synapse with your Google account, you will need to use a Synapser Personal Access Token (PAT) to log in with the R client. Follow these instructions to [generate a personal access token](https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin), then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.
 >
 > ```{r eval = FALSE}
->
+> >
 > synLogin(authToken = "<paste your personal access token here>")
 > ```
 >
@@ -469,9 +470,21 @@ Call the `Make.Gene.Symb()` function to add a new column with short gene names t
 
 ```{r convert-gene-ids}
 # use the mutate function from dplyr
-named_counts <- counts %>% 
-  mutate(gene_name = Make.Gene.Symb(gene_id))
+#named_counts <- counts %>% 
+#  mutate(gene_name = Make.Gene.Symb(gene_id))
 ```
+
+For this demonstration, I=instead of running biomaRt, which can be unreliable at times and take a long time to render, we will append a dataframe to our counts matrix with short gene names already translated
+
+```{r}
+#ensembl_to_gene <- subset(named_counts, select=c(gene_id, gene_name))
+#write.csv(ensembl_to_gene, file="ensembl_translation_key.csv", row.names=FALSE)
+
+ensembl_to_gene <- read.csv(file="ensembl_translation_key.csv")
+named_counts <- dplyr::left_join(counts, ensembl_to_gene, by="gene_id")
+```
+
+Are the gene names unique?
 
 ```{r check-unique-genes}
 # are all the gene names unique?
