@@ -7,6 +7,9 @@ output:
 
 Author: Ravi Pandey, Jackson Laboratories
 
+The following data is obtained from The Jax.IU.Pitt_5XFAD Study (Jax.IU.Pitt_5XFAD), found here: syn21983020
+and here: https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage/StudyData?Study=syn21983020
+
 ```{r, set-opts, include=FALSE}
 knitr::opts_chunk$set(
   eval = TRUE
