@@ -20,6 +20,9 @@ The following code will take the raw counts matrix you uploaded in the first par
 We will need several new packages from Bioconductor to run this analysis
 
 ```{r}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
 BiocManager::install(c("DESeq2", "org.Mm.eg.db","GO.db", "EnhancedVolcano", "AnnotationDbi"))
 #install.packages(c("tidyverse", "ggplot2", "dplyr"))
 ```
