@@ -34,7 +34,7 @@ install.packages("tidyverse")
 
 We will also use the BioconductoR package manager to install `biomaRt`, which will help us with gene count data later.
 
-```{r install-biomaRt, eval = FALSE}
+```{r install-biomaRt, message=FALSE, warning = FALSE}
 #install.packages("XML")
 
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -59,7 +59,7 @@ Next, you will need to log in to your Synapse account.
 
 If you are logged into the [Synapse](https://www.synapse.org/) web browser, `synapser` will automatically use your login credentials to log you in during your R session! All you have to do is:
 
-```{r synlogin, results = "hide"}
+```{r synlogin, include=FALSE}
 
 synLogin()
 ```
@@ -70,7 +70,7 @@ synLogin()
 >
 > In the code below, replace the \<\> with your Synapse username and password.
 >
-> ```{r eval = FALSE}
+> ```{r eval=FALSE, include=FALSE}
 > >
 > synLogin("<username>", "<password>")
 > ```
@@ -79,7 +79,7 @@ synLogin()
 >
 > If you usually log in to Synapse with your Google account, you will need to use a Synapser Personal Access Token (PAT) to log in with the R client. Follow these instructions to [generate a personal access token](https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin), then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.
 >
-> ```{r eval = FALSE}
+> ```{r eval=FALSE, include=FALSE}
 > >
 > synLogin(authToken = "<paste your personal access token here>")
 > ```
@@ -104,7 +104,7 @@ This filters the table to a single file. In the "Id" column for this `htseqcount
 
 We can then use that synID to download the file.
 
-```{r single-synGet, results = "hide"}
+```{r single-synGet}
 
 counts_id <- "syn22108847"
 synGet(counts_id, downloadLocation = "files/")
@@ -128,11 +128,9 @@ The function `synTableQuery()` returns a Synapse object wrapper around a CSV fil
 # download the results of the filtered table query
 query <- synTableQuery("SELECT * FROM syn11346063.36 WHERE ( ( `study` HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( `resourceType` = 'metadata' ) )")
 
-```
-
-```{r query-filepath}
-
+# view the file path of the resulting csv
 query$filepath
+
 ```
 
 We'll use `read.csv` to read the CSV file into R (although the provided `read.table` or any other base R version is also fine!). We can explore the `download_table` object and see that it contains information on all of the AD Portal data files we want to download. Some columns like the "id" and "parentId" columns contain info about where the file is in Synapse, and some columns contain AD Portal annotations for each file, like "dataType", "specimenID", and "assay". This annotation table will later allow us to link downloaded files to additional metadata variables!
@@ -273,14 +271,16 @@ If we filter for data where Study = "Jax.IU.Pitt_5XFAD" and Assay = "rnaSeq" we 
 
 #### Synapse entity annotations
 
-When we download a single fastq from this list (for this example, `synID = syn22108503`), we can see the annotations associated with that file. In the interest of saving time for this workshop, we'll set `downloadFile = "FALSE"` to get the Synapse entity (i.e. all the file information in Synapse) without actually downloading the 3GB-ish file.
+We can use the function `synGetAnnotations` to view the annotations associated with any file without downloading the file.
 
 ```{r json-single-file-annotations}
-# download the file; set "downloadFile = FALSE"
-fastq <- synGet("syn22108503", downloadFile = FALSE)
+# the synID of a random fastq file from this list
+random_fastq <- "syn22108503"
 
-# file annotations are formatted as JSON strings and are a property of the Synapse object
-fastq$annotations
+# extract the annotations as a nested list
+fastq_annotations <- synGetAnnotations(random_fastq)
+
+fastq_annotations
 ```
 
 ```{r list-single-file-annotations}
@@ -290,12 +290,13 @@ file_annotations <- synGetAnnotations(fastq)
 file_annotations
 ```
 
-The file annotations let us see which study the file is associated with (Jax.IU.Pitt.5XFAD), which species it's from (Mouse), which assay generated the file (rnaSeq), and a whole bunch of other properties. Most importantly, single-specimen files are annotated with with the specimenID of the specimen in the file, and the individualID of the individual that specimen was taken from. We can use these annotations to link files to the rest of the metadata, including metadata that is not in annotations. This is especially helpful for human studies, as potentially identifying information like age, race, and Braak score is not included in file annotations.
+The file annotations let us see which study the file is associated with (Jax.IU.Pitt.5XFAD), which species it's from (Mouse), which assay generated the file (rnaSeq), and a whole bunch of other properties. Most importantly, single-specimen files are annotated with with the specimenID of the specimen in the file, and the individualID of the individual that specimen was taken from. We can use these annotations to link files to the rest of the metadata, including metadata that is not in annotations. This is especially helpful for human studies, as potentially identifying information like age, race, and diagnosis is not included in file annotations.
 
 ```{r join-annotations-to-metadata}
+
 # find records belonging to the individual this file maps to in our joined metadata
 joined_meta %>% 
-  filter(individualID == file_annotations$individualID[[1]])
+  filter(individualID == fastq_annotations$individualID[[1]])
 ```
 
 #### Annotations during bulk download
@@ -305,8 +306,9 @@ When bulk downloading many files, the best practice is to preserve the download 
 If we use the "Programmatic Options" tab in the AD Portal download menu to download all 148 rnaSeq files from the 5XFAD study, we would get a table query that looks like this:
 
 ```{r all-rnaseq-portal-query}
-#
-query <- synTableQuery("SELECT * FROM syn11346063.17 WHERE ( ( \"assay\" = 'rnaSeq' ) AND ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) )")
+
+query <- synTableQuery("SELECT * FROM syn11346063.36 WHERE ( ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( \"assay\" HAS ( 'rnaSeq' ) ) )")
+
 ```
 
 As we saw previously, this downloads a csv file with the results of our AD Portal query. Opening that file lets us see which specimens are associated with which files:
@@ -434,7 +436,7 @@ Transform the ensemblIDs in the matrix to common gene names, using the R package
 
 We will use the two custom functions below to convert ensemblIDs to gene names:
 
-```{r gene-name-conversion-functions}
+```{r gene-name-conversion-functions, eval=FALSE, include=FALSE}
 #this function uses biomaRt and converts ensemblIDs to HGNC names
 convertEnsemblToHgnc <- function(ensemblIds){
   ensembl=biomaRt::useMart('ENSEMBL_MART_ENSEMBL',
@@ -464,10 +466,10 @@ Make.Gene.Symb <- function(GeneENSG){
 
 Call the `Make.Gene.Symb()` function to add a new column with short gene names to our counts dataframe. This will take a minute -- there are over 55k genes in our matrix!
 
-```{r convert-gene-ids}
+```{r convert-gene-ids, eval=FALSE, include=FALSE}
 # use the mutate function from dplyr
-#named_counts <- counts %>% 
-#  mutate(gene_name = Make.Gene.Symb(gene_id))
+named_counts <- counts %>% 
+  mutate(gene_name = Make.Gene.Symb(gene_id))
 ```
 
 For this demonstration, I=instead of running biomaRt, which can be unreliable at times and take a long time to render, we will append a dataframe to our counts matrix with short gene names already translated
