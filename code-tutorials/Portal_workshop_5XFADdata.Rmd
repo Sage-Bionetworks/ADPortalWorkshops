@@ -34,7 +34,7 @@ install.packages("tidyverse")
 
 We will also use the BioconductoR package manager to install `biomaRt`, which will help us with gene count data later.
 
-```{r install-biomaRt, message=FALSE, warning = FALSE}
+```{r install-biomaRt, eval = FALSE}
 #install.packages("XML")
 
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -283,13 +283,6 @@ fastq_annotations <- synGetAnnotations(random_fastq)
 fastq_annotations
 ```
 
-```{r list-single-file-annotations}
-# we can use the function synGetAnnotations() to extract the annotations as a nested list
-file_annotations <- synGetAnnotations(fastq)
-
-file_annotations
-```
-
 The file annotations let us see which study the file is associated with (Jax.IU.Pitt.5XFAD), which species it's from (Mouse), which assay generated the file (rnaSeq), and a whole bunch of other properties. Most importantly, single-specimen files are annotated with with the specimenID of the specimen in the file, and the individualID of the individual that specimen was taken from. We can use these annotations to link files to the rest of the metadata, including metadata that is not in annotations. This is especially helpful for human studies, as potentially identifying information like age, race, and diagnosis is not included in file annotations.
 
 ```{r join-annotations-to-metadata}
@@ -325,9 +318,13 @@ You could then use `purrr::walk(download_table$id, ~synGet(.x, downloadLocation 
 Once you've downloaded all the files in the `id` column, you can link those files to their annotations by the `name` column.
 
 ```{r match-annotations-to-file}
-# we'll use the single fastq that we already downloaded as an example
-# if we had downloaded the actual file, we could find it in the directory and search using the filename
-# since wejust downloaded the Synapse entity wrapper object, we'll use the file name listed in the object properties
+# We'll use the "random fastq" that we got annotations for earlier
+# To avoid downloading the whole 3GB file, we'll use synGet with "downloadFile = FALSE" to get only the Synapse entity information, rather than the file. 
+# If we downloaded the actual file, we could find it in the directory and search using the filename. Since we're just downloading the Synapse entity wrapper object, we'll use the file name listed in the object properties.
+
+fastq <- synGet(random_fastq, downloadFile = FALSE)
+
+# filter the annotations table to rows that match the fastq filename
 annotations_table %>% 
   filter(name == fastq$properties$name)
 ```
@@ -432,7 +429,11 @@ counts %>%
 
 #### Convert ensembleIDs to common gene names
 
-Transform the ensemblIDs in the matrix to common gene names, using the R package `biomaRt` (note: must specify to use the mouse database, although the two genes in the 5XFAD model we identified above are humanized and won't be translated by the program).
+##### BiomaRt option:
+
+OPTIONAL: Transform the ensemblIDs in the matrix to common gene names, using the R package `biomaRt` (note: must specify to use the mouse database, although the two genes in the 5XFAD model we identified above are humanized and won't be translated by the program).
+
+**The next two code chunks will not automatically execute in this notebook because they can take a long time -- the code is included if you'd like to try this on your own.**
 
 We will use the two custom functions below to convert ensemblIDs to gene names:
 
@@ -472,7 +473,9 @@ named_counts <- counts %>%
   mutate(gene_name = Make.Gene.Symb(gene_id))
 ```
 
-For this demonstration, I=instead of running biomaRt, which can be unreliable at times and take a long time to render, we will append a dataframe to our counts matrix with short gene names already translated
+##### Pre-translated option:
+
+For this demonstration, instead of running biomaRt, which can be unreliable at times and take a long time to render, we will append a dataframe to our counts matrix with short gene names already translated
 
 ```{r}
 #ensembl_to_gene <- subset(named_counts, select=c(gene_id, gene_name))
