@@ -96,15 +96,11 @@ While you can always download data from the AD Portal website via your web brows
 
 To download a single file from the AD Knowledge Portal, you can click the linked file name to go to a page in the Synapse platform where that file is stored. Using the synID on that page, you can call the `synGet()` function from `synapser` to download the file.
 
-#### Exercise 1: Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to find processed RNAseq data from the Jax.IU.Pitt_5XFAD
+#### Exercise 1: Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to find processed RNAseq data from the Jax.IU.Pitt_5XFAD Study
 
-This should give us a list of three files. Then, if we click on the link for the `htseqcounts_5XFAD.txt` file in the AD Portal...
+This filters the table to a single file. In the "Id" column for this `htseqcounts_5XFAD.txt` file, there is a unique Synapse ID (synID).
 
-![](images/portal_file_link.png){width="300"}
-
-...it takes us to this page in Synapse:
-
-![](images/counts_synID.png){width="300"}
+![](images/Screenshot%202023-05-07%20at%2011.10.31%20AM.png){width="448"}
 
 We can then use that synID to download the file.
 
@@ -124,13 +120,13 @@ Use the facets and search bar to look for data you want to download from the AD 
 
 In the window that pops up, select the "R" tab from the top menu bar. This will display some R code that constructs a SQL query of the Synapse data table that drives the AD Knowledge Portal. This query will allow us to download only the files that meet our search criteria.
 
-![](images/download-R-instructions.png){width="500"}
+![](images/Screenshot%202023-05-07%20at%2011.17.01%20AM.png){width="411"}
 
 The function `synTableQuery()` returns a Synapse object wrapper around a CSV file that is automatically downloaded to a Synapse cache directory `.synapseCache` in your home directory. You can use `query$filepath` to see the path to the file in the Synapse cache.
 
 ```{r portal-query}
 # download the results of the filtered table query
-query <- synTableQuery("SELECT * FROM syn11346063.17 WHERE ( ( `study` HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( `resourceType` = 'metadata' ) )")
+query <- synTableQuery("SELECT * FROM syn11346063.36 WHERE ( ( `study` HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( `resourceType` = 'metadata' ) )")
 
 ```
 
@@ -141,7 +137,7 @@ query$filepath
 
 We'll use `read.csv` to read the CSV file into R (although the provided `read.table` or any other base R version is also fine!). We can explore the `download_table` object and see that it contains information on all of the AD Portal data files we want to download. Some columns like the "id" and "parentId" columns contain info about where the file is in Synapse, and some columns contain AD Portal annotations for each file, like "dataType", "specimenID", and "assay". This annotation table will later allow us to link downloaded files to additional metadata variables!
 
-```{r download-query-table}
+```{r download-query-table, paged.print=TRUE}
 # read in the table query csv file
 download_table <- read_csv(query$filepath, show_col_types = FALSE)
 
