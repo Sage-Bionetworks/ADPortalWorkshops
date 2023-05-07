@@ -6,7 +6,7 @@ output:
   html_document: 
     pandoc_args: "--self-contained"
     toc: yes
-    toc_depth: 2
+    toc_depth: 3
     df_print: paged
 ---
 
@@ -59,7 +59,7 @@ Next, you will need to log in to your Synapse account.
 
 If you are logged into the [Synapse](https://www.synapse.org/) web browser, `synapser` will automatically use your login credentials to log you in during your R session! All you have to do is:
 
-```{r synlogin, include=FALSE}
+```{r synlogin, results = "hide"}
 
 synLogin()
 ```
@@ -70,8 +70,8 @@ synLogin()
 >
 > In the code below, replace the \<\> with your Synapse username and password.
 >
-> ```{r eval=FALSE, include=FALSE}
-> >
+> ```{r eval=FALSE}
+>
 > synLogin("<username>", "<password>")
 > ```
 >
@@ -79,8 +79,8 @@ synLogin()
 >
 > If you usually log in to Synapse with your Google account, you will need to use a Synapser Personal Access Token (PAT) to log in with the R client. Follow these instructions to [generate a personal access token](https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin), then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.
 >
-> ```{r eval=FALSE, include=FALSE}
-> >
+> ```{r eval=FALSE}
+>
 > synLogin(authToken = "<paste your personal access token here>")
 > ```
 >
@@ -104,7 +104,7 @@ This filters the table to a single file. In the "Id" column for this `htseqcount
 
 We can then use that synID to download the file.
 
-```{r single-synGet}
+```{r single-synGet, results = "hide"}
 
 counts_id <- "syn22108847"
 synGet(counts_id, downloadLocation = "files/")
