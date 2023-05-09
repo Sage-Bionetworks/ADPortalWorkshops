@@ -126,7 +126,7 @@ The function `synTableQuery()` returns a Synapse object wrapper around a CSV fil
 
 ```{r portal-query}
 # download the results of the filtered table query
-query <- synTableQuery("SELECT * FROM syn11346063.36 WHERE ( ( `study` HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( `resourceType` = 'metadata' ) )")
+query <- synTableQuery("SELECT * FROM syn11346063.37 WHERE ( ( `study` HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( `resourceType` = 'metadata' ) )")
 
 # view the file path of the resulting csv
 query$filepath
@@ -300,7 +300,7 @@ If we use the "Programmatic Options" tab in the AD Portal download menu to downl
 
 ```{r all-rnaseq-portal-query}
 
-query <- synTableQuery("SELECT * FROM syn11346063.36 WHERE ( ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( \"assay\" HAS ( 'rnaSeq' ) ) )")
+query <- synTableQuery("SELECT * FROM syn11346063.37 WHERE ( ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( \"assay\" HAS ( 'rnaSeq' ) ) )")
 
 ```
 
