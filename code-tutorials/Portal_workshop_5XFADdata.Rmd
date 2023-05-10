@@ -8,6 +8,7 @@ output:
     toc: yes
     toc_depth: 3
     df_print: paged
+    keep_md: true
 ---
 
 ```{r, set-opts, include=FALSE}
