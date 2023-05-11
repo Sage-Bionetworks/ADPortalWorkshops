@@ -31,3 +31,5 @@ vignettes/*.pdf
 # downloaded files
 code-tutorials/files/*
 .DS_Store
+
+/.quarto/

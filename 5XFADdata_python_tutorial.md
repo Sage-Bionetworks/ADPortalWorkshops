@@ -95,7 +95,7 @@ The variable `counts_file` is a Synapse entity object. It has a variety of attri
 counts_file.id
 ```
 
-::: {.cell-output .cell-output-display execution_count=31}
+::: {.cell-output .cell-output-display execution_count=4}
 ```
 'syn22108847'
 ```
@@ -110,7 +110,7 @@ counts_file.id
 counts_file.path 
 ```
 
-::: {.cell-output .cell-output-display execution_count=32}
+::: {.cell-output .cell-output-display execution_count=5}
 ```
 '/Users/alinden/Desktop/sage-repos/originals/ADPortalWorkshops/files/htseqcounts_5XFAD(1).txt'
 ```
@@ -125,7 +125,7 @@ counts_file.path
 counts_file.properties.versionNumber
 ```
 
-::: {.cell-output .cell-output-display execution_count=33}
+::: {.cell-output .cell-output-display execution_count=6}
 ```
 2
 ```
@@ -156,9 +156,9 @@ query = syn.tableQuery("SELECT * FROM syn11346063.37 WHERE ( ( `study` HAS ( 'Ja
 query.filepath
 ```
 
-::: {.cell-output .cell-output-display execution_count=34}
+::: {.cell-output .cell-output-display execution_count=7}
 ```
-'/Users/alinden/.synapseCache/278/124438278/SYNAPSE_TABLE_QUERY_124438278.csv'
+'/Users/alinden/.synapseCache/769/124438769/SYNAPSE_TABLE_QUERY_124438769.csv'
 ```
 :::
 :::
@@ -174,7 +174,7 @@ download_table = pd.read_csv(query.filepath)
 download_table
 ```
 
-::: {.cell-output .cell-output-display execution_count=35}
+::: {.cell-output .cell-output-display execution_count=8}
 
 ```{=html}
 <div>
@@ -378,7 +378,7 @@ We can see from the `download_table` we got during the bulk download step that w
 download_table[['name', 'metadataType', 'assay']]
 ```
 
-::: {.cell-output .cell-output-display execution_count=37}
+::: {.cell-output .cell-output-display execution_count=10}
 
 ```{=html}
 <div>
@@ -476,7 +476,7 @@ Let's examine the data and metadata files a bit before we begin our analyses.
 counts.head()
 ```
 
-::: {.cell-output .cell-output-display execution_count=39}
+::: {.cell-output .cell-output-display execution_count=12}
 
 ```{=html}
 <div>
@@ -658,7 +658,7 @@ The data file has a column of ENSEMBL gene ids and then a bunch of columns with 
 rna_meta.head()
 ```
 
-::: {.cell-output .cell-output-display execution_count=40}
+::: {.cell-output .cell-output-display execution_count=13}
 
 ```{=html}
 <div>
@@ -789,7 +789,7 @@ spec_ids = list(rna_meta.specimenID)
 all(item in col_names for item in spec_ids)
 ```
 
-::: {.cell-output .cell-output-display execution_count=41}
+::: {.cell-output .cell-output-display execution_count=14}
 ```
 True
 ```
@@ -808,7 +808,7 @@ The assay metadata contains information about how data was generated on each sam
 rna_meta['specimenID'].nunique()
 ```
 
-::: {.cell-output .cell-output-display execution_count=42}
+::: {.cell-output .cell-output-display execution_count=15}
 ```
 72
 ```
@@ -824,7 +824,7 @@ rna_meta['specimenID'].nunique()
 rna_meta[['platform', 'sequencingBatch']].nunique()
 ```
 
-::: {.cell-output .cell-output-display execution_count=43}
+::: {.cell-output .cell-output-display execution_count=16}
 ```
 platform           1
 sequencingBatch    1
@@ -846,7 +846,7 @@ The biospecimen metadata contains specimen-level information, including organ an
 rna_meta['specimenID'].isin(bio_meta['specimenID']).value_counts()
 ```
 
-::: {.cell-output .cell-output-display execution_count=44}
+::: {.cell-output .cell-output-display execution_count=17}
 ```
 True    72
 Name: specimenID, dtype: int64
@@ -862,7 +862,7 @@ Name: specimenID, dtype: int64
 bio_meta['specimenID'].isin(rna_meta['specimenID']).value_counts()
 ```
 
-::: {.cell-output .cell-output-display execution_count=45}
+::: {.cell-output .cell-output-display execution_count=18}
 ```
 False    502
 True      72
@@ -887,7 +887,7 @@ bio_meta['individualID'].isin(ind_meta['individualID']).value_counts()
 ind_meta['genotype'].unique()
 ```
 
-::: {.cell-output .cell-output-display execution_count=46}
+::: {.cell-output .cell-output-display execution_count=19}
 ```
 array(['5XFAD_carrier', '5XFAD_noncarrier'], dtype=object)
 ```
@@ -910,7 +910,7 @@ joined_meta = rna_meta.merge(bio_meta, how = "left", on = "specimenID").merge(in
 joined_meta
 ```
 
-::: {.cell-output .cell-output-display execution_count=47}
+::: {.cell-output .cell-output-display execution_count=20}
 
 ```{=html}
 <div>
@@ -1256,7 +1256,7 @@ fastq_annotations = syn.get_annotations(random_fastq)
 fastq_annotations
 ```
 
-::: {.cell-output .cell-output-display execution_count=48}
+::: {.cell-output .cell-output-display execution_count=21}
 ```
 {'sex': ['female'],
  'assay': ['rnaSeq'],
@@ -1294,7 +1294,7 @@ The file annotations let us see which study the file is associated with (Jax.IU.
 joined_meta[(joined_meta['individualID'] == int(fastq_annotations['individualID'][0]))]
 ```
 
-::: {.cell-output .cell-output-display execution_count=49}
+::: {.cell-output .cell-output-display execution_count=22}
 
 ```{=html}
 <div>
@@ -1395,7 +1395,7 @@ annotations_table = pd.read_csv(query.filepath)
 annotations_table
 ```
 
-::: {.cell-output .cell-output-display execution_count=51}
+::: {.cell-output .cell-output-display execution_count=24}
 
 ```{=html}
 <div>
@@ -1727,7 +1727,7 @@ fastq = syn.get(random_fastq, downloadFile = False)
 annotations_table[(annotations_table['name'] == fastq.properties.name)]
 ```
 
-::: {.cell-output .cell-output-display execution_count=52}
+::: {.cell-output .cell-output-display execution_count=25}
 
 ```{=html}
 <div>
@@ -1817,7 +1817,7 @@ If we look at the processed and normalized data files in the table of 5XFAD RNAs
 annotations_table[(annotations_table['dataSubtype'].isin(['processed', 'normalized']))][['name','individualID', 'specimenID', 'isMultiSpecimen', 'dataSubtype']]
 ```
 
-::: {.cell-output .cell-output-display execution_count=53}
+::: {.cell-output .cell-output-display execution_count=26}
 
 ```{=html}
 <div>
@@ -1906,7 +1906,7 @@ transposed = transposed.reset_index()
 transposed.merge(joined_meta, how = 'left', on = 'specimenID')
 ```
 
-::: {.cell-output .cell-output-display execution_count=54}
+::: {.cell-output .cell-output-display execution_count=27}
 
 ```{=html}
 <div>
