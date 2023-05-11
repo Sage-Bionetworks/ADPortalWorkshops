@@ -1,0 +1,382 @@
+---
+title: "5XFAD_tutorial_python"
+author: "Abby Vander Linden, Sage Bionetworks"
+format: 
+  html: 
+    toc: true
+    toc-depth: 3
+execute:
+  keep-md: true
+---
+
+## Setup
+
+### Install synapseclient package
+
+If you haven't already, install `synapseclient` (the [Synapse python client](https://python-docs.synapse.org/build/html/index.html#) package) using pip from the command line.
+
+``` bash
+pip3 install --upgrade synapseclient
+```
+
+We will also use the python package `pandas` for data wrangling. If you don't have it installed, install from the command line:
+
+``` bash
+pip3 install pandas
+```
+
+Import the synapseclient and pandas libraries and create a Synapse object.
+
+```{python}
+import synapseclient
+import pandas as pd
+syn = synapseclient.Synapse()
+```
+
+### Login to Synapse
+
+Next, you will need to log in to your Synapse account.
+
+Follow these instructions to [generate a personal access token](https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin), then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.
+
+```{python}
+#| output: false
+#| eval: false
+
+syn.login(authToken = "<paste your personal access token here>")
+```
+
+For more information on managing Synapse credentials with `synapseclient`, see the documentation [here](https://python-docs.synapse.org/build/html/Credentials.html). If you have a .synapseCreds file stored in your home directory, you can simply run
+
+```{python}
+#| output: false
+syn.login()
+```
+
+------------------------------------------------------------------------
+
+## Download data
+
+While you can always download data from the AD Portal website via your web browser, it's usually faster and often more convenient to download data programmatically.
+
+### Download a single file
+
+To download a single file from the AD Knowledge Portal, you can click the linked file name to go to a page in the Synapse platform where that file is stored. Using the synID on that page, you can call the `syn.get()` function to download the file.
+
+#### Exercise 1: Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to find processed RNAseq data from the Jax.IU.Pitt_5XFAD Study
+
+This filters the table to a single file. In the "Id" column for this `htseqcounts_5XFAD.txt` file, there is a unique Synapse ID (synID).
+
+![](images/Screenshot%202023-05-07%20at%2011.10.31%20AM.png){width="448"}
+
+We can then use that synID to download the file.
+
+```{python}
+
+counts_id ="syn22108847"
+
+counts_file = syn.get(counts_id, downloadLocation = "files/")
+```
+
+The variable `counts_file` is a Synapse entity object. It has a variety of attributes, including `.path`, `.properties`, and `.annotations` that contain information about where the file is in Synapse, how it is labeled, what version it is, etc.
+
+```{python}
+# this is the entity's synID
+
+counts_file.id
+```
+
+```{python}
+# the local path where the file was download
+
+counts_file.path 
+```
+
+```{python}
+# the file version
+
+counts_file.properties.versionNumber
+```
+
+### Bulk download files {#bulk-download-files}
+
+#### Exercise 2: Use [Explore Studies](https://adknowledgeportal.synapse.org/Explore/Studies) to find all metadata files from the Jax.IU.Pitt_5XFAD study
+
+Use the facets and search bar to look for data you want to download from the AD Knowledge Portal. Once you've identified the files you want, click on the download arrow icon on the top right of the Explore Data table and select "Programmatic Options" from the drop-down menu.
+
+![](images/download-programmatic-options.png){width="300"}
+
+In the window that pops up, select the "Python" tab from the top menu bar. This will display some Python code that constructs a SQL query of the Synapse data table that drives the AD Knowledge Portal. This query will allow us to download only the files that meet our search criteria.
+
+The function `syn.tableQuery()` returns query results as CSV file that is automatically downloaded to a Synapse cache directory `.synapseCache` in your home directory. You can use `query.filepath` to see the path to the file in the Synapse cache.
+
+```{python}
+# download the results of the filtered table query
+
+query = syn.tableQuery("SELECT * FROM syn11346063.37 WHERE ( ( `study` HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( `resourceType` = 'metadata' ) )")
+
+# view the file path of the resulting csv
+
+query.filepath
+
+```
+
+We'll use the pandas function `read.csv` to read the CSV file as a data frame. We can explore the `download_table` object and see that it contains information on all of the AD Portal data files we want to download. Some columns like the "id" and "parentId" columns contain info about where the file is in Synapse, and some columns contain AD Portal annotations for each file, like "dataType", "specimenID", and "assay". This annotation table will later allow us to link downloaded files to additional metadata variables!
+
+```{python}
+# read in the table query csv file
+
+download_table = pd.read_csv(query.filepath)
+download_table
+```
+
+Finally, we can use a for loop to loop through the "id" column and apply the `syn.get()` function to each file's synID.
+
+```{python}
+# loop through the column of synIDs and download each file
+
+for id in download_table.id:
+  syn.get(id, downloadLocation = "files/")
+
+```
+
+Congratulations, you have bulk downloaded files from the AD Knowledge Portal!
+
+------------------------------------------------------------------------
+
+## Working with AD Portal metadata
+
+### Metadata basics
+
+We have now downloaded several metadata files and an RNAseq counts file from the portal. For our next exercises, we want to read those files in as R data so we can work with them.
+
+We can see from the `download_table` we got during the bulk download step that we have five metadata files. Two of these should be the individual and biospecimen files, and three of them are assay meetadata files.
+
+```{python}
+
+download_table[['name', 'metadataType', 'assay']]
+```
+
+We are only interested in RNAseq data, so we will only read in the individual, biospecimen, and RNAseq assay metadata files. We will also read in the counts data file.
+
+```{python}
+# counts matrix
+
+counts = pd.read_table("files/htseqcounts_5XFAD.txt")
+
+# individual metadata
+
+ind_meta = pd.read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv")
+
+# biospecimen metadata
+
+bio_meta = pd.read_csv("files/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv")
+
+#assay metadata
+
+rna_meta = pd.read_csv("files/Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv")
+```
+
+Let's examine the data and metadata files a bit before we begin our analyses.
+
+#### Counts data
+
+```{python}
+
+counts.head()
+```
+
+The data file has a column of ENSEMBL gene ids and then a bunch of columns with count data, where the column headers correspond to the specimenIDs. These specimenIDs should all be in the RNAseq assay metadata file, so let's check.
+
+```{python}
+
+rna_meta.head()
+```
+
+```{python}
+# check that column headers in counts file match specimenIDs in assay metadata
+
+col_names = list(counts.columns.values)[1:]
+
+spec_ids = list(rna_meta.specimenID)
+
+all(item in col_names for item in spec_ids)
+```
+
+#### Assay metadata
+
+The assay metadata contains information about how data was generated on each sample in the assay. Each specimenID represents a unique sample. We can use some tools from pandas to explore the metadata.
+
+```{python}
+# how many unique specimens were sequenced?
+
+rna_meta['specimenID'].nunique()
+
+```
+
+```{python}
+# were the samples all sequenced on the same platform, and in the same
+# sequencing batch?
+
+rna_meta[['platform', 'sequencingBatch']].nunique()
+```
+
+#### Biospecimen metadata
+
+The biospecimen metadata contains specimen-level information, including organ and tissue the specimen was taken from, how it was prepared, etc. Each specimenID is mapped to an individualID.
+
+```{python}
+# all specimens from the RNAseq assay metadata file should be in the biospecimen
+# file
+
+rna_meta['specimenID'].isin(bio_meta['specimenID']).value_counts()
+```
+
+```{python}
+# but the biospecimen file also contains specimens from different assays
+
+bio_meta['specimenID'].isin(rna_meta['specimenID']).value_counts()
+
+```
+
+#### Individual metadata
+
+The individual metadata contains information about all the individuals in the study, represented by unique individualIDs. For humans, this includes information on age, sex, race, diagnosis, etc. For MODEL-AD mouse models, the individual metadata has information on model genotypes, stock numbers, diet, and more.
+
+```{python}
+# all individualIDs in the biospecimen file should be in the individual file
+
+bio_meta['individualID'].isin(ind_meta['individualID']).value_counts()
+
+# which model genotypes are in this study?
+
+ind_meta['genotype'].unique()
+```
+
+#### Joining metadata
+
+We use the three-file structure for our metadata because it allows us to store metadata for each study in a tidy format. Every line in the assay and biospecimen files represents a unique specimen, and every line in the individual file represents a unique individual. This means the files can be easily joined by specimenID and individualID to get all levels of metadata that apply to a particular data file. We will use the `merge()` function from `pandas`, with the `how = "left"` option to specify a left join.
+
+```{python}
+# join all the rows in the assay metadata that have a match in the biospecimen
+# metadata, then join all the rows in that dataframe to all rows that have a
+# match in the individual metadata
+
+joined_meta = rna_meta.merge(bio_meta, how = "left", on = "specimenID").merge(ind_meta, how = "left", on = "individualID")
+
+joined_meta
+```
+
+We now have a very wide dataframe that contains all the available metadata on each specimen in the RNAseq data from this study. This procedure can be used to join the three types of metadata files for every study in the AD Knowledge Portal, allowing you to filter individuals and specimens as needed based on your analysis criteria!
+
+### Single-specimen files
+
+For files that contain data from a single specimen (e.g. raw sequencing files, raw mass spectra, etc.), we can use the Synapse annotations to associate these files with the appropriate metadata.
+
+#### Excercise 3: Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to find *all* RNAseq files from the Jax.IU.Pitt_5XFAD study.
+
+If we filter for data where Study = "Jax.IU.Pitt_5XFAD" and Assay = "rnaSeq" we will get a list of 148 files, including raw fastqs and processed counts data.
+
+#### Synapse entity annotations
+
+We can use the function `syn.get_annotations()` to view the annotations associated with any file without downloading the file.
+
+```{python}
+# the synID of a random fastq file from our filtered search of fastq files
+
+random_fastq = "syn22108503"
+
+# extract the annotations as a dict
+
+fastq_annotations = syn.get_annotations(random_fastq)
+
+fastq_annotations
+```
+
+The file annotations let us see which study the file is associated with (Jax.IU.Pitt.5XFAD), which species it's from (Mouse), which assay generated the file (rnaSeq), and a whole bunch of other properties. Most importantly, single-specimen files are annotated with with the specimenID of the specimen in the file, and the individualID of the individual that specimen was taken from. We can use these annotations to link files to the rest of the metadata, including metadata that is not in annotations. This is especially helpful for human studies, as potentially identifying information like age, race, and diagnosis is not included in file annotations.
+
+```{python}
+
+# find records belonging to the individual this file maps to in our joined
+# metadata the annotation value is a string but the individualID column in the
+# metadat is type int so we have to convert
+
+joined_meta[(joined_meta['individualID'] == int(fastq_annotations['individualID'][0]))]
+
+```
+
+#### Annotations during bulk download
+
+When bulk downloading many files, the best practice is to preserve the download manifest that is generated which lists all the files, their synIDs, and all their annotations. If using the Synapse R client, follow the instructions in the [Bulk download files](#bulk-download-files) section above.
+
+If we use the "Programmatic Options" tab in the AD Portal download menu to download all 148 rnaSeq files from the 5XFAD study, we would get a table query that looks like this:
+
+```{python}
+
+query = syn.tableQuery("SELECT * FROM syn11346063.37 WHERE ( ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( \"assay\" HAS ( 'rnaSeq' ) ) )")
+
+```
+
+As we saw previously, this downloads a csv file with the results of our AD Portal query. Opening that file lets us see which specimens are associated with which files:
+
+```{python}
+
+annotations_table = pd.read_csv(query.filepath)
+
+annotations_table
+```
+
+You could then use a for loop as we did in the [Bulk download files] example to loop through the column of synIDs and download all 148 files.
+
+Once you've downloaded all the files in the `id` column, you can link those files to their annotations by the `name` column. We'll demonstrate this using the "random fastq" file that we got the annotations from earlier. To avoid downloading the whole 3GB file, we'll use `syn.get()` with `downloadFile = False` to get only the Synapse entity object rather than the file.
+
+```{python}
+
+fastq = syn.get(random_fastq, downloadFile = False)
+
+# filter the annotations table to rows that match the fastq filename
+
+annotations_table[(annotations_table['name'] == fastq.properties.name)]
+```
+
+### Multispecimen files
+
+Multispecimen files in the AD Knowledge Portal are files that contain data or information from more than one specimen. They are not annotated with individualIDs or specimenIDs, since these files may contain numbers of specimens that exceed the annotation limits. These files are usually processed or summary data (gene counts, peptide quantifications, etc), and are always annotated with `isMultiSpecimen = TRUE`.
+
+If we look at the processed and normalized data files in the table of 5XFAD RNAseq file annotations we just downloaded , we will see that it isMultiSpecimen = TRUE, but individualID and specimenID are blank:
+
+```{python}
+  
+annotations_table[(annotations_table['dataSubtype'].isin(['processed', 'normalized']))][['name','individualID', 'specimenID', 'isMultiSpecimen', 'dataSubtype']]
+
+```
+
+The multispecimen file should contain a row or column of specimenIDs that correspond to the specimenIDs used in a study's metadata, as we have seen with the 5XFAD counts file.
+
+```{python}
+# In this example, we take a slice of the counts data to reduce computation,
+# transpose it so that each row represents a single specimen, and then join it
+# to the joined metadata by the specimenID
+
+# transpose
+
+small_counts = counts.head()
+transposed = small_counts.transpose()
+
+# make geneIDs column headers
+
+transposed = transposed.rename(columns = transposed.iloc[0]).drop(transposed.index[0])
+
+# make rownames into a column of specimenIDs
+
+transposed.index.name = 'specimenID'
+transposed = transposed.reset_index()
+
+# join to metadata
+
+transposed.merge(joined_meta, how = 'left', on = 'specimenID')
+```
+
+You could now begin to compare counts of different genes across specimens from this study, perhaps grouping by sex, genotype, or age.
+
+------------------------------------------------------------------------
