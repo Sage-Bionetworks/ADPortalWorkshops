@@ -8,7 +8,7 @@
 
 <meta name="author" content="Abby Vander Linden, Sage Bionetworks">
 
-<title>5XFAD_tutorial_python</title>
+<title>AD Knowledge Portal Workshop: Download and explore 5XFAD mouse data in Python</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -164,7 +164,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">5XFAD_tutorial_python</h1>
+<h1 class="title">AD Knowledge Portal Workshop: Download and explore 5XFAD mouse data in Python</h1>
 </div>
 
 
@@ -178,6 +178,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
           </div>
   </div>
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">Invalid Date</p>
+    </div>
+  </div>
   
     
   </div>
@@ -274,7 +280,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>query.filepath</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
-<pre><code>'/Users/alinden/.synapseCache/769/124438769/SYNAPSE_TABLE_QUERY_124438769.csv'</code></pre>
+<pre><code>'/Users/alinden/.synapseCache/240/124439240/SYNAPSE_TABLE_QUERY_124439240.csv'</code></pre>
 </div>
 </div>
 <p>We’ll use the pandas function <code>read.csv</code> to read the CSV file as a data frame. We can explore the <code>download_table</code> object and see that it contains information on all of the AD Portal data files we want to download. Some columns like the “id” and “parentId” columns contain info about where the file is in Synapse, and some columns contain AD Portal annotations for each file, like “dataType”, “specimenID”, and “assay”. This annotation table will later allow us to link downloaded files to additional metadata variables!</p>

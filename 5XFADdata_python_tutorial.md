@@ -1,6 +1,7 @@
 ---
-title: "5XFAD_tutorial_python"
+title: "AD Knowledge Portal Workshop: Download and explore 5XFAD mouse data in Python"
 author: "Abby Vander Linden, Sage Bionetworks"
+date: "`r Sys.Date()`"
 format: 
   html: 
     toc: true
@@ -158,7 +159,7 @@ query.filepath
 
 ::: {.cell-output .cell-output-display execution_count=7}
 ```
-'/Users/alinden/.synapseCache/769/124438769/SYNAPSE_TABLE_QUERY_124438769.csv'
+'/Users/alinden/.synapseCache/240/124439240/SYNAPSE_TABLE_QUERY_124439240.csv'
 ```
 :::
 :::
