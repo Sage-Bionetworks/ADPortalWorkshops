@@ -5,16 +5,16 @@ output:
     df_print: paged
 ---
 
-Author: Ravi Pandey, Jackson Laboratories
+Author: adapted from code written by Ravi Pandey, Jackson Laboratories
 
-The following data is obtained from The Jax.IU.Pitt_5XFAD Study (Jax.IU.Pitt_5XFAD), found here: syn21983020
-and here: https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage/StudyData?Study=syn21983020
+The following data is obtained from The Jax.IU.Pitt_5XFAD Study (Jax.IU.Pitt_5XFAD), found here: syn21983020 and here: <https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage/StudyData?Study=syn21983020>
 
 ```{r, set-opts, include=FALSE}
 knitr::opts_chunk$set(
   eval = TRUE
 )
 ```
+
 The following code will take the raw counts matrix you uploaded in the first part of the workshop (Portal_workshop_5xFADdata.Rmd) and the metadata file you created that also contains the specimen IDs to run a basic differential expression analysis on a single time point (12 months) in male mice. You can amend the code to compare wild type and 5XFAD mice from either sex, at any time point.
 
 We will need several new packages from Bioconductor to run this analysis
@@ -50,8 +50,7 @@ counts <- read.delim("files/htseqcounts_5XFAD.txt", check.names = FALSE)
 head(counts)
 ```
 
-Upload the three metadata files we need, in order to join specimen IDs from the counts matrix to individual IDs in the clinical metadata 
-(Note: you could use the 'covars' file you created in the previous exercise)
+Upload the three metadata files we need, in order to join specimen IDs from the counts matrix to individual IDs in the clinical metadata (Note: you could use the 'covars' file you created in the previous exercise)
 
 ```{r}
 #upload the three metadata files we need and join them (or use 'covars' from Portal_workshop_5XFADdata.Rmd)
@@ -106,7 +105,11 @@ Select the covariates needed for the analysis
 ```{r}
 covars <- joined_meta_time %>% 
   dplyr::select(individualID, specimenID, sex, genotype, timepoint)
+```
 
+PICK UP HERE TO REUSE DATAFRAMES GENERATED IN 5XFAD_data_R_tutorial.qmd
+
+```{r}
 # coerce covars into a dataframe, label the rows by specimenID, and check the result
 covars <- as.data.frame(covars)
 rownames(covars) <- covars$specimenID
@@ -176,7 +179,7 @@ All_res[2, "symbol"] <- "APP"
 head(All_res)
 ```
 
-Volcano plot of differential expression results: all genes with p < 0.05 and log2FC > 0.1
+Volcano plot of differential expression results: all genes with p \< 0.05 and log2FC \> 0.1
 
 ```{r}
   plot_DEGvolcano <- EnhancedVolcano(All_res,
