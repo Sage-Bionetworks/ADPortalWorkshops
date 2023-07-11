@@ -171,7 +171,10 @@ We are only interested in RNAseq data, so we will only read in the individual, b
 counts <- read_tsv("files/htseqcounts_5XFAD.txt", show_col_types = FALSE)
 
 # individual metadata
-ind_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv", show_col_types = FALSE)
+#ind_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv", show_col_types = FALSE)
+#The individual metadata file was recently updated and has some errors and changed some column headings. While we sort this out, I am going to upload an older version (version 3):
+ind_meta_object <- synGet(entity = 'syn22103212', version=3)
+ind_meta <- read.csv(ind_meta_object$path)
 
 # biospecimen metadata
 bio_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv", show_col_types = FALSE)
