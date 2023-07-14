@@ -7,13 +7,11 @@ format:
     toc: true
     toc-depth: 3
     df-print: paged
-execute:
-  keep-md: true
-# knit: (function(input_file, encoding) {
-#   out_dir <- 'docs';
-#   rmarkdown::render(input_file,
-#     encoding=encoding,
-#     output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
+knit: (function(input_file, encoding) {
+   out_dir <- 'docs';
+   rmarkdown::render(input_file,
+     encoding=encoding,
+     output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
 ---
 
 ```{r, set-opts, include=FALSE}
