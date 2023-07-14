@@ -5,7 +5,7 @@ output:
     df_print: paged
 ---
 
-Author: adapted from code written by Ravi Pandey, Jackson Laboratories
+Author: Laura Heath, adapted from code written by Ravi Pandey, Jackson Laboratories
 
 The following data is obtained from The Jax.IU.Pitt_5XFAD Study (Jax.IU.Pitt_5XFAD), found here: syn21983020 and here: <https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage/StudyData?Study=syn21983020>
 
@@ -19,7 +19,7 @@ The following code will take the raw counts matrix you uploaded in the first par
 
 We will need several new packages from Bioconductor to run this analysis
 
-```{r}
+```{r, eval = FALSE}
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
