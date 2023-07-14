@@ -70,7 +70,6 @@ If you are logged into the [Synapse](https://www.synapse.org/) web browser, `syn
 synLogin()
 ```
 
-
 #### Login option 2: Synapse PAT
 
 Follow these instructions to [generate a Personal Access Token](https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin), then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.
@@ -211,12 +210,10 @@ The assay metadata contains information about how data was generated on each sam
 n_distinct(rna_meta$specimenID)
 ```
 
-
 ```{r}
 # were the samples all sequenced on the same platform?
 distinct(rna_meta, platform)
 ```
-
 
 ```{r}
 # were there multiple sequencing batches reported?
@@ -232,7 +229,6 @@ The biospecimen metadata contains specimen-level information, including organ an
 all(rna_meta$specimenID %in% bio_meta$specimenID)
 ```
 
-
 ```{r}
 # but the biospecimen file also contains specimens from different assays
 all(bio_meta$specimenID %in% rna_meta$specimenID)
@@ -247,7 +243,6 @@ The individual metadata contains information about all the individuals in the st
 # all individualIDs in the biospecimen file should be in the individual file
 all(bio_meta$individualID %in% ind_meta$individualID)
 ```
-
 
 ```{r}
 # which model genotypes are in this study?
