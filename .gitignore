@@ -30,6 +30,7 @@ vignettes/*.pdf
 *.Rproj
 # downloaded files
 code-tutorials/files/*
+files/*
 .DS_Store
 
 /.quarto/
