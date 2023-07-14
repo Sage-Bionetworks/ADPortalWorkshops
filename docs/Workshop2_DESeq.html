@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.353">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Differential Analysis of 5xFAD mouse models</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-search-results"></div>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Differential Analysis of 5xFAD mouse models</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<p>Author: Laura Heath, adapted from code written by Ravi Pandey, Jackson Laboratories</p>
+<p>The following data is obtained from The Jax.IU.Pitt_5XFAD Study (Jax.IU.Pitt_5XFAD), found here: syn21983020 and here: <a href="https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage/StudyData?Study=syn21983020" class="uri">https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage/StudyData?Study=syn21983020</a></p>
+<p>The following code will take the raw counts matrix you uploaded in the first part of the workshop (Portal_workshop_5xFADdata.Rmd) and the metadata file you created that also contains the specimen IDs to run a basic differential expression analysis on a single time point (12 months) in male mice. You can amend the code to compare wild type and 5XFAD mice from either sex, at any time point.</p>
+<p>We will need several new packages from Bioconductor to run this analysis</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">"BiocManager"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">install.packages</span>(<span class="st">"BiocManager"</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="fu">c</span>(<span class="st">"DESeq2"</span>, <span class="st">"org.Mm.eg.db"</span>,<span class="st">"GO.db"</span>, <span class="st">"EnhancedVolcano"</span>, <span class="st">"AnnotationDbi"</span>))</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">#install.packages(c("tidyverse", "ggplot2", "dplyr"))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DESeq2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: S4Vectors</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: stats4</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: BiocGenerics</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'BiocGenerics'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:stats':
+
+    IQR, mad, sd, var, xtabs</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:base':
+
+    anyDuplicated, aperm, append, as.data.frame, basename, cbind,
+    colnames, dirname, do.call, duplicated, eval, evalq, Filter, Find,
+    get, grep, grepl, intersect, is.unsorted, lapply, Map, mapply,
+    match, mget, order, paste, pmax, pmax.int, pmin, pmin.int,
+    Position, rank, rbind, Reduce, rownames, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which.max, which.min</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'S4Vectors'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:base':
+
+    expand.grid, I, unname</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: IRanges</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: GenomicRanges</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: GenomeInfoDb</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: SummarizedExperiment</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: MatrixGenerics</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: matrixStats</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'MatrixGenerics'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:matrixStats':
+
+    colAlls, colAnyNAs, colAnys, colAvgsPerRowSet, colCollapse,
+    colCounts, colCummaxs, colCummins, colCumprods, colCumsums,
+    colDiffs, colIQRDiffs, colIQRs, colLogSumExps, colMadDiffs,
+    colMads, colMaxs, colMeans2, colMedians, colMins, colOrderStats,
+    colProds, colQuantiles, colRanges, colRanks, colSdDiffs, colSds,
+    colSums2, colTabulates, colVarDiffs, colVars, colWeightedMads,
+    colWeightedMeans, colWeightedMedians, colWeightedSds,
+    colWeightedVars, rowAlls, rowAnyNAs, rowAnys, rowAvgsPerColSet,
+    rowCollapse, rowCounts, rowCummaxs, rowCummins, rowCumprods,
+    rowCumsums, rowDiffs, rowIQRDiffs, rowIQRs, rowLogSumExps,
+    rowMadDiffs, rowMads, rowMaxs, rowMeans2, rowMedians, rowMins,
+    rowOrderStats, rowProds, rowQuantiles, rowRanges, rowRanks,
+    rowSdDiffs, rowSds, rowSums2, rowTabulates, rowVarDiffs, rowVars,
+    rowWeightedMads, rowWeightedMeans, rowWeightedMedians,
+    rowWeightedSds, rowWeightedVars</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: Biobase</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Welcome to Bioconductor
+
+    Vignettes contain introductory material; view with
+    'browseVignettes()'. To cite Bioconductor, see
+    'citation("Biobase")', and for packages 'citation("pkgname")'.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'Biobase'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:MatrixGenerics':
+
+    rowMedians</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:matrixStats':
+
+    anyMissing, rowMedians</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(AnnotationDbi)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(org.Mm.eg.db)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code></code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(GO.db)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code></code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(EnhancedVolcano)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: ggrepel</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.0     ✔ readr     2.1.4
+✔ forcats   1.0.0     ✔ stringr   1.5.0
+✔ lubridate 1.9.2     ✔ tibble    3.1.8
+✔ purrr     1.0.1     ✔ tidyr     1.3.0</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ lubridate::%within%() masks IRanges::%within%()
+✖ dplyr::collapse()     masks IRanges::collapse()
+✖ dplyr::combine()      masks Biobase::combine(), BiocGenerics::combine()
+✖ dplyr::count()        masks matrixStats::count()
+✖ dplyr::desc()         masks IRanges::desc()
+✖ tidyr::expand()       masks S4Vectors::expand()
+✖ dplyr::filter()       masks stats::filter()
+✖ dplyr::first()        masks S4Vectors::first()
+✖ dplyr::lag()          masks stats::lag()
+✖ ggplot2::Position()   masks BiocGenerics::Position(), base::Position()
+✖ purrr::reduce()       masks GenomicRanges::reduce(), IRanges::reduce()
+✖ dplyr::rename()       masks S4Vectors::rename()
+✖ lubridate::second()   masks S4Vectors::second()
+✖ lubridate::second&lt;-() masks S4Vectors::second&lt;-()
+✖ dplyr::select()       masks AnnotationDbi::select()
+✖ dplyr::slice()        masks IRanges::slice()
+ℹ Use the ]8;;http://conflicted.r-lib.org/conflicted package]8;; to force all conflicts to become errors</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(synapser)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+New synapser version detected:
+    You are using synapser version 1.0.59.
+    synapser version 1.1.0.119 is detected at http://ran.synapse.org.
+    To upgrade to the latest version of synapser, please run the following command:
+    install.packages("synapser", repos="http://ran.synapse.org")
+
+
+TERMS OF USE NOTICE:
+  When using Synapse, remember that the terms and conditions of use require that you:
+  1) Attribute data contributors when discussing these data or results from these data.
+  2) Not discriminate, identify, or recontact individuals or groups represented by the data.
+  3) Use and contribute only data de-identified to HIPAA standards.
+  4) Redistribute data only under these same terms of use.</code></pre>
+</div>
+</div>
+<p>You can use the original counts matrix you uploaded in the Portal_workshop_5XFADdata.Rmd, along with the subsetted metadata file with covariates of interest (‘covars’)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">synLogin</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>NULL</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>counts_id <span class="ot">&lt;-</span> <span class="st">"syn22108847"</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="fu">synGet</span>(counts_id, <span class="at">downloadLocation =</span> <span class="st">"files/"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>File(consortium=['MODEL-AD'], dataType=['geneExpression'], isModelSystem=[False], name='htseqcounts_5XFAD.txt', path='/Users/alinden/Desktop/sage-repos/originals/ADPortalWorkshops/files/htseqcounts_5XFAD.txt', tissue=['right cerebral hemisphere'], id='syn22108847', modifiedOn='2023-05-19T20:43:30.219Z', study=['Jax.IU.Pitt_5XFAD'], createdBy='3347528', resourceType=['experimentalData'], versionLabel='2', isLatestVersion=True, cacheDir='/Users/alinden/Desktop/sage-repos/originals/ADPortalWorkshops/files', modifiedBy='3427512', nucleicAcidSource=['bulk cell'], grant=['U54AG054345'], fileFormat=['txt'], dataFileHandleId='75357567', etag='b73bc1b8-2af8-48ce-a51b-ea6ded5624b5', versionNumber=2, files=['htseqcounts_5XFAD.txt'], createdOn='2020-05-31T02:43:27.937Z', synapseStore=True, isMultiSpecimen=[False], _file_handle={'id': '75357567', 'etag': '409fa46a-4f31-4cf8-8133-e3deb6511437', 'createdBy': '3417412', 'createdOn': '2021-04-26T08:20:13.000Z', 'modifiedOn': '2021-04-26T08:20:13.000Z', 'concreteType': 'org.sagebionetworks.repo.model.file.S3FileHandle', 'contentType': 'text/plain', 'contentMd5': '72e2ed951e541c5ba93a37465f056d7a', 'fileName': 'htseqcounts_5XFAD.txt', 'storageLocationId': 41208, 'contentSize': 12803625, 'status': 'AVAILABLE', 'bucketName': 'ad-knowledge-portal-main', 'key': 'data/3417412/60d0db76-ca8c-458d-91fc-b4b9f9dd470a/htseqcounts_5XFAD.txt', 'previewId': '75357569', 'isPreview': False, 'externalURL': None}, concreteType='org.sagebionetworks.repo.model.FileEntity', parentId='syn22323073', assay=['rnaSeq'], dataSubtype=['processed'], modelSystemType=['animal'], organ=['brain'])</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>counts <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="st">"files/htseqcounts_5XFAD.txt"</span>, <span class="at">check.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(counts)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>             gene_id 32043rh 32044rh 32046rh 32047rh 32048rh 32049rh 32050rh
+1    ENSG00000080815   22554       0       0       0   16700       0       0
+2    ENSG00000142192  344489       4       0       1  260935       6       8
+3 ENSMUSG00000000001    5061    3483    3941    3088    2756    3067    2711
+4 ENSMUSG00000000003       0       0       0       0       0       0       0
+5 ENSMUSG00000000028     208     162     138     127      95     154     165
+6 ENSMUSG00000000031      44      17      14      28      23      24      14
+  32052rh 32053rh 32057rh 32059rh 32061rh 32062rh 32065rh 32067rh 32068rh
+1   19748   14023       0   17062       0   15986      10       0   18584
+2  337456  206851       1  264748       0  252248     172       4  300398
+3    3334    3841    4068    3306    4076    3732    3940    4238    3257
+4       0       0       0       0       0       0       0       0       0
+5     124     103     164     116     108     134     204     239     148
+6      30      24      35      41      40      32      34      47      22
+  32070rh 32073rh 32074rh 32075rh 32078rh 32081rh 32088rh 32640rh 46105rh
+1       1       0       0   22783   17029   16626   15573   12721       4
+2       4       2       9  342655  280968  258597  243373  188818      19
+3    3351    3449    4654    4844    3132    3334    3639    3355    4191
+4       0       0       0       0       0       0       0       0       0
+5     159     167     157     211     162     149     160     103     158
+6      52      21      13      58      18      35      19      43     103
+  46106rh 46107rh 46108rh 46109rh 46110rh 46111rh 46112rh 46113rh 46115rh
+1       0       0       0       0       0   17931       0   19087       0
+2       0       0       1       5       1  293409       8  273704       1
+3    3058    4265    3248    3638    3747    3971    3192    3805    3753
+4       0       0       0       0       0       0       0       0       0
+5     167     199     113     168     175     203     158     108     110
+6      36      32      12      24      41      52      79      33      83
+  46121rh 46131rh 46132rh 46134rh 46138rh 46141rh 46142rh 46862rh 46863rh
+1       0       0   12703   18833       0   18702   17666       0   14834
+2       0       1  187975  285048       0  284499  250600       0  218494
+3    4134    3059    3116    3853    3682    2844    3466    3442    3300
+4       0       0       0       0       0       0       0       0       0
+5     179     137     145     183     171     138      88     154     157
+6      53      14      19      34      38      73      46      30      37
+  46865rh 46866rh 46867rh 46868rh 46871rh 46872rh 46873rh 46874rh 46875rh
+1   10546   10830   10316   10638   15248       0       0   11608   11561
+2  169516  152769  151732  190150  229063       6       1  165941  171303
+3    3242    3872    3656    3739    3473    3154    5510    3657    4121
+4       0       0       0       0       0       0       0       0       0
+5     131     152     152     155     140      80     240     148     112
+6      74      36      21      66      27      30      43      31      28
+  46876rh 46877rh 46878rh 46879rh 46881rh 46882rh 46883rh 46884rh 46885rh
+1       0       0   12683   15613       0   14084   20753       0       0
+2       0       2  183058  216122       0  199448  306081       0       5
+3    3422    3829    3996    4324    2592    2606    4600    2913    3614
+4       0       0       0       0       0       0       0       0       0
+5     147     166     169     215     115     101     174     127     151
+6      20      26      43      43      21      27      48      29      29
+  46886rh 46887rh 46888rh 46889rh 46890rh 46891rh 46892rh 46893rh 46895rh
+1   16639   16072       0   16680   13367       0   25119      92       0
+2  242543  258061       0  235530  196721       0  371037    1116       0
+3    3294    3719    3899    4173    4008    3037    5967    3459    4262
+4       0       0       0       0       0       0       0       0       0
+5     139     128     210     127     156     116     260     161     189
+6      21      34      25      45      67      24      60      45      41
+  46896rh 46897rh
+1   15934       0
+2  235343       6
+3    3923    3486
+4       0       0
+5     179     117
+6      58      28</code></pre>
+</div>
+</div>
+<p>Upload the three metadata files we need, in order to join specimen IDs from the counts matrix to individual IDs in the clinical metadata (Note: you could use the ‘covars’ file you created in the previous exercise)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co">#upload the three metadata files we need and join them (or use 'covars' from Portal_workshop_5XFADdata.Rmd)</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>rna_metaID <span class="ot">&lt;-</span> <span class="st">"syn22110328"</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="fu">synGet</span>(rna_metaID, <span class="at">downloadLocation =</span> <span class="st">"files/"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>File(consortium=['MODEL-AD'], path='/Users/alinden/Desktop/sage-repos/originals/ADPortalWorkshops/files/Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv', createdOn='2020-05-31T20:38:13.220Z', dataType=['geneExpression'], metadataType=['assay'], isModelSystem=[False], files=['Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv'], study=['Jax.IU.Pitt_5XFAD'], createdBy='3347528', fileFormat=['csv'], isLatestVersion=True, cacheDir='/Users/alinden/Desktop/sage-repos/originals/ADPortalWorkshops/files', name='Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv', versionLabel='4', modifiedBy='3427512', grant=['U54AG054345'], modifiedOn='2023-05-19T20:43:30.418Z', versionNumber=4, _file_handle={'id': '75357585', 'etag': '9c34f6ea-5e65-440c-a4cb-5eeb985bd947', 'createdBy': '3417412', 'createdOn': '2021-04-26T08:20:25.000Z', 'modifiedOn': '2021-04-26T08:20:25.000Z', 'concreteType': 'org.sagebionetworks.repo.model.file.S3FileHandle', 'contentType': 'text/csv', 'contentMd5': '7bfeb136cc94cae8cebfbd4a0f2e72cb', 'fileName': 'Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv', 'storageLocationId': 41208, 'contentSize': 5476, 'status': 'AVAILABLE', 'bucketName': 'ad-knowledge-portal-main', 'key': 'data/3417412/38a12b9b-9744-4f2c-bcfe-fdfa377cfb9a/Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv', 'previewId': '75357590', 'isPreview': False, 'externalURL': None}, etag='69fc8a06-b928-4f37-969d-47c7aa4c1ca1', id='syn22110328', resourceType=['metadata'], synapseStore=True, concreteType='org.sagebionetworks.repo.model.FileEntity', parentId='syn21983022', dataFileHandleId='75357585', assay=['rnaSeq'], modelSystemType=['animal'])</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>rna_meta <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"files/Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>bio_metaID <span class="ot">&lt;-</span> <span class="st">"syn22103213"</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a><span class="fu">synGet</span>(bio_metaID, <span class="at">downloadLocation =</span> <span class="st">"files/"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>File(consortium=['MODEL-AD'], isModelSystem=[False], path='/Users/alinden/Desktop/sage-repos/originals/ADPortalWorkshops/files/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv', study=['Jax.IU.Pitt_5XFAD'], files=['Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv'], fileFormat=['csv'], metadataType=['biospecimen'], modifiedOn='2023-05-19T20:43:19.849Z', _file_handle={'id': '75356382', 'etag': '2d04cb02-73ed-4702-b646-5ce724fb2985', 'createdBy': '3417412', 'createdOn': '2021-04-26T05:54:39.000Z', 'modifiedOn': '2021-04-26T05:54:39.000Z', 'concreteType': 'org.sagebionetworks.repo.model.file.S3FileHandle', 'contentType': 'text/csv', 'contentMd5': 'a7d5a4733df4948daaad8078dfd9b835', 'fileName': 'Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv', 'storageLocationId': 41208, 'contentSize': 36929, 'status': 'AVAILABLE', 'bucketName': 'ad-knowledge-portal-main', 'key': 'data/3417412/d3fc54fe-0bd9-4a0b-b64f-e08da782c25a/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv', 'previewId': '75356385', 'isPreview': False, 'externalURL': None}, cacheDir='/Users/alinden/Desktop/sage-repos/originals/ADPortalWorkshops/files', isLatestVersion=True, name='Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv', modifiedBy='3427512', grant=['U54AG054345'], etag='248c214b-5d5c-4e36-9aa6-127e9180e412', dataFileHandleId='75356382', id='syn22103213', resourceType=['metadata'], synapseStore=True, createdOn='2020-05-28T17:36:33.824Z', concreteType='org.sagebionetworks.repo.model.FileEntity', parentId='syn21983022', createdBy='3346982', versionLabel='3', modelSystemType=['animal'], versionNumber=3)</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>bio_meta <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"files/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>ind_metaID <span class="ot">&lt;-</span> <span class="st">"syn22103212"</span></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a><span class="fu">synGet</span>(ind_metaID, <span class="at">downloadLocation =</span> <span class="st">"files/"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>File(study=['Jax.IU.Pitt_5XFAD'], etag='b2c027b9-c62a-444b-ade1-abca9c99da2a', dataFileHandleId='124762661', isLatestVersion=True, cacheDir='/Users/alinden/Desktop/sage-repos/originals/ADPortalWorkshops/files', modifiedOn='2023-06-01T18:05:16.052Z', versionLabel='4', name='Jax.IU.Pitt_5XFAD_individual_metadata.csv', modifiedBy='3427512', versionNumber=4, metadataType=['individual'], createdOn='2020-05-28T17:36:32.156Z', resourceType=['metadata'], synapseStore=True, files=['Jax.IU.Pitt_5XFAD_individual_metadata(1).csv'], _file_handle={'id': '124762661', 'etag': 'fbf74349-e88e-4dbb-b5af-8f30c007665b', 'createdBy': '3427512', 'createdOn': '2023-05-19T20:43:50.000Z', 'modifiedOn': '2023-05-19T20:43:50.000Z', 'concreteType': 'org.sagebionetworks.repo.model.file.S3FileHandle', 'contentType': 'text/csv', 'contentMd5': '7b66876f4306b102691f7f8eee781f83', 'fileName': 'Jax.IU.Pitt_5XFAD_individual_metadata.csv', 'storageLocationId': 41208, 'contentSize': 39725, 'status': 'AVAILABLE', 'bucketName': 'ad-knowledge-portal-main', 'key': 'data/3427512/328ad101-e935-43d1-9f01-aa0985bbb14d/Jax.IU.Pitt_5XFAD_individual_metadata.csv', 'previewId': '124762662', 'isPreview': False, 'externalURL': None}, concreteType='org.sagebionetworks.repo.model.FileEntity', path='/Users/alinden/Desktop/sage-repos/originals/ADPortalWorkshops/files/Jax.IU.Pitt_5XFAD_individual_metadata(1).csv', parentId='syn21983022', createdBy='3346982', id='syn22103212')</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>ind_meta <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"files/Jax.IU.Pitt_5XFAD_individual_metadata.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Join the three metadata files by IDs in common</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="co">#join the metadata files</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>joined_meta <span class="ot">&lt;-</span> rna_meta <span class="sc">%&gt;%</span> <span class="co">#start with the rnaseq assay metadata</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(bio_meta, <span class="at">by =</span> <span class="st">"specimenID"</span>) <span class="sc">%&gt;%</span>  <span class="co">#join rows from biospecimen that match specimenID </span></span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ind_meta, <span class="at">by =</span> <span class="st">"individualID"</span>) <span class="co"># join rows from individual that match individualID</span></span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>joined_meta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 72 × 56
+   speci…¹ platf…² RIN   rnaBa…³ libra…⁴ seque…⁵ libra…⁶ libra…⁷ isStr…⁸ readS…⁹
+   &lt;chr&gt;   &lt;chr&gt;   &lt;lgl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;   &lt;lgl&gt;   &lt;lgl&gt;   &lt;lgl&gt;  
+ 1 32043rh Illumi… NA          1       1       1 polyAs… NA      FALSE   NA     
+ 2 32044rh Illumi… NA          1       1       1 polyAs… NA      FALSE   NA     
+ 3 32046rh Illumi… NA          1       1       1 polyAs… NA      FALSE   NA     
+ 4 32047rh Illumi… NA          1       1       1 polyAs… NA      FALSE   NA     
+ 5 32049rh Illumi… NA          1       1       1 polyAs… NA      FALSE   NA     
+ 6 32057rh Illumi… NA          1       1       1 polyAs… NA      FALSE   NA     
+ 7 32061rh Illumi… NA          1       1       1 polyAs… NA      FALSE   NA     
+ 8 32065rh Illumi… NA          1       1       1 polyAs… NA      FALSE   NA     
+ 9 32067rh Illumi… NA          1       1       1 polyAs… NA      FALSE   NA     
+10 32070rh Illumi… NA          1       1       1 polyAs… NA      FALSE   NA     
+# … with 62 more rows, 46 more variables: runType &lt;chr&gt;, readLength &lt;dbl&gt;,
+#   individualID &lt;dbl&gt;, specimenIdSource &lt;chr&gt;, organ &lt;chr&gt;, tissue &lt;chr&gt;,
+#   BrodmannArea &lt;lgl&gt;, sampleStatus &lt;chr&gt;, tissueWeight &lt;lgl&gt;,
+#   tissueVolume &lt;lgl&gt;, nucleicAcidSource &lt;lgl&gt;, cellType &lt;lgl&gt;,
+#   fastingState &lt;lgl&gt;, isPostMortem &lt;lgl&gt;, samplingAge &lt;lgl&gt;,
+#   individualIdSource &lt;chr&gt;, species &lt;chr&gt;, sex &lt;chr&gt;, genotype &lt;chr&gt;,
+#   genotypeBackground &lt;chr&gt;, room &lt;chr&gt;, litter &lt;chr&gt;, matingID &lt;chr&gt;, …</code></pre>
+</div>
+</div>
+<p>Create a timepoint variable (Months since birth)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a><span class="co"># convert columns of strings to month-date-year format</span></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>joined_meta_time <span class="ot">&lt;-</span> joined_meta <span class="sc">%&gt;%</span> </span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dateBirth =</span> <span class="fu">mdy</span>(dateBirth), <span class="at">dateDeath =</span> <span class="fu">mdy</span>(dateDeath)) <span class="sc">%&gt;%</span> </span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># create a new column that subtracts dateBirth from dateDeath in days, then divide by 30 to get months</span></span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">timepoint =</span> <span class="fu">as.numeric</span>(<span class="fu">difftime</span>(dateDeath, dateBirth, <span class="at">units =</span><span class="st">"days"</span>))<span class="sc">/</span><span class="dv">30</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># convert numeric ages to timepoint categories</span></span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">timepoint =</span> <span class="fu">case_when</span>(timepoint <span class="sc">&gt;</span> <span class="dv">10</span> <span class="sc">~</span> <span class="st">"12 mo"</span>,</span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>                               timepoint <span class="sc">&lt;</span> <span class="dv">10</span> <span class="sc">&amp;</span> timepoint <span class="sc">&gt;</span> <span class="dv">5</span> <span class="sc">~</span> <span class="st">"6 mo"</span>,</span>
+<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>                               timepoint <span class="sc">&lt;</span> <span class="dv">5</span> <span class="sc">~</span> <span class="st">"4 mo"</span>))</span>
+<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a><span class="co"># check that the timepoint column looks ok (should be 6 mice in each group)</span></span>
+<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a>joined_meta_time <span class="sc">%&gt;%</span> </span>
+<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">group_by</span>(sex, genotype, timepoint) <span class="sc">%&gt;%</span> </span>
+<span id="cb50-16"><a href="#cb50-16" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">count</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 12 × 4
+# Groups:   sex, genotype, timepoint [12]
+   sex    genotype         timepoint     n
+   &lt;chr&gt;  &lt;chr&gt;            &lt;chr&gt;     &lt;int&gt;
+ 1 female 5XFAD_carrier    12 mo         6
+ 2 female 5XFAD_carrier    4 mo          6
+ 3 female 5XFAD_carrier    6 mo          6
+ 4 female 5XFAD_noncarrier 12 mo         6
+ 5 female 5XFAD_noncarrier 4 mo          6
+ 6 female 5XFAD_noncarrier 6 mo          6
+ 7 male   5XFAD_carrier    12 mo         6
+ 8 male   5XFAD_carrier    4 mo          6
+ 9 male   5XFAD_carrier    6 mo          6
+10 male   5XFAD_noncarrier 12 mo         6
+11 male   5XFAD_noncarrier 4 mo          6
+12 male   5XFAD_noncarrier 6 mo          6</code></pre>
+</div>
+</div>
+<p>Select the covariates needed for the analysis</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>covars <span class="ot">&lt;-</span> joined_meta_time <span class="sc">%&gt;%</span> </span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(individualID, specimenID, sex, genotype, timepoint)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>PICK UP HERE TO REUSE DATAFRAMES GENERATED IN 5XFAD_data_R_tutorial.qmd</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="co"># coerce covars into a dataframe, label the rows by specimenID, and check the result</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>covars <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(covars)</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(covars) <span class="ot">&lt;-</span> covars<span class="sc">$</span>specimenID</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>covars</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        individualID specimenID    sex         genotype timepoint
+32043rh        32043    32043rh female    5XFAD_carrier     12 mo
+32044rh        32044    32044rh   male 5XFAD_noncarrier     12 mo
+32046rh        32046    32046rh   male 5XFAD_noncarrier     12 mo
+32047rh        32047    32047rh   male 5XFAD_noncarrier     12 mo
+32049rh        32049    32049rh female 5XFAD_noncarrier     12 mo
+32057rh        32057    32057rh female 5XFAD_noncarrier     12 mo
+32061rh        32061    32061rh   male 5XFAD_noncarrier     12 mo
+32065rh        32065    32065rh female 5XFAD_noncarrier     12 mo
+32067rh        32067    32067rh female 5XFAD_noncarrier     12 mo
+32070rh        32070    32070rh female 5XFAD_noncarrier     12 mo
+32073rh        32073    32073rh   male 5XFAD_noncarrier     12 mo
+32074rh        32074    32074rh   male 5XFAD_noncarrier     12 mo
+46105rh        46105    46105rh female 5XFAD_noncarrier      6 mo
+46106rh        46106    46106rh female 5XFAD_noncarrier      6 mo
+46107rh        46107    46107rh female 5XFAD_noncarrier      6 mo
+46108rh        46108    46108rh   male 5XFAD_noncarrier      6 mo
+46109rh        46109    46109rh   male 5XFAD_noncarrier      6 mo
+46110rh        46110    46110rh   male 5XFAD_noncarrier      6 mo
+46112rh        46112    46112rh female 5XFAD_noncarrier      6 mo
+46115rh        46115    46115rh female 5XFAD_noncarrier      6 mo
+46121rh        46121    46121rh female 5XFAD_noncarrier      6 mo
+46131rh        46131    46131rh female 5XFAD_noncarrier      4 mo
+46138rh        46138    46138rh female 5XFAD_noncarrier      4 mo
+46862rh        46862    46862rh female 5XFAD_noncarrier      4 mo
+46872rh        46872    46872rh   male 5XFAD_noncarrier      6 mo
+46873rh        46873    46873rh   male 5XFAD_noncarrier      6 mo
+46876rh        46876    46876rh   male 5XFAD_noncarrier      6 mo
+46877rh        46877    46877rh   male 5XFAD_noncarrier      4 mo
+46881rh        46881    46881rh female 5XFAD_noncarrier      4 mo
+46884rh        46884    46884rh   male 5XFAD_noncarrier      4 mo
+46887rh        46887    46887rh female    5XFAD_carrier      4 mo
+46888rh        46888    46888rh   male 5XFAD_noncarrier      4 mo
+46891rh        46891    46891rh   male 5XFAD_noncarrier      4 mo
+46893rh        46893    46893rh female 5XFAD_noncarrier      4 mo
+46895rh        46895    46895rh   male 5XFAD_noncarrier      4 mo
+46897rh        46897    46897rh   male 5XFAD_noncarrier      4 mo
+32048rh        32048    32048rh female    5XFAD_carrier     12 mo
+32050rh        32050    32050rh female 5XFAD_noncarrier     12 mo
+32052rh        32052    32052rh female    5XFAD_carrier     12 mo
+32053rh        32053    32053rh   male    5XFAD_carrier     12 mo
+32059rh        32059    32059rh   male    5XFAD_carrier     12 mo
+32062rh        32062    32062rh   male    5XFAD_carrier     12 mo
+32068rh        32068    32068rh female    5XFAD_carrier     12 mo
+32075rh        32075    32075rh   male    5XFAD_carrier     12 mo
+32078rh        32078    32078rh female    5XFAD_carrier     12 mo
+32081rh        32081    32081rh female    5XFAD_carrier     12 mo
+32088rh        32088    32088rh   male    5XFAD_carrier     12 mo
+32640rh        32640    32640rh   male    5XFAD_carrier     12 mo
+46111rh        46111    46111rh female    5XFAD_carrier      6 mo
+46113rh        46113    46113rh female    5XFAD_carrier      6 mo
+46132rh        46132    46132rh female    5XFAD_carrier      6 mo
+46134rh        46134    46134rh female    5XFAD_carrier      4 mo
+46141rh        46141    46141rh female    5XFAD_carrier      4 mo
+46142rh        46142    46142rh female    5XFAD_carrier      4 mo
+46863rh        46863    46863rh female    5XFAD_carrier      6 mo
+46865rh        46865    46865rh   male    5XFAD_carrier      6 mo
+46866rh        46866    46866rh   male    5XFAD_carrier      4 mo
+46867rh        46867    46867rh   male    5XFAD_carrier      4 mo
+46868rh        46868    46868rh   male    5XFAD_carrier      4 mo
+46871rh        46871    46871rh female    5XFAD_carrier      6 mo
+46874rh        46874    46874rh   male    5XFAD_carrier      6 mo
+46875rh        46875    46875rh   male    5XFAD_carrier      6 mo
+46878rh        46878    46878rh   male    5XFAD_carrier      4 mo
+46879rh        46879    46879rh   male    5XFAD_carrier      4 mo
+46882rh        46882    46882rh female    5XFAD_carrier      4 mo
+46883rh        46883    46883rh female    5XFAD_carrier      4 mo
+46885rh        46885    46885rh female 5XFAD_noncarrier      4 mo
+46886rh        46886    46886rh female    5XFAD_carrier      6 mo
+46889rh        46889    46889rh   male    5XFAD_carrier      6 mo
+46890rh        46890    46890rh   male    5XFAD_carrier      6 mo
+46892rh        46892    46892rh   male    5XFAD_carrier      6 mo
+46896rh        46896    46896rh   male    5XFAD_carrier      4 mo</code></pre>
+</div>
+</div>
+<p>This time, we’ll use a different package to translate mouse ENSEMBL IDS to gene names. Run these two functions and they will be called up when assembling results from the differential expression analysis</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="co"># functions to extract entrezid and symbols from ENSEMBL IDs</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>map_symbol.rname <span class="ot">&lt;-</span> <span class="cf">function</span>(x){</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a><span class="fu">mapIds</span>(org.Mm.eg.db,<span class="at">keys=</span><span class="fu">row.names</span>(x),<span class="at">column=</span><span class="st">"SYMBOL"</span>,<span class="at">keytype=</span><span class="st">"ENSEMBL"</span>,<span class="at">multiVals=</span><span class="st">"first"</span>)}</span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>map_eid.rname <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {<span class="fu">mapIds</span>(org.Mm.eg.db,<span class="at">keys=</span><span class="fu">row.names</span>(x),<span class="at">column=</span><span class="st">"ENTREZID"</span>,<span class="at">keytype=</span><span class="st">"ENSEMBL"</span>,<span class="at">multiVals=</span><span class="st">"first"</span>)}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Order the data (counts columns and metadata rows MUST be in the same order), and subset the counts matrix and metadata to include only 12 month old male mice</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(counts) <span class="ot">&lt;-</span> counts<span class="sc">$</span>gene_id</span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>counts <span class="ot">&lt;-</span> counts[<span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>rawdata <span class="ot">&lt;-</span> counts[,<span class="fu">sort</span>(<span class="fu">colnames</span>(counts))]</span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>metadata <span class="ot">&lt;-</span> covars[<span class="fu">sort</span>(<span class="fu">rownames</span>(covars)),]</span>
+<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a>meta<span class="fl">.12</span>M.Male <span class="ot">&lt;-</span> metadata[(metadata<span class="sc">$</span>sex<span class="sc">==</span><span class="st">"male"</span> <span class="sc">&amp;</span> metadata<span class="sc">$</span>timepoint<span class="sc">==</span><span class="st">'12 mo'</span>),]</span>
+<span id="cb56-8"><a href="#cb56-8" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(rawdata[,<span class="fu">colnames</span>(rawdata) <span class="sc">%in%</span> <span class="fu">rownames</span>(meta<span class="fl">.12</span>M.Male)])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Differential Analysis using DESeq2: set up data for analysis</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="co">#combine metadata info with the read counts</span></span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>ddsHTSeq <span class="ot">&lt;-</span> <span class="fu">DESeqDataSetFromMatrix</span>(<span class="at">countData=</span>dat, <span class="at">colData=</span>meta<span class="fl">.12</span>M.Male, <span class="at">design =</span> <span class="sc">~</span>genotype)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in DESeqDataSet(se, design = design, ignoreRank): some variables in
+design formula are characters, converting to factors</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="co"># filtering low count genes</span></span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>ddsHTSeq <span class="ot">&lt;-</span> ddsHTSeq[<span class="fu">rowSums</span>(<span class="fu">counts</span>(ddsHTSeq)) <span class="sc">&gt;=</span> <span class="dv">1</span>,]  </span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a><span class="co">#selecting WT mice as reference genotype</span></span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>ddsHTSeq<span class="sc">$</span>genotype <span class="ot">&lt;-</span> <span class="fu">relevel</span>(ddsHTSeq<span class="sc">$</span>genotype,<span class="at">ref=</span><span class="st">"5XFAD_noncarrier"</span>)     </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Run DESeq</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="co">#run DESeq: this function normalizes the read counts, estimates dispersions, and fits the linear model</span></span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>dds <span class="ot">&lt;-</span> <span class="fu">DESeq</span>(ddsHTSeq,<span class="at">parallel =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>estimating size factors</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>estimating dispersions</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>gene-wise dispersion estimates: 6 workers</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>mean-dispersion relationship</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>final dispersion estimates, fitting model and testing: 6 workers</code></pre>
+</div>
+</div>
+<p>Data wrangle to extract a downloadable table of results</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="co"># setting 0.05 as significant threshold</span></span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">results</span>(dds,<span class="at">alpha=</span><span class="fl">0.05</span>)                        </span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(res)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+out of 40784 with nonzero total read count
+adjusted p-value &lt; 0.05
+LFC &gt; 0 (up)       : 1091, 2.7%
+LFC &lt; 0 (down)     : 492, 1.2%
+outliers [1]       : 33, 0.081%
+low counts [2]     : 15803, 39%
+(mean count &lt; 6)
+[1] see 'cooksCutoff' argument of ?results
+[2] see 'independentFiltering' argument of ?results</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="co"># generating differential expression results table for all genes, and map mouse short gene names to ensembl labels</span></span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>All_res <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(res) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">symbol =</span> <span class="fu">map_symbol.rname</span>(res)) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">EntrezGene =</span> <span class="fu">map_eid.rname</span>(res)) <span class="sc">%&gt;%</span>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="st">"symbol"</span>, <span class="st">"EntrezGene"</span>,<span class="st">"baseMean"</span>, <span class="st">"log2FoldChange"</span>, <span class="st">"lfcSE"</span>, <span class="st">"stat"</span>, <span class="st">"pvalue"</span>, <span class="st">"padj"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>'select()' returned 1:many mapping between keys and columns
+'select()' returned 1:many mapping between keys and columns</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="co">#label human gene names</span></span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>All_res[<span class="dv">1</span>, <span class="st">"symbol"</span>] <span class="ot">&lt;-</span> <span class="st">"PSEN1"</span></span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>All_res[<span class="dv">2</span>, <span class="st">"symbol"</span>] <span class="ot">&lt;-</span> <span class="st">"APP"</span></span>
+<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(All_res)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                   symbol EntrezGene     baseMean log2FoldChange      lfcSE
+ENSG00000080815     PSEN1       &lt;NA&gt;   8063.75087    16.43362659 0.83494694
+ENSG00000142192       APP       &lt;NA&gt; 123183.70706    16.53067797 0.37385139
+ENSMUSG00000000001  Gnai3      14679   3737.92736     0.01485591 0.04670563
+ENSMUSG00000000028  Cdc45      12544    138.56440    -0.07125899 0.15554445
+ENSMUSG00000000031    H19      14955     29.29858     0.67055831 0.35732817
+ENSMUSG00000000037  Scml2     107815    123.64893    -0.21840176 0.15610915
+                         stat       pvalue         padj
+ENSG00000080815    19.6822407 3.061625e-86 2.121706e-83
+ENSG00000142192    44.2172436 0.000000e+00 0.000000e+00
+ENSMUSG00000000001  0.3180754 7.504278e-01 9.471513e-01
+ENSMUSG00000000028 -0.4581262 6.468618e-01 9.196556e-01
+ENSMUSG00000000031  1.8765896 6.057437e-02 3.637962e-01
+ENSMUSG00000000037 -1.3990324 1.618033e-01 5.809593e-01</code></pre>
+</div>
+</div>
+<p>Volcano plot of differential expression results: all genes with p &lt; 0.05 and log2FC &gt; 0.1</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>  plot_DEGvolcano <span class="ot">&lt;-</span> <span class="fu">EnhancedVolcano</span>(All_res,</span>
+<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">lab =</span> (All_res<span class="sc">$</span>symbol),</span>
+<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">x =</span> <span class="st">'log2FoldChange'</span>,</span>
+<span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">y =</span> <span class="st">'padj'</span>,<span class="at">legendPosition =</span> <span class="st">'none'</span>,</span>
+<span id="cb72-5"><a href="#cb72-5" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">title =</span> <span class="st">'DE Results of 12 mo. old Male Mice'</span>,</span>
+<span id="cb72-6"><a href="#cb72-6" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">subtitle =</span> <span class="st">''</span>,</span>
+<span id="cb72-7"><a href="#cb72-7" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">FCcutoff =</span> <span class="fl">0.1</span>,</span>
+<span id="cb72-8"><a href="#cb72-8" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">pCutoff =</span> <span class="fl">0.05</span>,</span>
+<span id="cb72-9"><a href="#cb72-9" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">xlim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">3</span>, <span class="dv">17</span>)</span>
+<span id="cb72-10"><a href="#cb72-10" aria-hidden="true" tabindex="-1"></a>                                     )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: One or more p-values is 0. Converting to 10^-1 * current lowest
+non-zero p-value...</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>  plot_DEGvolcano</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Workshop2_DESeq_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Save results table and plot:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>All_res<span class="sc">$</span>ensembl <span class="ot">&lt;-</span> <span class="fu">row.names</span>(All_res)</span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(All_res, <span class="at">file=</span><span class="st">"outputs/5XFAD_DEresults_12mo_males.csv"</span>, <span class="at">row.names=</span><span class="cn">FALSE</span>)</span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="st">"outputs/VolcanoPlot.png"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Saving 7 x 5 in image</code></pre>
+</div>
+</div>
+
+
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
