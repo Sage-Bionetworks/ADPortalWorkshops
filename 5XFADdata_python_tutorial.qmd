@@ -1,7 +1,7 @@
 ---
 title: "AD Knowledge Portal Workshop: Download and explore 5XFAD mouse data in Python"
 author: "Abby Vander Linden & Victor Baham, Sage Bionetworks"
-date: "`r Sys.Date()`"
+date: today
 format: 
   html: 
     toc: true
