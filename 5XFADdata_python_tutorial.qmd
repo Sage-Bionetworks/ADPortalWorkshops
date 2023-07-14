@@ -167,7 +167,26 @@ We are only interested in RNAseq data, so we will only read in the individual, b
 # counts matrix
 
 counts = pd.read_table("files/htseqcounts_5XFAD.txt")
+```
 
+A note on file versions!
+
+All files in the AD Portal are versioned, meaning that if the file represented by a particular synID changes, a new version will be created. You can access a specific versions by using the version argument in synGet(). This will come in handy here, because the Jax.IU.Pitt_5XFAD study recently made some changes to their individual metadata file that included an inadvertent error. While our curators sort out that error, we will use a a previous version of this file (version 3) to ensure that our metadata joins properly. More info on versions in the AD Portal and the Synapse platform can be found here.
+
+```{python}
+# use the "version" parameter to get a previous version of this file
+# the "ifcollision" parameter lets us specify what synapser should do if an entity already exists locally -- in this case we want to overwrite the previous version downloaded during our bulk download
+ind_meta_object = syn.get(entity = 'syn22103212', 
+                          version=3, 
+                          downloadLocation = "files/",
+                          ifcollision = "overwrite.local")
+# we can check the entity properties to see what version number it is, and if it is the latest version
+ind_meta_object.properties              
+                          
+```
+We can now read the metadata csv files in as pandas dataframes. 
+
+```{python}
 # individual metadata
 
 ind_meta = pd.read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv")
