@@ -170,17 +170,38 @@ We are only interested in RNAseq data, so we will only read in the individual, b
 # counts matrix
 counts <- read_tsv("files/htseqcounts_5XFAD.txt", show_col_types = FALSE)
 
-# individual metadata
-#ind_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv", show_col_types = FALSE)
-#The individual metadata file was recently updated and has some errors and changed some column headings. While we sort this out, I am going to upload an older version (version 3):
-ind_meta_object <- synGet(entity = 'syn22103212', version=3)
-ind_meta <- read.csv(ind_meta_object$path)
+```
+
+##### A note on file versions!
+
+All files in the AD Portal are versioned, meaning that if the file represented by a particular synID changes, a new version will be created. You can access a specific versions by using the `version` argument in `synGet()`. This will come in handy here, because the Jax.IU.Pitt_5XFAD study recently made some changes to their individual metadata file that included an inadvertent error. While our curators sort out that error, we will use a a previous version of this file (version 3) to ensure that our metadata joins properly. More info on versions in the AD Portal and the Synapse platform can be found [here](https://help.synapse.org/docs/Versioning-Files.2667708547.html).
+
+```{r get-earlier-ind-version, message=FALSE, warning=FALSE}
+
+# use the "version" parameter to get a previous version of this file
+# the "ifcollision" parameter lets us specify what synapser should do if an entity already exists locally -- in this case we want to overwrite the previous version downloaded during our bulk download
+ind_meta_object <- synGet(entity = 'syn22103212', 
+                          version=3, 
+                          downloadLocation = "files/",
+                          ifcollision = "overwrite.local")
+
+# we can check the version to see what number it is, and if it is the latest version
+ind_meta_object$properties$versionNumber
+ind_meta_object$properties$isLatestVersion
+```
+
+Now we can read all the metadata files in to R as data frames.
+
+```{r}
+#individual metadata
+ind_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv", show_col_types = FALSE)
 
 # biospecimen metadata
 bio_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv", show_col_types = FALSE)
 
 #assay metadata
 rna_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv", show_col_types = FALSE)
+
 ```
 
 Let's examine the data and metadata files a bit before we begin our analyses.
