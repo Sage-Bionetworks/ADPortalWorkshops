@@ -199,8 +199,8 @@ Save results table and plot:
 
 ```{r}
 All_res$ensembl <- row.names(All_res)
-write.csv(All_res, file="5XFAD_DEresults_12mo_males.csv", row.names=FALSE)
+write.csv(All_res, file="outputs/5XFAD_DEresults_12mo_males.csv", row.names=FALSE)
 
-ggsave("VolcanoPlot.png")
+ggsave("outputs/VolcanoPlot.png")
 
 ```
