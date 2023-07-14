@@ -252,7 +252,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>query.filepath</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
-<pre><code>'/Users/alinden/.synapseCache/793/126944793/SYNAPSE_TABLE_QUERY_126944793.csv'</code></pre>
+<pre><code>'/Users/alinden/.synapseCache/835/126944835/SYNAPSE_TABLE_QUERY_126944835.csv'</code></pre>
 </div>
 </div>
 <p>We’ll use the pandas function <code>read.csv</code> to read the CSV file as a data frame. We can explore the <code>download_table</code> object and see that it contains information on all of the AD Portal data files we want to download. Some columns like the “id” and “parentId” columns contain info about where the file is in Synapse, and some columns contain AD Portal annotations for each file, like “dataType”, “specimenID”, and “assay”. This annotation table will later allow us to link downloaded files to additional metadata variables!</p>
