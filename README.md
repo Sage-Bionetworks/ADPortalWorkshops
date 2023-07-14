@@ -1,9 +1,16 @@
-## AD Knowledge Portal workshop materials and planning
+## Exploring data programmatically in the AD Knowledge Portal
 
-### AD Portal programmatic tutorials:
+------------------------------------------------------------------------
 
-- [R tutorial](https://sage-bionetworks.github.io/ADPortalWorkshops/5XFAD_data_R_tutorial.html)
-- [python tutorial](https://sage-bionetworks.github.io/ADPortalWorkshops/5XFADdata_python_tutorial.html)
+### AD Portal programmatic tutorials you can view on the web:
+
+-   [Working with AD portal Data in R](https://sage-bionetworks.github.io/ADPortalWorkshops/5XFAD_data_R_tutorial.html)
+-   [Working with AD portal Data in python](https://sage-bionetworks.github.io/ADPortalWorkshops/5XFADdata_python_tutorial.html)
+-   [Differential expression with DESeq2 in R](https://github.com/Sage-Bionetworks/ADPortalWorkshops/blob/main/Workshop2_DESeq.nb.html)
+
+### Versions of the tutorials you can download and run interactively from RStudio or VSCode
+
+-   [Differential expression with DESeq2 in R](https://github.com/Sage-Bionetworks/ADPortalWorkshops/blob/main/Workshop2_DESeq.nb.html)
 
 ### Next upcoming workshop: July 14, 2023 at AAIC!
 
