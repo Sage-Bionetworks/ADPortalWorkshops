@@ -1,6 +1,6 @@
 ---
 title: 'AD Knowledge Portal Workshop: Download and explore 5XFAD mouse data in RStudio'
-author: "Laura Heath & Abby Vander Linden, Sage Bionetworks"
+author: "Abby Vander Linden & Laura Heath, Sage Bionetworks"
 date: "`r Sys.Date()`"
 format: 
   html: 
@@ -34,25 +34,19 @@ If you haven't already, install `synapser` (the [Synapse R client](https://r-doc
 install.packages("synapser", repos = c("http://ran.synapse.org", "http://cran.fhcrc.org"))
 
 # install tidyverse if you don't already have it
-install.packages("tidyverse")
-```
-
-We will also use the BioconductoR package manager to install `biomaRt`, which will help us with gene count data later.
-
-```{r install-biomaRt, eval = FALSE}
-
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-BiocManager::install("biomaRt")
+install.packages("dplyr", "purrr", "readr", "lubridate", "stringr", "tibble")
 ```
 
 Load libraries
 
 ```{r load-libraries, message=FALSE, warning=FALSE}
 library(synapser)
-library(tidyverse)
-library(biomaRt)
+library(dplyr)
+library(purrr)
+library(readr)
+library(lubridate)
+library(stringr)
+library(tibble)
 ```
 
 ### Login to Synapse
@@ -457,6 +451,18 @@ counts %>%
 ##### BiomaRt option:
 
 OPTIONAL: Transform the ensemblIDs in the matrix to common gene names, using the R package `biomaRt` (note: must specify to use the mouse database, although the two genes in the 5XFAD model we identified above are humanized and won't be translated by the program).
+
+For this option, use the BioconductoR package manager to install `biomaRt`.
+
+```{r install-biomaRt, eval = FALSE}
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("biomaRt")
+
+library(biomaRt)
+```
 
 **The next two code chunks will not automatically execute in this notebook because they can take a long time -- the code is included if you'd like to try this on your own.**
 
