@@ -31,7 +31,7 @@ If you haven't already, install `synapser` (the [Synapse R client](https://r-doc
 
 ```{r install-synapser, eval = FALSE}
 # install synapser
-install.packages("synapser", repos = c("http://ran.synapse.org", "http://cran.fhcrc.org"))
+install.packages("synapser", repos = c("http://ran.synapse.org"))
 
 # install tidyverse if you don't already have it
 install.packages("dplyr", "purrr", "readr", "lubridate", "stringr", "tibble")
@@ -39,7 +39,7 @@ install.packages("dplyr", "purrr", "readr", "lubridate", "stringr", "tibble")
 
 Load libraries
 
-```{r load-libraries, message=FALSE, warning=FALSE}
+```{r load-libraries, message=FALSE, warning=TRUE}
 library(synapser)
 library(dplyr)
 library(purrr)
@@ -57,7 +57,7 @@ Next, you will need to log in to your Synapse account.
 
 If you are logged into the [Synapse](https://www.synapse.org/) web browser, `synapser` will automatically use your login credentials to log you in during your R session! All you have to do is:
 
-```{r synlogin, results = "hide"}
+```{r synlogin, include = FALSE}
 
 synLogin()
 ```
@@ -89,7 +89,7 @@ This filters the table to a single file. In the "Id" column for this `htseqcount
 
 ![](images/Screenshot%202023-05-07%20at%2011.10.31%20AM.png){width="448"}
 
-We can then use that synID to download the file.
+We can then use that synID to download the file. Some system about the file and its storage location within Synapse is printed to the R console when we call `synGet`.
 
 ```{r single-synGet, results = "hide"}
 
