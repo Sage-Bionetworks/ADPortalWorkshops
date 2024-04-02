@@ -152,17 +152,11 @@ We can see from the `download_table` we got during the bulk download step that w
 
 ```{r explore-download-table}
 #
-download_table %>% 
+download_table |> 
   dplyr::select(name, metadataType, assay)
 ```
 
 We are only interested in RNAseq data, so we will only read in the individual, biospecimen, and RNAseq assay metadata files.
-
-```{r read-data-files, message=FALSE, warning=FALSE}
-# counts matrix
-counts <- read_tsv("files/htseqcounts_5XFAD.txt", show_col_types = FALSE)
-
-```
 
 ##### A note on file versions!
 
@@ -184,7 +178,7 @@ ind_meta_object$properties$isLatestVersion
 
 Now we can read all the metadata files in to R as data frames.
 
-```{r}
+```{r read-metadata-files}
 #individual metadata
 ind_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv", show_col_types = FALSE)
 
@@ -200,12 +194,17 @@ Let's examine the data and metadata files a bit before we begin our analyses.
 
 #### Counts data
 
+```{r read-data-files, message=FALSE, warning=FALSE}
+# counts matrix
+counts <- read_tsv("files/htseqcounts_5XFAD.txt", show_col_types = FALSE)
+```
+
 ```{r view-counts}
 # Calling a tibble object will print the first ten rows in a nice tidy output; doing the same for a base R dataframe will print the whole thing until it runs out of memory. If you want to inspect a large dataframe, use `head(df)`
 head(counts)
 ```
 
-The data file has a column of ENSEMBL gene ids and then a bunch of columns with count data, where the column headers correspond to the specimenIDs. These specimenIDs should all be in the RNAseq assay metadata file, so let's check.
+The counts data file has a column of ENSEMBL gene ids and then a bunch of columns with count data, where the column headers correspond to the specimenIDs. These specimenIDs should all be in the RNAseq assay metadata file, so let's check.
 
 ```{r view-assay}
 # what does the RNAseq assay metadata look like?
@@ -267,12 +266,12 @@ distinct(ind_meta, genotype)
 
 #### Joining metadata
 
-We use the three-file structure for our metadata because it allows us to store metadata for each study in a tidy format. Every line in the assay and biospecimen files represents a unique specimen, and every line in the individual file represents a unique individual. This means the files can be easily joined by specimenID and individualID to get all levels of metadata that apply to a particular data file. We will use the `left_join()` function from the `dplyr` package, and the `%>%` operator from the `magrittr` package. *If you are unfamiliar with the pipe, think of it as a shorthand for "take this (the preceding object) and do that (the subsequent command)". See [here](https://magrittr.tidyverse.org/) for more info on piping in R.*
+We use the three-file structure for our metadata because it allows us to store metadata for each study in a tidy format. Every line in the assay and biospecimen files represents a unique specimen, and every line in the individual file represents a unique individual. This means the files can be easily joined by specimenID and individualID to get all levels of metadata that apply to a particular data file. We will use the `left_join()` function from the `dplyr` package, and the base R pipe operator `|>`. *If you are unfamiliar with the pipe, think of it as a shorthand for "take this (the preceding object) and do that (the subsequent command)". See [here](https://r4ds.hadley.nz/data-transform.html#sec-the-pipe) for more info on piping in R.*
 
 ```{r join-metadata}
 # join all the rows in the assay metadata that have a match in the biospecimen metadata
-joined_meta <- rna_meta %>% #start with the rnaseq assay metadata
-  left_join(bio_meta, by = "specimenID") %>%  #join rows from biospecimen that match specimenID 
+joined_meta <- rna_meta |> #start with the rnaseq assay metadata
+  left_join(bio_meta, by = "specimenID") |>  #join rows from biospecimen that match specimenID 
   left_join(ind_meta, by = "individualID") # join rows from individual that match individualID
 
 joined_meta
@@ -307,7 +306,7 @@ The file annotations let us see which study the file is associated with (Jax.IU.
 ```{r join-annotations-to-metadata}
 
 # find records belonging to the individual this file maps to in our joined metadata
-joined_meta %>% 
+joined_meta |> 
   filter(individualID == fastq_annotations$individualID[[1]])
 ```
 
@@ -344,7 +343,7 @@ Once you've downloaded all the files in the `id` column, you can link those file
 fastq <- synGet(random_fastq, downloadFile = FALSE)
 
 # filter the annotations table to rows that match the fastq filename
-annotations_table %>% 
+annotations_table |> 
   filter(name == fastq$properties$name)
 ```
 
@@ -356,8 +355,8 @@ If we look at the processed data files in the table of 5XFAD RNAseq file annotat
 
 ```{r filter-multispecimen-files}
 #
-annotations_table %>% 
-  filter(fileFormat == "txt") %>% 
+annotations_table |> 
+  filter(fileFormat == "txt") |> 
   dplyr::select(name, individualID, specimenID, isMultiSpecimen)
 ```
 
@@ -365,10 +364,10 @@ The multispecimen file should contain a row or column of specimenIDs that corres
 
 ```{r join-multispecimen-metadata}
 # In this example, we take a slice of the counts data to reduce computation, transpose it so that each row represents a single specimen, and then join it to the joined metadata by the specimenID
-counts %>% 
-  slice_head(n = 5) %>% 
-  t() %>% 
-  as_tibble(rownames = "specimenID") %>% 
+counts |> 
+  slice_head(n = 5) |> 
+  t() |> 
+  as_tibble(rownames = "specimenID") |> 
   left_join(joined_meta, by = "specimenID")
 ```
 
@@ -403,10 +402,10 @@ The MODEL-AD individual mouse metadata contains columns with birth date and deat
 library(lubridate)
 
 # convert columns of strings to month-date-year format
-joined_meta_time <- joined_meta %>% 
-  mutate(dateBirth = mdy(dateBirth), dateDeath = mdy(dateDeath)) %>% 
+joined_meta_time <- joined_meta |> 
+  mutate(dateBirth = mdy(dateBirth), dateDeath = mdy(dateDeath)) |> 
   # create a new column that subtracts dateBirth from dateDeath in days, then divide by 30 to get months
-  mutate(timepoint = as.numeric(difftime(dateDeath, dateBirth, units ="days"))/30) %>% 
+  mutate(timepoint = as.numeric(difftime(dateDeath, dateBirth, units ="days"))/30) |> 
   # convert numeric ages to timepoint categories
   mutate(timepoint = case_when(timepoint > 10 ~ "12 mo",
                                timepoint < 10 & timepoint > 5 ~ "6 mo",
@@ -417,8 +416,8 @@ We now have balanced samples across sex, genotype, and age:
 
 ```{r group-metadata-by-covars}
 # check that the timepoint column looks ok
-joined_meta_time %>% 
-  group_by(sex, genotype, timepoint) %>% 
+joined_meta_time |> 
+  group_by(sex, genotype, timepoint) |> 
   count()
 ```
 
@@ -428,7 +427,7 @@ To reduce the width of the dataframe, we will subset only the columns that conta
 
 ```{r subset-covars}
 # many packages have a "select" function that masks dplyr so we have to specify
-covars <- joined_meta_time %>% 
+covars <- joined_meta_time |> 
   dplyr::select(individualID, specimenID, sex, genotype, timepoint)
 
 # check the result
@@ -441,7 +440,7 @@ Return to the gene counts matrix we read in earlier.
 
 ```{r check-non-mouse-genes}
 # check how many gene_ids are NOT from the mouse genome by searching for the string "MUS" (as in Mus musculus) in the gene_id column
-counts %>% 
+counts |> 
   filter(!str_detect(gene_id, "MUS"))
 
 ```
@@ -500,7 +499,7 @@ Call the `Make.Gene.Symb()` function to add a new column with short gene names t
 
 ```{r convert-gene-ids, eval=FALSE, include=FALSE}
 # use the mutate function from dplyr
-named_counts <- counts %>% 
+named_counts <- counts |> 
   mutate(gene_name = Make.Gene.Symb(gene_id))
 ```
 
@@ -533,9 +532,9 @@ named_counts[1, "gene_name"] <- "PSEN1"
 named_counts[2, "gene_name"] <- "APP"
 
 #make all gene names unique and remove unneeded column
-named_counts <- named_counts %>% 
-  mutate(gene_name = make.unique(gene_name)) %>% 
-  dplyr::select(-gene_id) %>% 
+named_counts <- named_counts |> 
+  mutate(gene_name = make.unique(gene_name)) |> 
+  dplyr::select(-gene_id) |> 
   column_to_rownames(var = "gene_name")
 
 ```
@@ -546,9 +545,9 @@ Now we can transpose the dataframe so that each row contains count data cross al
 
 ```{r transpose-counts}
 #
-counts_tposed <- named_counts %>% 
-  t() %>%  #transposing forces the df to a matrix
-  as_tibble(rownames = "specimenID") %>% #reconvert to tibble and specify rownames
+counts_tposed <- named_counts |> 
+  t() |>  #transposing forces the df to a matrix
+  as_tibble(rownames = "specimenID") |> #reconvert to tibble and specify rownames
   left_join(covars, by = "specimenID") #join covariates by specimenID
 ```
 
@@ -573,7 +572,7 @@ Use ggplot to plot gene counts for each specimen by age, sex, and genotype.
 library(ggplot2)
 
 #Look at Trem2 levels
-g <- counts_tposed %>% 
+g <- counts_tposed |> 
   ggplot(aes(x=timepoint, y=Trem2, color=genotype)) +
     geom_boxplot() + 
     geom_point(position=position_jitterdodge()) +
@@ -586,7 +585,7 @@ Examine any gene of interest by setting the y argument in the `ggplot(aes()` map
 
 ```{r plot-Cst7}
 #
-g <- counts_tposed %>% 
+g <- counts_tposed |> 
   ggplot(aes(x=timepoint, y=Cst7, color=genotype)) +
     geom_boxplot() + 
     geom_point(position=position_jitterdodge()) +
@@ -599,7 +598,7 @@ Ex: `y = Apoe`
 
 ```{r plot-Apoe}
 #
-g <- counts_tposed %>% 
+g <- counts_tposed |> 
   ggplot(aes(x=timepoint, y=Apoe, color=genotype)) +
     geom_boxplot() + 
     geom_point(position=position_jitterdodge()) +
@@ -612,7 +611,7 @@ Ex: `y = Kirrel2`
 
 ```{r plot-Kirrel2}
 #
-g <- counts_tposed %>% 
+g <- counts_tposed |> 
   ggplot(aes(x=timepoint, y=Kirrel2, color=genotype)) +
     geom_boxplot() + 
     geom_point(position=position_jitterdodge()) +
