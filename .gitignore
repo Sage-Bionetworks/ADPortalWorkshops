@@ -29,9 +29,9 @@ vignettes/*.pdf
 # R project
 *.Rproj
 # downloaded files
-code-tutorials/files/*
-files/*
-DESeq2_tutorial_R/outputs/*
+code-tutorials/files/
+files/
+DESeq2_tutorial_R/outputs/
 .DS_Store
 
 /.quarto/
