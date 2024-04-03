@@ -507,9 +507,7 @@ named_counts <- counts |>
 
 For this demonstration, instead of running biomaRt, which can be unreliable at times and take a long time to render, we will append a dataframe to our counts matrix with short gene names already translated
 
-```{r}
-#ensembl_to_gene <- subset(named_counts, select=c(gene_id, gene_name))
-#write.csv(ensembl_to_gene, file="ensembl_translation_key.csv", row.names=FALSE)
+```{r read-preconverted-ensembl-counts}
 
 ensembl_to_gene <- read.csv(file="ensembl_translation_key.csv")
 named_counts <- dplyr::left_join(counts, ensembl_to_gene, by="gene_id")
@@ -567,13 +565,13 @@ counts_tposed$timepoint <- factor(counts_tposed$timepoint, levels=c("4 mo","6 mo
 
 Use ggplot to plot gene counts for each specimen by age, sex, and genotype.
 
-```{r plot-trem2}
+```{r plot-app}
 # load ggplot2
 library(ggplot2)
 
-#Look at Trem2 levels
+#Look at APP levels -- this model is the 5X FAD mutant, so we expect it to be high!
 g <- counts_tposed |> 
-  ggplot(aes(x=timepoint, y=Trem2, color=genotype)) +
+  ggplot(aes(x=timepoint, y=APP, color=genotype)) +
     geom_boxplot() + 
     geom_point(position=position_jitterdodge()) +
     facet_wrap(~sex)
@@ -581,12 +579,12 @@ g <- counts_tposed |>
 g
 ```
 
-Examine any gene of interest by setting the y argument in the `ggplot(aes()` mapping equal to the gene name. Ex: `y = Cst7`
+Examine any gene of interest by setting the y argument in the `ggplot(aes()` mapping equal to the gene name. Ex: `y = Trem2`
 
-```{r plot-Cst7}
+```{r plot-Trem2}
 #
 g <- counts_tposed |> 
-  ggplot(aes(x=timepoint, y=Cst7, color=genotype)) +
+  ggplot(aes(x=timepoint, y=Trem2, color=genotype)) +
     geom_boxplot() + 
     geom_point(position=position_jitterdodge()) +
     facet_wrap(~sex)
@@ -607,15 +605,4 @@ g <- counts_tposed |>
 g
 ```
 
-Ex: `y = Kirrel2`
-
-```{r plot-Kirrel2}
-#
-g <- counts_tposed |> 
-  ggplot(aes(x=timepoint, y=Kirrel2, color=genotype)) +
-    geom_boxplot() + 
-    geom_point(position=position_jitterdodge()) +
-    facet_wrap(~sex)
-
-g
-```
+\-\--
