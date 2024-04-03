@@ -13,6 +13,6 @@
 -   [Quarto notebook - Working with AD portal Data in python](https://github.com/Sage-Bionetworks/ADPortalWorkshops/blob/main/5XFADdata_python_tutorial.qmd)
 -   [R notebook - Differential expression with DESeq2 in R](https://github.com/Sage-Bionetworks/ADPortalWorkshops/blob/main/Workshop2_DESeq.nb.html)
   
-### Next upcoming workshop: July 14, 2023 at AAIC!
+### Next upcoming workshop: April 8th, 2024 at EMBL-EBI's "Data-driven approaches to understanding dementia"!
 
 [Synapse workshop project](https://www.synapse.org/#!Synapse:syn26165425/wiki/612752)
