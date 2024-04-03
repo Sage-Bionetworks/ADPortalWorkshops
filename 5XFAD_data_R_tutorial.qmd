@@ -606,3 +606,5 @@ g
 ```
 
 \-\--
+
+![](images/ADKP_logo.png){width="236"}
