@@ -433,7 +433,7 @@ counts |>
 
 #### Convert ensembleIDs to common gene names
 
-##### BiomaRt option:
+##### 1. BiomaRt option:
 
 OPTIONAL: Transform the ensemblIDs in the matrix to common gene names, using the R package `biomaRt` (note: must specify to use the mouse database, although the two genes in the 5XFAD model we identified above are humanized and won't be translated by the program).
 
@@ -449,7 +449,7 @@ BiocManager::install("biomaRt")
 library(biomaRt)
 ```
 
-**The next two code chunks will not automatically execute in this notebook because they can take a long time -- the code is included if you'd like to try this on your own.**
+**⚠️ The next two code chunks will not automatically execute in this notebook because they can take a long time -- the code is included if you'd like to try this on your own.**
 
 We will use the two custom functions below to convert ensemblIDs to gene names:
 
@@ -489,7 +489,7 @@ named_counts <- counts |>
   mutate(gene_name = Make.Gene.Symb(gene_id))
 ```
 
-##### Pre-translated option:
+##### 2. Pre-translated option:
 
 For this demonstration, instead of running biomaRt, which can be unreliable at times and take a long time to render, we will append a dataframe to our counts matrix with short gene names already translated
 
