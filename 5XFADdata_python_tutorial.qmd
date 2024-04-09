@@ -117,7 +117,7 @@ The function `syn.tableQuery()` returns query results as CSV file that is automa
 ```{python}
 # download the results of the filtered table query
 
-query = syn.tableQuery("SELECT * FROM syn11346063.37 WHERE ( ( `study` HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( `resourceType` = 'metadata' ) )")
+query = syn.tableQuery("SELECT * FROM syn11346063 WHERE ( ( `study` HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( `resourceType` = 'metadata' ) )")
 
 # view the file path of the resulting csv
 
@@ -137,6 +137,7 @@ download_table
 Finally, we can use a for loop to loop through the "id" column and apply the `syn.get()` function to each file's synID.
 
 ```{python}
+#| output: false
 # loop through the column of synIDs and download each file
 
 for id in download_table.id:
@@ -145,6 +146,10 @@ for id in download_table.id:
 ```
 
 Congratulations, you have bulk downloaded files from the AD Knowledge Portal!
+
+##### ✏️  A note on file versions!
+
+All files in the AD Portal are versioned, meaning that if the file represented by a particular synID changes, a new version will be created. You can access a specific versions by using the `version` argument in `syn.get()`. More info on version control in the AD Portal and the Synapse platform can be found [here](https://help.synapse.org/docs/Versioning-Files.2667708547.html).
 
 ------------------------------------------------------------------------
 
@@ -169,22 +174,7 @@ We are only interested in RNAseq data, so we will only read in the individual, b
 counts = pd.read_table("files/htseqcounts_5XFAD.txt")
 ```
 
-A note on file versions!
-
-All files in the AD Portal are versioned, meaning that if the file represented by a particular synID changes, a new version will be created. You can access a specific versions by using the version argument in synGet(). This will come in handy here, because the Jax.IU.Pitt_5XFAD study recently made some changes to their individual metadata file that included an inadvertent error. While our curators sort out that error, we will use a a previous version of this file (version 3) to ensure that our metadata joins properly. More info on versions in the AD Portal and the Synapse platform can be found here.
-
-```{python}
-# use the "version" parameter to get a previous version of this file
-# the "ifcollision" parameter lets us specify what synapser should do if an entity already exists locally -- in this case we want to overwrite the previous version downloaded during our bulk download
-ind_meta_object = syn.get(entity = 'syn22103212', 
-                          version=3, 
-                          downloadLocation = "files/",
-                          ifcollision = "overwrite.local")
-# we can check the entity properties to see what version number it is, and if it is the latest version
-ind_meta_object.properties              
-                          
-```
-We can now read the metadata csv files in as pandas dataframes. 
+We can now read the metadata csv files in as pandas dataframes.
 
 ```{python}
 # individual metadata
@@ -230,17 +220,16 @@ all(item in col_names for item in spec_ids)
 
 The assay metadata contains information about how data was generated on each sample in the assay. Each specimenID represents a unique sample. We can use some tools from pandas to explore the metadata.
 
-```{python}
-# how many unique specimens were sequenced?
+How many unique specimens were sequenced?
 
+```{python}
 rna_meta['specimenID'].nunique()
 
 ```
 
-```{python}
-# were the samples all sequenced on the same platform, and in the same
-# sequencing batch?
+Were the samples all sequenced on the same platform, or in the same batch?
 
+```{python}
 rna_meta[['platform', 'sequencingBatch']].nunique()
 ```
 
@@ -249,8 +238,7 @@ rna_meta[['platform', 'sequencingBatch']].nunique()
 The biospecimen metadata contains specimen-level information, including organ and tissue the specimen was taken from, how it was prepared, etc. Each specimenID is mapped to an individualID.
 
 ```{python}
-# all specimens from the RNAseq assay metadata file should be in the biospecimen
-# file
+# all specimens from the RNAseq assay metadata file should be in the biospecimen file
 
 rna_meta['specimenID'].isin(bio_meta['specimenID']).value_counts()
 ```
@@ -271,7 +259,11 @@ The individual metadata contains information about all the individuals in the st
 
 bio_meta['individualID'].isin(ind_meta['individualID']).value_counts()
 
-# which model genotypes are in this study?
+
+```
+
+```{python}
+# check model genotypes in this study
 
 ind_meta['genotype'].unique()
 ```
@@ -336,7 +328,7 @@ If we use the "Programmatic Options" tab in the AD Portal download menu to downl
 
 ```{python}
 
-query = syn.tableQuery("SELECT * FROM syn11346063.37 WHERE ( ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( \"assay\" HAS ( 'rnaSeq' ) ) )")
+query = syn.tableQuery("SELECT * FROM syn11346063 WHERE ( ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( \"assay\" HAS ( 'rnaSeq' ) ) )")
 
 ```
 
@@ -349,7 +341,7 @@ annotations_table = pd.read_csv(query.filepath)
 annotations_table
 ```
 
-You could then use a for loop as we did in the [Bulk download files] example to loop through the column of synIDs and download all 148 files.
+You could then use a for loop as we did in the [Bulk download files](#bulk-download-files) example to loop through the column of synIDs and download all 148 files.
 
 Once you've downloaded all the files in the `id` column, you can link those files to their annotations by the `name` column. We'll demonstrate this using the "random fastq" file that we got the annotations from earlier. To avoid downloading the whole 3GB file, we'll use `syn.get()` with `downloadFile = False` to get only the Synapse entity object rather than the file.
 
