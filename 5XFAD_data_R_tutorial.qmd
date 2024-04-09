@@ -140,6 +140,10 @@ Congratulations, you have bulk downloaded files from the AD Knowledge Portal!
 
 **An important note:** for situations where you are downloading many large files, the R client performs substantially slower than the command line client or the Python client. In these cases, you can use the instructions and code snippets for the command line or Python client provided in the "Programmatic Options" menu.
 
+##### ✏️  A note on file versions!
+
+All files in the AD Portal are versioned, meaning that if the file represented by a particular synID changes, a new version will be created. You can access a specific versions by using the `version` argument in `synGet()`. More info on version control in the AD Portal and the Synapse platform can be found [here](https://help.synapse.org/docs/Versioning-Files.2667708547.html).
+
 ------------------------------------------------------------------------
 
 ## Working with AD Portal metadata
@@ -157,24 +161,6 @@ download_table |>
 ```
 
 We are only interested in RNAseq data, so we will only read in the individual, biospecimen, and RNAseq assay metadata files.
-
-##### A note on file versions!
-
-All files in the AD Portal are versioned, meaning that if the file represented by a particular synID changes, a new version will be created. You can access a specific versions by using the `version` argument in `synGet()`. This will come in handy here, because the Jax.IU.Pitt_5XFAD study recently made some changes to their individual metadata file that included an inadvertent error. While our curators sort out that error, we will use a a previous version of this file (version 3) to ensure that our metadata joins properly. More info on versions in the AD Portal and the Synapse platform can be found [here](https://help.synapse.org/docs/Versioning-Files.2667708547.html).
-
-```{r get-earlier-ind-version, message=FALSE, warning=FALSE}
-
-# use the "version" parameter to get a previous version of this file
-# the "ifcollision" parameter lets us specify what synapser should do if an entity already exists locally -- in this case we want to overwrite the previous version downloaded during our bulk download
-ind_meta_object <- synGet(entity = 'syn22103212', 
-                          version=3, 
-                          downloadLocation = "files/",
-                          ifcollision = "overwrite.local")
-
-# we can check the version to see what number it is, and if it is the latest version
-ind_meta_object$properties$versionNumber
-ind_meta_object$properties$isLatestVersion
-```
 
 Now we can read all the metadata files in to R as data frames.
 
@@ -289,7 +275,7 @@ If we filter for data where Study = "Jax.IU.Pitt_5XFAD" and Assay = "rnaSeq" we 
 
 #### Synapse entity annotations
 
-We can use the function `synGetAnnotations` to view the annotations associated with any file without downloading the file.
+We can use the function `synGetAnnotations` to view the annotations associated with any file *before* actually downloading the file.
 
 ```{r json-single-file-annotations}
 # the synID of a random fastq file from this list
