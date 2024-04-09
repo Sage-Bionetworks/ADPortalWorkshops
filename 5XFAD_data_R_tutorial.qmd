@@ -55,7 +55,7 @@ Next, you will need to log in to your Synapse account.
 
 #### Login option 1: Synapser takes credentials from your Synapse web session
 
-If you are logged into the [Synapse](https://www.synapse.org/) web browser, `synapser` will automatically use your login credentials to log you in during your R session! All you have to do is:
+If you are logged into the [Synapse](https://www.synapse.org/) web browser, `synapser` will automatically use your login credentials to log you in during your R session! All you have to do is call `synLogin()` from a script or the R console.
 
 ```{r synlogin, include = FALSE}
 
