@@ -304,7 +304,7 @@ If we use the "Programmatic Options" tab in the AD Portal download menu to downl
 
 ```{r all-rnaseq-portal-query}
 
-query <- synTableQuery("SELECT * FROM syn11346063.37 WHERE ( ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( \"assay\" HAS ( 'rnaSeq' ) ) )")
+query <- synTableQuery("SELECT * FROM syn11346063.48 WHERE ( ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( \"assay\" HAS ( 'rnaSeq' ) ) )")
 
 ```
 
