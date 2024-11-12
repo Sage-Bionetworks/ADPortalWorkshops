@@ -506,7 +506,7 @@ We now have balanced samples across sex, genotype, and age:
 # check that the timepoint column looks ok
 joined_meta_time |>
   group_by(sex, genotype, timepoint) |>
-  count()
+  dplyr::count()
 ```
 
 #### Subset covariates

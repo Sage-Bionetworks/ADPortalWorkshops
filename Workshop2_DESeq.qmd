@@ -208,7 +208,7 @@ This leaves us with 12 samples, 6 per genotype:
 ```{r check-subset}
 meta.12M.Male |>
   group_by(sex, genotype, timepoint) |>
-  count()
+  dplyr::count()
 ```
 
 Verify that the columns in `counts.12M.Male` are in the same order as the specimenIDs in 
