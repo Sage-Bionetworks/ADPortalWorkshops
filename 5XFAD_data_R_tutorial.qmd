@@ -52,7 +52,7 @@ If you haven't already, install `synapser` (the [Synapse R client](https://r-doc
 
 ```{r install-synapser, eval = FALSE}
 install.packages("synapser", repos = c("http://ran.synapse.org"))
-install.packages("tidyverse", "lubridate")
+install.packages(c("tidyverse", "lubridate"))
 ```
 
 Load libraries
