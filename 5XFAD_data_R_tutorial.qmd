@@ -1,8 +1,9 @@
 ---
 title: "AD Knowledge Portal Workshop: Download and explore 5XFAD mouse data in RStudio"
 author: 
-  - Abby Vander Linden & Laura Heath (Sage Bionetworks)
-  - Edited by Jaclyn Beck (Sage Bionetworks)
+  - Abby Vander Linden (Sage Bionetworks)
+  - Laura Heath (Sage Bionetworks)
+  - Jaclyn Beck (Sage Bionetworks)
 date: "`r Sys.Date()`"
 format: 
   html: 
@@ -392,11 +393,6 @@ Were the samples all sequenced on the same platform?
 ```{r}
 distinct(rna_meta, platform)
 ```
-Were there multiple sequencing batches reported?
-
-```{r}
-distinct(rna_meta, sequencingBatch) 
-```
 
 #### Biospecimen metadata
 
@@ -605,13 +601,14 @@ head(named_counts)
 How many genes are missing a gene symbol?
 
 ```{r check-na-genes}
-sum(is.na(named_counts$gene_name))
+sum(is.na(named_counts$gene_name) | nchar(named_counts$gene_name) == 0)
 ```
 
 Are all the gene names unique?
 
 ```{r check-unique-genes}
-non_na_genes <- named_counts$gene_name[!is.na(named_counts$gene_name)]
+non_na_genes <- named_counts$gene_name[!is.na(named_counts$gene_name) &
+                                         nchar(named_counts$gene_name) > 0]
 length(non_na_genes) - n_distinct(non_na_genes)
 ```
 
@@ -628,6 +625,7 @@ named_counts <- named_counts |>
   
   # Replace NA symbols, make all symbols unique
   mutate(gene_name = replace(gene_name, is.na(gene_name), "UNKNOWN"),
+         gene_name = replace(gene_name, gene_name == "", "UNKNOWN"),
          gene_name = make.unique(gene_name)) |>
   
   # Throw away Ensembl IDs
