@@ -2,12 +2,14 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.353">
+<meta name="generator" content="quarto-1.5.57">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="Abby Vander Linden &amp; Victor Baham, Sage Bionetworks">
-<meta name="dcterms.date" content="2024-04-09">
+<meta name="author" content="Abby Vander Linden (Sage Bionetworks)">
+<meta name="author" content="Victor Baham (Sage Bionetworks)">
+<meta name="author" content="Jaclyn Beck (Sage Bionetworks)">
+<meta name="dcterms.date" content="2024-11-11">
 
 <title>AD Knowledge Portal Workshop: Download and explore 5XFAD mouse data in Python</title>
 <style>
@@ -24,7 +26,7 @@ ul.task-list li input[type="checkbox"] {
 }
 /* CSS for syntax highlighting */
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -35,7 +37,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -59,7 +61,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="site_libs/clipboard/clipboard.min.js"></script>
 <script src="site_libs/quarto-search/autocomplete.umd.js"></script>
 <script src="site_libs/quarto-search/fuse.min.js"></script>
@@ -80,7 +82,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   "collapse-after": 3,
   "panel-placement": "start",
   "type": "textbox",
-  "limit": 20,
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
   "language": {
     "search-no-results-text": "No results",
     "search-matching-documents-text": "matching documents",
@@ -89,12 +97,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-more-match-text": "more match in this document",
     "search-more-matches-text": "more matches in this document",
     "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
     "search-detached-cancel-button-title": "Cancel",
-    "search-submit-button-title": "Submit"
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
   }
 }</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
 
@@ -112,7 +122,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#setup" id="toc-setup" class="nav-link active" data-scroll-target="#setup">Setup</a>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#setup" id="toc-setup" class="nav-link" data-scroll-target="#setup">Setup</a>
   <ul class="collapse">
   <li><a href="#install-synapseclient-package" id="toc-install-synapseclient-package" class="nav-link" data-scroll-target="#install-synapseclient-package">Install synapseclient package</a></li>
   <li><a href="#login-to-synapse" id="toc-login-to-synapse" class="nav-link" data-scroll-target="#login-to-synapse">Login to Synapse</a></li>
@@ -121,12 +132,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#download-a-single-file" id="toc-download-a-single-file" class="nav-link" data-scroll-target="#download-a-single-file">Download a single file</a></li>
   <li><a href="#bulk-download-files" id="toc-bulk-download-files" class="nav-link" data-scroll-target="#bulk-download-files">Bulk download files</a></li>
+  <li><a href="#single-specimen-files" id="toc-single-specimen-files" class="nav-link" data-scroll-target="#single-specimen-files">Single-specimen files</a></li>
+  <li><a href="#multispecimen-files" id="toc-multispecimen-files" class="nav-link" data-scroll-target="#multispecimen-files">Multispecimen files</a></li>
   </ul></li>
   <li><a href="#working-with-ad-portal-metadata" id="toc-working-with-ad-portal-metadata" class="nav-link" data-scroll-target="#working-with-ad-portal-metadata">Working with AD Portal metadata</a>
   <ul class="collapse">
   <li><a href="#metadata-basics" id="toc-metadata-basics" class="nav-link" data-scroll-target="#metadata-basics">Metadata basics</a></li>
-  <li><a href="#single-specimen-files" id="toc-single-specimen-files" class="nav-link" data-scroll-target="#single-specimen-files">Single-specimen files</a></li>
-  <li><a href="#multispecimen-files" id="toc-multispecimen-files" class="nav-link" data-scroll-target="#multispecimen-files">Multispecimen files</a></li>
+  <li><a href="#verify-file-contents" id="toc-verify-file-contents" class="nav-link" data-scroll-target="#verify-file-contents">Verify file contents</a></li>
+  </ul></li>
+  <li><a href="#rnaseq-data-exploration" id="toc-rnaseq-data-exploration" class="nav-link" data-scroll-target="#rnaseq-data-exploration">RNASeq data exploration</a>
+  <ul class="collapse">
+  <li><a href="#explore-covariates" id="toc-explore-covariates" class="nav-link" data-scroll-target="#explore-covariates">Explore covariates</a></li>
+  <li><a href="#convert-ensembleids-to-common-gene-names" id="toc-convert-ensembleids-to-common-gene-names" class="nav-link" data-scroll-target="#convert-ensembleids-to-common-gene-names">Convert ensembleIDs to common gene names</a></li>
+  <li><a href="#visualize-gene-count-data" id="toc-visualize-gene-count-data" class="nav-link" data-scroll-target="#visualize-gene-count-data">Visualize gene count data</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -144,16 +162,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="quarto-title-meta">
 
     <div>
-    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-heading">Authors</div>
     <div class="quarto-title-meta-contents">
-             <p>Abby Vander Linden &amp; Victor Baham, Sage Bionetworks </p>
+             <p>Abby Vander Linden (Sage Bionetworks) </p>
+             <p>Victor Baham (Sage Bionetworks) </p>
+             <p>Jaclyn Beck (Sage Bionetworks) </p>
           </div>
   </div>
     
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 9, 2024</p>
+      <p class="date">November 11, 2024</p>
     </div>
   </div>
   
@@ -161,32 +181,49 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </div>
   
 
+
 </header>
 
+
+<hr>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>We will be working with metadata and RNAseq counts data from The Jax.IU.Pitt_5XFAD Study (Jax.IU.Pitt_5XFAD), which can be found <a href="https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage/StudyData?Study=syn21983020">here on the AD Knowledge Portal</a>. During this workshop we will use Python to:</p>
+<ol type="1">
+<li><p>Log in to Synapse</p></li>
+<li><p>Download the counts file (single-file download from Synapse)</p></li>
+<li><p>Download the metadata files (bulk data download from Synapse)</p></li>
+<li><p>Map samples in data files to information in metadata files</p></li>
+<li><p>Explore the data</p></li>
+</ol>
+<hr>
+</section>
 <section id="setup" class="level2">
 <h2 class="anchored" data-anchor-id="setup">Setup</h2>
 <section id="install-synapseclient-package" class="level3">
 <h3 class="anchored" data-anchor-id="install-synapseclient-package">Install synapseclient package</h3>
-<p>If you haven’t already, install <code>synapseclient</code> (the <a href="https://python-docs.synapse.org/build/html/index.html#">Synapse python client</a> package) using pip from the command line.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip3</span> install <span class="at">--upgrade</span> synapseclient</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>If you haven’t already, install <code>synapseclient</code> (the <a href="https://python-docs.synapse.org/">Synapse python client</a> package) using pip from the command line.</p>
+<pre class="{bash}"><code>pip3 install --upgrade synapseclient</code></pre>
 <p>We will also use the python package <code>pandas</code> for data wrangling. If you don’t have it installed, install from the command line:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip3</span> install pandas</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="{bash}"><code>pip3 install pandas</code></pre>
 <p>Import the synapseclient and pandas libraries and create a Synapse object.</p>
-<div class="cell" data-execution_count="1">
+<div id="6d64b076" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> synapseclient</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>syn <span class="op">=</span> synapseclient.Synapse()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> datetime</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>syn <span class="op">=</span> synapseclient.Synapse()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="login-to-synapse" class="level3">
 <h3 class="anchored" data-anchor-id="login-to-synapse">Login to Synapse</h3>
 <p>Next, you will need to log in to your Synapse account.</p>
 <p>Follow these instructions to <a href="https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin">generate a personal access token</a>, then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.</p>
-<div class="cell" data-execution_count="2">
+<p><strong>⚠ DO NOT put your Synapse access token in scripts that will be shared with others, or they will be able to log in as you.</strong></p>
+<div id="c76a2db2" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>syn.login(authToken <span class="op">=</span> <span class="st">"&lt;paste your personal access token here&gt;"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>For more information on managing Synapse credentials with <code>synapseclient</code>, see the documentation <a href="https://python-docs.synapse.org/build/html/Credentials.html">here</a>. If you have a .synapseCreds file stored in your home directory, you can simply run</p>
-<div class="cell" data-execution_count="3">
+<p>For more information on managing Synapse credentials with <code>synapseclient</code>, see the documentation <a href="https://python-docs.synapse.org/tutorials/configuration/">here</a>. If you have a <code>.synapseConfig</code> file stored in your home directory, you can simply run</p>
+<div id="b7b2778d" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>syn.login()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <hr>
@@ -201,329 +238,45 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="exercise-1-use-explore-data-to-find-processed-rnaseq-data-from-the-jax.iu.pitt_5xfad-study" class="level4">
 <h4 class="anchored" data-anchor-id="exercise-1-use-explore-data-to-find-processed-rnaseq-data-from-the-jax.iu.pitt_5xfad-study">Exercise 1: Use <a href="https://adknowledgeportal.synapse.org/Explore/Data">Explore Data</a> to find processed RNAseq data from the Jax.IU.Pitt_5XFAD Study</h4>
 <p>This filters the table to a single file. In the “Id” column for this <code>htseqcounts_5XFAD.txt</code> file, there is a unique Synapse ID (synID).</p>
-<p><img src="images/Screenshot 2023-05-07 at 11.10.31 AM.png" class="img-fluid" width="448"></p>
-<p>We can then use that synID to download the file.</p>
-<div class="cell" data-execution_count="4">
+<p><img src="images/portal-search-counts-file.png" class="img-fluid" width="448"></p>
+<p>We can then use that synID to download the file. Some information about the file and its storage location within Synapse is assigned to the variable <code>counts_file</code>.</p>
+<div id="057d4abf" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>counts_id <span class="op">=</span><span class="st">"syn22108847"</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>counts_file <span class="op">=</span> syn.get(counts_id, downloadLocation <span class="op">=</span> <span class="st">"files/"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>counts_file <span class="op">=</span> syn.get(counts_id, downloadLocation <span class="op">=</span> <span class="st">"files/"</span>, ifcollision <span class="op">=</span> <span class="st">"overwrite.local"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>The argument <code>ifcollision = "overwrite.local"</code> means that instead of downloading the file and saving it as a new copy, it will overwrite the current file at that location if it already exists, to avoid cluttering your hard drive with multiple copies of the same file. Before downloading, <code>synGet</code> will check if the file on your hard drive is the same as the version on Synapse, and will only download from Synapse if the two files are different.</p>
+<p>This is very useful for large files especially: you can ensure that you always have the latest copy of a file from Synapse, without having to re-download the file if you already have the current version on your hard drive.</p>
 <p>The variable <code>counts_file</code> is a Synapse entity object. It has a variety of attributes, including <code>.path</code>, <code>.properties</code>, and <code>.annotations</code> that contain information about where the file is in Synapse, how it is labeled, what version it is, etc.</p>
-<div class="cell" data-execution_count="5">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># this is the entity's synID</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>counts_file.<span class="bu">id</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Synapse ID of the file:</p>
+<div id="7199627c" class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>counts_file.<span class="bu">id</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="4">
 <pre><code>'syn22108847'</code></pre>
 </div>
 </div>
-<div class="cell" data-execution_count="6">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># the local path where the file was download</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>counts_file.path </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The local path where the file was download:</p>
+<div id="120b8330" class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>counts_file.path </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="5">
-<pre><code>'/Users/alinden/Desktop/sage-repos/originals/ADPortalWorkshops/files/htseqcounts_5XFAD.txt'</code></pre>
+<pre><code>'/Users/jbeck/Code/ADPortalWorkshops/files/htseqcounts_5XFAD.txt'</code></pre>
 </div>
 </div>
-<div class="cell" data-execution_count="7">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># the file version</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>counts_file.properties.versionNumber</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The file version:</p>
+<div id="3da0cd63" class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>counts_file.properties.versionNumber</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="6">
 <pre><code>2</code></pre>
 </div>
 </div>
-</section>
-</section>
-<section id="bulk-download-files" class="level3">
-<h3 class="anchored" data-anchor-id="bulk-download-files">Bulk download files</h3>
-<section id="exercise-2-use-explore-studies-to-find-all-metadata-files-from-the-jax.iu.pitt_5xfad-study" class="level4">
-<h4 class="anchored" data-anchor-id="exercise-2-use-explore-studies-to-find-all-metadata-files-from-the-jax.iu.pitt_5xfad-study">Exercise 2: Use <a href="https://adknowledgeportal.synapse.org/Explore/Studies">Explore Studies</a> to find all metadata files from the Jax.IU.Pitt_5XFAD study</h4>
-<p>Use the facets and search bar to look for data you want to download from the AD Knowledge Portal. Once you’ve identified the files you want, click on the download arrow icon on the top right of the Explore Data table and select “Programmatic Options” from the drop-down menu.</p>
-<p><img src="images/download-programmatic-options.png" class="img-fluid" width="300"></p>
-<p>In the window that pops up, select the “Python” tab from the top menu bar. This will display some Python code that constructs a SQL query of the Synapse data table that drives the AD Knowledge Portal. This query will allow us to download only the files that meet our search criteria.</p>
-<p>The function <code>syn.tableQuery()</code> returns query results as CSV file that is automatically downloaded to a Synapse cache directory <code>.synapseCache</code> in your home directory. You can use <code>query.filepath</code> to see the path to the file in the Synapse cache.</p>
-<div class="cell" data-execution_count="8">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># download the results of the filtered table query</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>query <span class="op">=</span> syn.tableQuery(<span class="st">"SELECT * FROM syn11346063 WHERE ( ( `study` HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( `resourceType` = 'metadata' ) )"</span>)</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co"># view the file path of the resulting csv</span></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>query.filepath</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Let’s take a quick look at the file we just downloaded.</p>
+<div id="ff024ae9" class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>counts <span class="op">=</span> pd.read_table(counts_file.path, sep <span class="op">=</span> <span class="st">"</span><span class="ch">\t</span><span class="st">"</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>counts.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
-<pre><code>'/Users/alinden/.synapseCache/8/136284008/SYNAPSE_TABLE_QUERY_136284008.csv'</code></pre>
-</div>
-</div>
-<p>We’ll use the pandas function <code>read.csv</code> to read the CSV file as a data frame. We can explore the <code>download_table</code> object and see that it contains information on all of the AD Portal data files we want to download. Some columns like the “id” and “parentId” columns contain info about where the file is in Synapse, and some columns contain AD Portal annotations for each file, like “dataType”, “specimenID”, and “assay”. This annotation table will later allow us to link downloaded files to additional metadata variables!</p>
-<div class="cell" data-execution_count="9">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># read in the table query csv file</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>download_table <span class="op">=</span> pd.read_csv(query.filepath)</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>download_table</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="8">
 <div>
 
 
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">ROW_ID</th>
-<th data-quarto-table-cell-role="th">ROW_VERSION</th>
-<th data-quarto-table-cell-role="th">ROW_ETAG</th>
-<th data-quarto-table-cell-role="th">id</th>
-<th data-quarto-table-cell-role="th">name</th>
-<th data-quarto-table-cell-role="th">study</th>
-<th data-quarto-table-cell-role="th">dataType</th>
-<th data-quarto-table-cell-role="th">assay</th>
-<th data-quarto-table-cell-role="th">organ</th>
-<th data-quarto-table-cell-role="th">tissue</th>
-<th data-quarto-table-cell-role="th">...</th>
-<th data-quarto-table-cell-role="th">benefactorId</th>
-<th data-quarto-table-cell-role="th">projectId</th>
-<th data-quarto-table-cell-role="th">modifiedOn</th>
-<th data-quarto-table-cell-role="th">modifiedBy</th>
-<th data-quarto-table-cell-role="th">dataFileHandleId</th>
-<th data-quarto-table-cell-role="th">metaboliteType</th>
-<th data-quarto-table-cell-role="th">chromosome</th>
-<th data-quarto-table-cell-role="th">modelSystemType</th>
-<th data-quarto-table-cell-role="th">libraryPrep</th>
-<th data-quarto-table-cell-role="th">dataFileSizeBytes</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">0</td>
-<td>22094731</td>
-<td>2</td>
-<td>10af2c18-a22b-4294-acd2-a58d3f49af73</td>
-<td>syn22094731</td>
-<td>Jax.IU.Pitt_5XFAD_assay_autorad_metadata.csv</td>
-<td>["Jax.IU.Pitt_5XFAD"]</td>
-<td>["image"]</td>
-<td>["autoradiography"]</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>...</td>
-<td>syn2580853</td>
-<td>syn2580853</td>
-<td>1684528999504</td>
-<td>3427512</td>
-<td>75355920</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>animal</td>
-<td>NaN</td>
-<td>22454</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">1</td>
-<td>22094732</td>
-<td>2</td>
-<td>bf808735-6793-47c4-9c8e-add847c66c57</td>
-<td>syn22094732</td>
-<td>Jax.IU.Pitt_5XFAD_assay_PET_metadata.csv</td>
-<td>["Jax.IU.Pitt_5XFAD"]</td>
-<td>["image"]</td>
-<td>["Positron Emission Tomography"]</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>...</td>
-<td>syn2580853</td>
-<td>syn2580853</td>
-<td>1684528999561</td>
-<td>3427512</td>
-<td>75355925</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>animal</td>
-<td>NaN</td>
-<td>20460</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">2</td>
-<td>22103212</td>
-<td>5</td>
-<td>982af708-77e8-4d31-b9dc-ae817829036b</td>
-<td>syn22103212</td>
-<td>Jax.IU.Pitt_5XFAD_individual_metadata.csv</td>
-<td>["Jax.IU.Pitt_5XFAD"]</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>...</td>
-<td>syn2580853</td>
-<td>syn2580853</td>
-<td>1712682733219</td>
-<td>3427512</td>
-<td>136215768</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>159129</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">3</td>
-<td>22103213</td>
-<td>3</td>
-<td>248c214b-5d5c-4e36-9aa6-127e9180e412</td>
-<td>syn22103213</td>
-<td>Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv</td>
-<td>["Jax.IU.Pitt_5XFAD"]</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>...</td>
-<td>syn2580853</td>
-<td>syn2580853</td>
-<td>1684528999849</td>
-<td>3427512</td>
-<td>75356382</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>animal</td>
-<td>NaN</td>
-<td>36929</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">4</td>
-<td>22110328</td>
-<td>4</td>
-<td>69fc8a06-b928-4f37-969d-47c7aa4c1ca1</td>
-<td>syn22110328</td>
-<td>Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv</td>
-<td>["Jax.IU.Pitt_5XFAD"]</td>
-<td>["geneExpression"]</td>
-<td>["rnaSeq"]</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>...</td>
-<td>syn2580853</td>
-<td>syn2580853</td>
-<td>1684529010418</td>
-<td>3427512</td>
-<td>75357585</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>animal</td>
-<td>NaN</td>
-<td>5476</td>
-</tr>
-</tbody>
-</table>
-
-<p>5 rows × 46 columns</p>
-</div>
-</div>
-</div>
-<p>Finally, we can use a for loop to loop through the “id” column and apply the <code>syn.get()</code> function to each file’s synID.</p>
-<div class="cell" data-execution_count="10">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># loop through the column of synIDs and download each file</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="bu">id</span> <span class="kw">in</span> download_table.<span class="bu">id</span>:</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  syn.get(<span class="bu">id</span>, downloadLocation <span class="op">=</span> <span class="st">"files/"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Congratulations, you have bulk downloaded files from the AD Knowledge Portal!</p>
-<section id="a-note-on-file-versions" class="level5">
-<h5 class="anchored" data-anchor-id="a-note-on-file-versions">✏️ A note on file versions!</h5>
-<p>All files in the AD Portal are versioned, meaning that if the file represented by a particular synID changes, a new version will be created. You can access a specific versions by using the <code>version</code> argument in <code>syn.get()</code>. More info on version control in the AD Portal and the Synapse platform can be found <a href="https://help.synapse.org/docs/Versioning-Files.2667708547.html">here</a>.</p>
-<hr>
-</section>
-</section>
-</section>
-</section>
-<section id="working-with-ad-portal-metadata" class="level2">
-<h2 class="anchored" data-anchor-id="working-with-ad-portal-metadata">Working with AD Portal metadata</h2>
-<section id="metadata-basics" class="level3">
-<h3 class="anchored" data-anchor-id="metadata-basics">Metadata basics</h3>
-<p>We have now downloaded several metadata files and an RNAseq counts file from the portal. For our next exercises, we want to read those files in as R data so we can work with them.</p>
-<p>We can see from the <code>download_table</code> we got during the bulk download step that we have five metadata files. Two of these should be the individual and biospecimen files, and three of them are assay meetadata files.</p>
-<div class="cell" data-execution_count="11">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>download_table[[<span class="st">'name'</span>, <span class="st">'metadataType'</span>, <span class="st">'assay'</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="10">
-<div>
-
-
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">name</th>
-<th data-quarto-table-cell-role="th">metadataType</th>
-<th data-quarto-table-cell-role="th">assay</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">0</td>
-<td>Jax.IU.Pitt_5XFAD_assay_autorad_metadata.csv</td>
-<td>assay</td>
-<td>["autoradiography"]</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">1</td>
-<td>Jax.IU.Pitt_5XFAD_assay_PET_metadata.csv</td>
-<td>assay</td>
-<td>["Positron Emission Tomography"]</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">2</td>
-<td>Jax.IU.Pitt_5XFAD_individual_metadata.csv</td>
-<td>individual</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">3</td>
-<td>Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv</td>
-<td>biospecimen</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">4</td>
-<td>Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv</td>
-<td>assay</td>
-<td>["rnaSeq"]</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-</div>
-<p>We are only interested in RNAseq data, so we will only read in the individual, biospecimen, and RNAseq assay metadata files. We will also read in the counts data file.</p>
-<div class="cell" data-execution_count="12">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># counts matrix</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>counts <span class="op">=</span> pd.read_table(<span class="st">"files/htseqcounts_5XFAD.txt"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>We can now read the metadata csv files in as pandas dataframes.</p>
-<div class="cell" data-execution_count="13">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># individual metadata</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>ind_meta <span class="op">=</span> pd.read_csv(<span class="st">"files/Jax.IU.Pitt_5XFAD_individual_metadata.csv"</span>)</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co"># biospecimen metadata</span></span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>bio_meta <span class="op">=</span> pd.read_csv(<span class="st">"files/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv"</span>)</span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="co">#assay metadata</span></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>rna_meta <span class="op">=</span> pd.read_csv(<span class="st">"files/Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Let’s examine the data and metadata files a bit before we begin our analyses.</p>
-<section id="counts-data" class="level4">
-<h4 class="anchored" data-anchor-id="counts-data">Counts data</h4>
-<div class="cell" data-execution_count="14">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>counts.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="13">
-<div>
-
-
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
@@ -678,14 +431,1101 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>The data file has a column of ENSEMBL gene ids and then a bunch of columns with count data, where the column headers correspond to the specimenIDs. These specimenIDs should all be in the RNAseq assay metadata file, so let’s check.</p>
-<div class="cell" data-execution_count="15">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>rna_meta.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="14">
+</section>
+</section>
+<section id="bulk-download-files" class="level3">
+<h3 class="anchored" data-anchor-id="bulk-download-files">Bulk download files</h3>
+<section id="exercise-2-use-explore-studies-to-find-all-metadata-files-from-the-jax.iu.pitt_5xfad-study" class="level4">
+<h4 class="anchored" data-anchor-id="exercise-2-use-explore-studies-to-find-all-metadata-files-from-the-jax.iu.pitt_5xfad-study">Exercise 2: Use <a href="https://adknowledgeportal.synapse.org/Explore/Studies">Explore Studies</a> to find all metadata files from the Jax.IU.Pitt_5XFAD study</h4>
+<p>Use the facets and search bar to look for data you want to download from the AD Knowledge Portal. Once you’ve identified the files you want, click on the download arrow icon on the top right of the Explore Data table and select “Programmatic Options” from the drop-down menu.</p>
+<p><img src="images/download-programmatic-options.png" class="img-fluid" width="300"></p>
+<p>In the window that pops up, select the “Python” tab from the top menu bar. This will display some Python code that constructs a SQL query of the Synapse data table that drives the AD Knowledge Portal. This query will allow us to download only the files that meet our search criteria.</p>
+<p><strong>We’ll download our files using two steps:</strong></p>
+<ol type="1">
+<li><p>We will use the <code>syn.tableQuery()</code> code the portal gave us to download a CSV file that lists all of the files we want. This CSV file is a table, one row per file in the list, containing the Synapse ID, file name, annotations, etc associated with each file.</p>
+<ol type="a">
+<li>This does NOT download the files themselves. It only fetches a list of the files plus their annotations for you.</li>
+</ol></li>
+<li><p>We will call <code>syn.get()</code> on each Synapse ID in the table to download the files.</p></li>
+</ol>
+<p><strong>Why isn’t this just one step instead of two?</strong></p>
+<p>Splitting this into steps can be extremely helpful for cases where you might not want to download all of the files back-to-back. For example, if the file sizes are very large or if you are downloading hundreds of files. Downloading the table first lets you: a) Fetch helpful annotations about the files without downloading them first, and b) do things like loop through the list one by one, download a file, do some processing, and delete the file before downloading the next one to save hard drive space.</p>
+<p><strong>Back to downloading…</strong></p>
+<p>The function <code>syn.tableQuery()</code> returns a Synapse object wrapper around the CSV file, which is automatically downloaded to a folder called <code>.synapseCache</code> in your home directory. You can use <code>query.filepath</code> to see the path to the file in the Synapse cache.</p>
+<div id="fe35fbef" class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># download the results of the filtered table query</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>query <span class="op">=</span> syn.tableQuery(</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"SELECT * FROM syn11346063 WHERE ( ( `study` HAS ( 'Jax.IU.Pitt_5XFAD' ) ) "</span> <span class="op">+</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"AND ( `resourceType` = 'metadata' ) )"</span>, </span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  includeRowIdAndRowVersion <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co"># view the file path of the resulting csv</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>query.filepath</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Downloading files:   0%|          | 0.00/1.00 [00:00&lt;?, ?B/s, syn11346063]Downloading files:   0%|          | 0.00/2.14k [00:00&lt;?, ?B/s, syn11346063]Downloading files: 100%|██████████| 2.14k/2.14k [00:00&lt;00:00, 4.11kB/s, syn11346063]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Downloaded syn11346063 to /Users/jbeck/.synapseCache/948/149674948/SYNAPSE_TABLE_QUERY_149674948.csv</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Downloading files: 100%|██████████| 2.14k/2.14k [00:00&lt;00:00, 4.09kB/s, syn11346063]</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="8">
+<pre><code>'/Users/jbeck/.synapseCache/948/149674948/SYNAPSE_TABLE_QUERY_149674948.csv'</code></pre>
+</div>
+</div>
+<p>We’ll use the pandas function <code>read.csv</code> to read the CSV file as a data frame. We can explore the <code>download_table</code> object and see that it contains information on all of the AD Portal data files we want to download. Some columns like the “id” and “parentId” columns contain info about where the file is in Synapse, and some columns contain AD Portal annotations for each file, like “dataType”, “specimenID”, and “assay”. This annotation table will later allow us to link downloaded files to additional metadata variables!</p>
+<div id="6cc3a5d4" class="cell" data-execution_count="10">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># read in the table query csv file</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>download_table <span class="op">=</span> pd.read_csv(query.filepath)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>download_table</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="9">
 <div>
 
 
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">id</th>
+<th data-quarto-table-cell-role="th">name</th>
+<th data-quarto-table-cell-role="th">study</th>
+<th data-quarto-table-cell-role="th">dataType</th>
+<th data-quarto-table-cell-role="th">assay</th>
+<th data-quarto-table-cell-role="th">organ</th>
+<th data-quarto-table-cell-role="th">tissue</th>
+<th data-quarto-table-cell-role="th">species</th>
+<th data-quarto-table-cell-role="th">sex</th>
+<th data-quarto-table-cell-role="th">consortium</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">benefactorId</th>
+<th data-quarto-table-cell-role="th">projectId</th>
+<th data-quarto-table-cell-role="th">modifiedOn</th>
+<th data-quarto-table-cell-role="th">modifiedBy</th>
+<th data-quarto-table-cell-role="th">dataFileHandleId</th>
+<th data-quarto-table-cell-role="th">metaboliteType</th>
+<th data-quarto-table-cell-role="th">chromosome</th>
+<th data-quarto-table-cell-role="th">modelSystemType</th>
+<th data-quarto-table-cell-role="th">libraryPrep</th>
+<th data-quarto-table-cell-role="th">dataFileSizeBytes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>syn22094731</td>
+<td>Jax.IU.Pitt_5XFAD_assay_autorad_metadata.csv</td>
+<td>["Jax.IU.Pitt_5XFAD"]</td>
+<td>["image"]</td>
+<td>["autoradiography"]</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>MODEL-AD</td>
+<td>...</td>
+<td>syn2580853</td>
+<td>syn2580853</td>
+<td>1684528999504</td>
+<td>3427512</td>
+<td>75355920</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>animal</td>
+<td>NaN</td>
+<td>22454</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>syn22094732</td>
+<td>Jax.IU.Pitt_5XFAD_assay_PET_metadata.csv</td>
+<td>["Jax.IU.Pitt_5XFAD"]</td>
+<td>["image"]</td>
+<td>["Positron Emission Tomography"]</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>MODEL-AD</td>
+<td>...</td>
+<td>syn2580853</td>
+<td>syn2580853</td>
+<td>1684528999561</td>
+<td>3427512</td>
+<td>75355925</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>animal</td>
+<td>NaN</td>
+<td>20460</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>syn22103212</td>
+<td>Jax.IU.Pitt_5XFAD_individual_metadata.csv</td>
+<td>["Jax.IU.Pitt_5XFAD"]</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>...</td>
+<td>syn2580853</td>
+<td>syn2580853</td>
+<td>1712682733219</td>
+<td>3427512</td>
+<td>136215768</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>159129</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>syn22103213</td>
+<td>Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv</td>
+<td>["Jax.IU.Pitt_5XFAD"]</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>MODEL-AD</td>
+<td>...</td>
+<td>syn2580853</td>
+<td>syn2580853</td>
+<td>1684528999849</td>
+<td>3427512</td>
+<td>75356382</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>animal</td>
+<td>NaN</td>
+<td>36929</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>syn22110328</td>
+<td>Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv</td>
+<td>["Jax.IU.Pitt_5XFAD"]</td>
+<td>["geneExpression"]</td>
+<td>["rnaSeq"]</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>MODEL-AD</td>
+<td>...</td>
+<td>syn2580853</td>
+<td>syn2580853</td>
+<td>1684529010418</td>
+<td>3427512</td>
+<td>75357585</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>animal</td>
+<td>NaN</td>
+<td>5476</td>
+</tr>
+</tbody>
+</table>
+
+<p>5 rows × 43 columns</p>
+</div>
+</div>
+</div>
+<p>Let’s look at a subset of columns that might be useful:</p>
+<div id="7bba087d" class="cell" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># read in the table query csv file</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>download_table[[<span class="st">"id"</span>, <span class="st">"name"</span>, <span class="st">"metadataType"</span>, <span class="st">"assay"</span>, <span class="st">"fileFormat"</span>, <span class="st">"currentVersion"</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="10">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">id</th>
+<th data-quarto-table-cell-role="th">name</th>
+<th data-quarto-table-cell-role="th">metadataType</th>
+<th data-quarto-table-cell-role="th">assay</th>
+<th data-quarto-table-cell-role="th">fileFormat</th>
+<th data-quarto-table-cell-role="th">currentVersion</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>syn22094731</td>
+<td>Jax.IU.Pitt_5XFAD_assay_autorad_metadata.csv</td>
+<td>assay</td>
+<td>["autoradiography"]</td>
+<td>csv</td>
+<td>2</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>syn22094732</td>
+<td>Jax.IU.Pitt_5XFAD_assay_PET_metadata.csv</td>
+<td>assay</td>
+<td>["Positron Emission Tomography"]</td>
+<td>csv</td>
+<td>2</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>syn22103212</td>
+<td>Jax.IU.Pitt_5XFAD_individual_metadata.csv</td>
+<td>individual</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>5</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>syn22103213</td>
+<td>Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv</td>
+<td>biospecimen</td>
+<td>NaN</td>
+<td>csv</td>
+<td>3</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>syn22110328</td>
+<td>Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv</td>
+<td>assay</td>
+<td>["rnaSeq"]</td>
+<td>csv</td>
+<td>4</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p><strong>Tip:</strong> Copy this file and save it somewhere memorable to have a complete record of all the files you are using and what version of each file was downloaded – for reproducibility!</p>
+<p>Finally, we can use a <code>for</code> loop to loop through the “id” column and apply the <code>syn.get()</code> function to each file’s synID.</p>
+<div id="436c7224" class="cell" data-execution_count="12">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># loop through the column of synIDs and download each file</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="bu">id</span> <span class="kw">in</span> download_table.<span class="bu">id</span>:</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  syn.get(<span class="bu">id</span>, downloadLocation <span class="op">=</span> <span class="st">"files/"</span>, ifcollision <span class="op">=</span> <span class="st">"overwrite.local"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Congratulations, you have bulk downloaded files from the AD Knowledge Portal!</p>
+<section id="note-on-file-versions" class="level5">
+<h5 class="anchored" data-anchor-id="note-on-file-versions">✏ Note on file versions</h5>
+<p>All files in the AD Portal are versioned, meaning that if the file represented by a particular synID changes, a new version will be created. You can access a specific versions by using the <code>version</code> argument in <code>syn.get()</code>. More info on version control in the AD Portal and the Synapse platform can be found <a href="https://help.synapse.org/docs/Versioning-Files.2667708547.html">here</a>.</p>
+</section>
+</section>
+</section>
+<section id="single-specimen-files" class="level3">
+<h3 class="anchored" data-anchor-id="single-specimen-files">Single-specimen files</h3>
+<p>For files that contain data from a single specimen (e.g.&nbsp;raw sequencing files, raw mass spectra, etc.), we can use the Synapse annotations to associate these files with the appropriate metadata.</p>
+<section id="excercise-3-use-explore-data-to-find-all-rnaseq-files-from-the-jax.iu.pitt_5xfad-study." class="level4">
+<h4 class="anchored" data-anchor-id="excercise-3-use-explore-data-to-find-all-rnaseq-files-from-the-jax.iu.pitt_5xfad-study.">Excercise 3: Use <a href="https://adknowledgeportal.synapse.org/Explore/Data">Explore Data</a> to find <em>all</em> RNAseq files from the Jax.IU.Pitt_5XFAD study.</h4>
+<p>If we filter for data where Study = “Jax.IU.Pitt_5XFAD” and Assay = “rnaSeq” we will get a list of 148 files, including raw fastqs and processed counts data.</p>
+</section>
+<section id="synapse-entity-annotations" class="level4">
+<h4 class="anchored" data-anchor-id="synapse-entity-annotations">Synapse entity annotations</h4>
+<p>We can use the function <code>syn.get_annotations()</code> to view the annotations associated with any file <em>before</em> actually downloading the file.</p>
+<div id="f8df591e" class="cell" data-execution_count="13">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># the synID of a random fastq file from our filtered search of fastq files</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>random_fastq <span class="op">=</span> <span class="st">"syn22108503"</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># extract the annotations as a dict</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>fastq_annotations <span class="op">=</span> syn.get_annotations(random_fastq)</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>fastq_annotations</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="12">
+<pre><code>{'sex': ['female'],
+ 'room': ['JAX_MGL373'],
+ 'assay': ['rnaSeq'],
+ 'grant': ['U54AG054345'],
+ 'organ': ['brain'],
+ 'study': ['Jax.IU.Pitt_5XFAD'],
+ 'tissue': ['right cerebral hemisphere'],
+ 'bedding': ['aspen'],
+ 'birthID': ['RMO1223'],
+ 'climbID': ['298456'],
+ 'species': ['Mouse'],
+ 'waterpH': [2.85],
+ 'ageDeath': [10.8196721311475],
+ 'dataType': ['geneExpression'],
+ 'genotype': ['5XFAD_carrier'],
+ 'matingID': ['M-108-17'],
+ 'dateBirth': ['1521417600000'],
+ 'consortium': ['MODEL-AD'],
+ 'fileFormat': ['fastq'],
+ 'generation': ['N1F3'],
+ 'rodentDiet': ['0.06'],
+ 'specimenID': ['32043rh'],
+ 'brainWeight': [0.503],
+ 'dataSubtype': ['raw'],
+ 'microchipID': ['288646853'],
+ 'stockNumber': ['8730'],
+ 'individualID': ['32043'],
+ 'officialName': ['B6.Cg-Tg(APPSwFlLon,PSEN1*M146L*L286V)6799Vas/Mmjax'],
+ 'resourceType': ['experimentalData'],
+ 'rodentWeight': [28.76],
+ 'ageDeathUnits': ['months'],
+ 'isModelSystem': [False],
+ 'materialOrigin': ['JAX'],
+ 'isMultiSpecimen': [False],
+ 'modelSystemName': ['5XFAD'],
+ 'modelSystemType': ['animal'],
+ 'nucleicAcidSource': ['bulk cell'],
+ 'genotypeBackground': ['C57BL6J'],
+ 'individualIdSource': ['JAX'],
+ 'individualCommonGenotype': ['5XFAD']}</code></pre>
+</div>
+</div>
+<p>The file annotations let us see which study the file is associated with (Jax.IU.Pitt.5XFAD), which species it’s from (Mouse), which assay generated the file (rnaSeq), and a whole bunch of other properties. Most importantly, single-specimen files are annotated with with the specimenID of the specimen in the file, and the individualID of the individual that specimen was taken from. We can use these annotations to link files to the rest of the metadata, including metadata that is not in annotations. This is especially helpful for human studies, as potentially identifying information like age, race, and diagnosis is not included in file annotations.</p>
+<div id="40472ebb" class="cell" data-execution_count="14">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>ind_meta <span class="op">=</span> pd.read_csv(<span class="st">"files/Jax.IU.Pitt_5XFAD_individual_metadata.csv"</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Find records belonging to the individual this file maps to in our joined</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="co"># metadata. The annotation value is a string but the individualID column in the</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="co"># metadata is type int so we have to convert.</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>ind_meta[(ind_meta[<span class="st">'individualID'</span>] <span class="op">==</span> <span class="bu">int</span>(fastq_annotations[<span class="st">'individualID'</span>][<span class="dv">0</span>]))]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="13">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">individualID</th>
+<th data-quarto-table-cell-role="th">individualIdSource</th>
+<th data-quarto-table-cell-role="th">species</th>
+<th data-quarto-table-cell-role="th">sex</th>
+<th data-quarto-table-cell-role="th">genotype</th>
+<th data-quarto-table-cell-role="th">genotypeBackground</th>
+<th data-quarto-table-cell-role="th">room</th>
+<th data-quarto-table-cell-role="th">litter</th>
+<th data-quarto-table-cell-role="th">matingID</th>
+<th data-quarto-table-cell-role="th">dateBirth</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">PhysicalMarker</th>
+<th data-quarto-table-cell-role="th">generation</th>
+<th data-quarto-table-cell-role="th">AnimalMatingStatus</th>
+<th data-quarto-table-cell-role="th">jobNumber</th>
+<th data-quarto-table-cell-role="th">microchipID</th>
+<th data-quarto-table-cell-role="th">rodentDiet</th>
+<th data-quarto-table-cell-role="th">birthID</th>
+<th data-quarto-table-cell-role="th">brainWeight</th>
+<th data-quarto-table-cell-role="th">rodentWeight</th>
+<th data-quarto-table-cell-role="th">modelCommonName</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">511</td>
+<td>32043</td>
+<td>JAX</td>
+<td>Mouse</td>
+<td>female</td>
+<td>5XFAD_carrier</td>
+<td>C57BL6J</td>
+<td>JAX_MGL373</td>
+<td>RMO1223</td>
+<td>M-108-17</td>
+<td>3/19/18</td>
+<td>...</td>
+<td>NaN</td>
+<td>N1F3</td>
+<td>Virgin</td>
+<td>JAX 5xFAD 12mo</td>
+<td>288646853.0</td>
+<td>6%</td>
+<td>NaN</td>
+<td>0.503</td>
+<td>28.76</td>
+<td>5XFAD</td>
+</tr>
+</tbody>
+</table>
+
+<p>1 rows × 29 columns</p>
+</div>
+</div>
+</div>
+</section>
+<section id="annotations-during-bulk-download" class="level4">
+<h4 class="anchored" data-anchor-id="annotations-during-bulk-download">Annotations during bulk download</h4>
+<p>When bulk downloading many files, the best practice is to preserve the download manifest that is generated which lists all the files, their synIDs, and all their annotations. If using the Synapse R client, follow the instructions in the <a href="#bulk-download-files">Bulk download files</a> section above.</p>
+<p>If we use the “Programmatic Options” tab in the AD Portal download menu to download all 148 rnaSeq files from the 5XFAD study, we would get a table query that looks like this:</p>
+<div id="e47babdf" class="cell" data-execution_count="15">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>query <span class="op">=</span> syn.tableQuery(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"SELECT * FROM syn11346063 WHERE ( ( </span><span class="ch">\"</span><span class="st">study</span><span class="ch">\"</span><span class="st"> HAS ( 'Jax.IU.Pitt_5XFAD' ) ) "</span> <span class="op">+</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"AND ( </span><span class="ch">\"</span><span class="st">assay</span><span class="ch">\"</span><span class="st"> HAS ( 'rnaSeq' ) ) )"</span>,</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  includeRowIdAndRowVersion <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Downloading files:   0%|          | 0.00/1.00 [00:00&lt;?, ?B/s, syn11346063]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Downloaded syn11346063 to /Users/jbeck/.synapseCache/950/149674950/SYNAPSE_TABLE_QUERY_149674950.csv</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Downloading files: 100%|██████████| 69.7k/69.7k [00:00&lt;00:00, 146kB/s, syn11346063]</code></pre>
+</div>
+</div>
+<p>As we saw previously, this downloads a csv file with the results of our AD Portal query. Opening that file lets us see which specimens are associated with which files:</p>
+<div id="c7de5ab8" class="cell" data-execution_count="16">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>annotations_table <span class="op">=</span> pd.read_csv(query.filepath)</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>annotations_table</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="15">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">id</th>
+<th data-quarto-table-cell-role="th">name</th>
+<th data-quarto-table-cell-role="th">study</th>
+<th data-quarto-table-cell-role="th">dataType</th>
+<th data-quarto-table-cell-role="th">assay</th>
+<th data-quarto-table-cell-role="th">organ</th>
+<th data-quarto-table-cell-role="th">tissue</th>
+<th data-quarto-table-cell-role="th">species</th>
+<th data-quarto-table-cell-role="th">sex</th>
+<th data-quarto-table-cell-role="th">consortium</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">benefactorId</th>
+<th data-quarto-table-cell-role="th">projectId</th>
+<th data-quarto-table-cell-role="th">modifiedOn</th>
+<th data-quarto-table-cell-role="th">modifiedBy</th>
+<th data-quarto-table-cell-role="th">dataFileHandleId</th>
+<th data-quarto-table-cell-role="th">metaboliteType</th>
+<th data-quarto-table-cell-role="th">chromosome</th>
+<th data-quarto-table-cell-role="th">modelSystemType</th>
+<th data-quarto-table-cell-role="th">libraryPrep</th>
+<th data-quarto-table-cell-role="th">dataFileSizeBytes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>syn22108503</td>
+<td>32043_GT19_12829_CCGCGGTT-AGCGCTAG_R1_001.fast...</td>
+<td>["Jax.IU.Pitt_5XFAD"]</td>
+<td>["geneExpression"]</td>
+<td>["rnaSeq"]</td>
+<td>brain</td>
+<td>["right cerebral hemisphere"]</td>
+<td>["Mouse"]</td>
+<td>["female"]</td>
+<td>MODEL-AD</td>
+<td>...</td>
+<td>syn2580853</td>
+<td>syn2580853</td>
+<td>1684529000205</td>
+<td>3427512</td>
+<td>75357319</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>animal</td>
+<td>NaN</td>
+<td>4234330492</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>syn22108508</td>
+<td>32044_GT19_12856_GGAGCGTC-GTCCGTGC_R1_001.fast...</td>
+<td>["Jax.IU.Pitt_5XFAD"]</td>
+<td>["geneExpression"]</td>
+<td>["rnaSeq"]</td>
+<td>brain</td>
+<td>["right cerebral hemisphere"]</td>
+<td>["Mouse"]</td>
+<td>["male"]</td>
+<td>MODEL-AD</td>
+<td>...</td>
+<td>syn2580853</td>
+<td>syn2580853</td>
+<td>1684529000273</td>
+<td>3427512</td>
+<td>75357320</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>animal</td>
+<td>NaN</td>
+<td>3157791076</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>syn22108512</td>
+<td>32046_GT19_12865_CAACAATG-CTTCACGG_R1_001.fast...</td>
+<td>["Jax.IU.Pitt_5XFAD"]</td>
+<td>["geneExpression"]</td>
+<td>["rnaSeq"]</td>
+<td>brain</td>
+<td>["right cerebral hemisphere"]</td>
+<td>["Mouse"]</td>
+<td>["male"]</td>
+<td>MODEL-AD</td>
+<td>...</td>
+<td>syn2580853</td>
+<td>syn2580853</td>
+<td>1684529000345</td>
+<td>3427512</td>
+<td>75357321</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>animal</td>
+<td>NaN</td>
+<td>3194898678</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>syn22108519</td>
+<td>32047_GT19_12836_ATGAGGCC-GTTAATTG_R1_001.fast...</td>
+<td>["Jax.IU.Pitt_5XFAD"]</td>
+<td>["geneExpression"]</td>
+<td>["rnaSeq"]</td>
+<td>brain</td>
+<td>["right cerebral hemisphere"]</td>
+<td>["Mouse"]</td>
+<td>["male"]</td>
+<td>MODEL-AD</td>
+<td>...</td>
+<td>syn2580853</td>
+<td>syn2580853</td>
+<td>1684529000413</td>
+<td>3427512</td>
+<td>75357323</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>animal</td>
+<td>NaN</td>
+<td>2542370766</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>syn22108525</td>
+<td>32049_GT19_12881_GCCACAGG-CATGCCAT_R1_001.fast...</td>
+<td>["Jax.IU.Pitt_5XFAD"]</td>
+<td>["geneExpression"]</td>
+<td>["rnaSeq"]</td>
+<td>brain</td>
+<td>["right cerebral hemisphere"]</td>
+<td>["Mouse"]</td>
+<td>["female"]</td>
+<td>MODEL-AD</td>
+<td>...</td>
+<td>syn2580853</td>
+<td>syn2580853</td>
+<td>1684529000486</td>
+<td>3427512</td>
+<td>75357322</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>animal</td>
+<td>NaN</td>
+<td>2931163068</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">143</td>
+<td>syn22108846</td>
+<td>46896_GT19_12890_CATAGAGT-TGCCACCA_R2_001.fast...</td>
+<td>["Jax.IU.Pitt_5XFAD"]</td>
+<td>["geneExpression"]</td>
+<td>["rnaSeq"]</td>
+<td>brain</td>
+<td>["right cerebral hemisphere"]</td>
+<td>["Mouse"]</td>
+<td>["male"]</td>
+<td>MODEL-AD</td>
+<td>...</td>
+<td>syn2580853</td>
+<td>syn2580853</td>
+<td>1684529010148</td>
+<td>3427512</td>
+<td>75357566</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>animal</td>
+<td>NaN</td>
+<td>3566851836</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">144</td>
+<td>syn22108847</td>
+<td>htseqcounts_5XFAD.txt</td>
+<td>["Jax.IU.Pitt_5XFAD"]</td>
+<td>["geneExpression"]</td>
+<td>["rnaSeq"]</td>
+<td>brain</td>
+<td>["right cerebral hemisphere"]</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>MODEL-AD</td>
+<td>...</td>
+<td>syn2580853</td>
+<td>syn2580853</td>
+<td>1684529010219</td>
+<td>3427512</td>
+<td>75357567</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>animal</td>
+<td>NaN</td>
+<td>12803625</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">145</td>
+<td>syn22108848</td>
+<td>tpm_gene_5XFAD.txt</td>
+<td>["Jax.IU.Pitt_5XFAD"]</td>
+<td>["geneExpression"]</td>
+<td>["rnaSeq"]</td>
+<td>brain</td>
+<td>["right cerebral hemisphere"]</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>MODEL-AD</td>
+<td>...</td>
+<td>syn2580853</td>
+<td>syn2580853</td>
+<td>1684529010285</td>
+<td>3427512</td>
+<td>75357570</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>animal</td>
+<td>NaN</td>
+<td>15483508</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">146</td>
+<td>syn22108849</td>
+<td>tpm_isoform_5XFAD.txt</td>
+<td>["Jax.IU.Pitt_5XFAD"]</td>
+<td>["geneExpression"]</td>
+<td>["rnaSeq"]</td>
+<td>brain</td>
+<td>["right cerebral hemisphere"]</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>MODEL-AD</td>
+<td>...</td>
+<td>syn2580853</td>
+<td>syn2580853</td>
+<td>1684529010351</td>
+<td>3427512</td>
+<td>75357576</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>animal</td>
+<td>NaN</td>
+<td>42994443</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">147</td>
+<td>syn22110328</td>
+<td>Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv</td>
+<td>["Jax.IU.Pitt_5XFAD"]</td>
+<td>["geneExpression"]</td>
+<td>["rnaSeq"]</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>MODEL-AD</td>
+<td>...</td>
+<td>syn2580853</td>
+<td>syn2580853</td>
+<td>1684529010418</td>
+<td>3427512</td>
+<td>75357585</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>animal</td>
+<td>NaN</td>
+<td>5476</td>
+</tr>
+</tbody>
+</table>
+
+<p>148 rows × 43 columns</p>
+</div>
+</div>
+</div>
+<p>You could then use a <code>for</code> loop as we did in the <a href="#bulk-download-files">Bulk download files</a> example to loop through the column of synIDs and download all 148 files.</p>
+</section>
+</section>
+<section id="multispecimen-files" class="level3">
+<h3 class="anchored" data-anchor-id="multispecimen-files">Multispecimen files</h3>
+<p>Multispecimen files in the AD Knowledge Portal are files that contain data or information from more than one specimen. They are not annotated with individualIDs or specimenIDs, since these files may contain numbers of specimens that exceed the annotation limits. These files are usually processed or summary data (gene counts, peptide quantifications, etc), and are always annotated with <code>isMultiSpecimen = TRUE</code>.</p>
+<p>If we look at the processed data files in the table of 5XFAD RNAseq file annotations we just downloaded, we will see that isMultiSpecimen = TRUE, but individualID and specimenID are blank:</p>
+<div id="42dcf265" class="cell" data-execution_count="17">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>annotations_table.loc[</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  annotations_table[<span class="st">'fileFormat'</span>] <span class="op">==</span> <span class="st">"txt"</span>, </span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  [<span class="st">'name'</span>,<span class="st">'individualID'</span>, <span class="st">'specimenID'</span>, <span class="st">'isMultiSpecimen'</span>]</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="16">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">name</th>
+<th data-quarto-table-cell-role="th">individualID</th>
+<th data-quarto-table-cell-role="th">specimenID</th>
+<th data-quarto-table-cell-role="th">isMultiSpecimen</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">144</td>
+<td>htseqcounts_5XFAD.txt</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>True</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">145</td>
+<td>tpm_gene_5XFAD.txt</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>True</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">146</td>
+<td>tpm_isoform_5XFAD.txt</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>True</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>The multispecimen file should contain a row or column of specimenIDs that correspond to the specimenIDs used in a study’s metadata, as we have seen with the 5XFAD counts file.</p>
+<div id="b5208ee8" class="cell" data-execution_count="18">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>counts.columns</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="17">
+<pre><code>Index(['gene_id', '32043rh', '32044rh', '32046rh', '32047rh', '32048rh',
+       '32049rh', '32050rh', '32052rh', '32053rh', '32057rh', '32059rh',
+       '32061rh', '32062rh', '32065rh', '32067rh', '32068rh', '32070rh',
+       '32073rh', '32074rh', '32075rh', '32078rh', '32081rh', '32088rh',
+       '32640rh', '46105rh', '46106rh', '46107rh', '46108rh', '46109rh',
+       '46110rh', '46111rh', '46112rh', '46113rh', '46115rh', '46121rh',
+       '46131rh', '46132rh', '46134rh', '46138rh', '46141rh', '46142rh',
+       '46862rh', '46863rh', '46865rh', '46866rh', '46867rh', '46868rh',
+       '46871rh', '46872rh', '46873rh', '46874rh', '46875rh', '46876rh',
+       '46877rh', '46878rh', '46879rh', '46881rh', '46882rh', '46883rh',
+       '46884rh', '46885rh', '46886rh', '46887rh', '46888rh', '46889rh',
+       '46890rh', '46891rh', '46892rh', '46893rh', '46895rh', '46896rh',
+       '46897rh'],
+      dtype='object')</code></pre>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="working-with-ad-portal-metadata" class="level2">
+<h2 class="anchored" data-anchor-id="working-with-ad-portal-metadata">Working with AD Portal metadata</h2>
+<section id="metadata-basics" class="level3">
+<h3 class="anchored" data-anchor-id="metadata-basics">Metadata basics</h3>
+<p>We have now downloaded several metadata files and an RNAseq counts file from the portal. For our next exercises, we want to read those files in as R data so we can work with them.</p>
+<p>We can see from the <code>download_table</code> we got during the bulk download step that we have five metadata files. Two of these should be the individual and biospecimen files, and three of them are assay metadata files.</p>
+<div id="515639e3" class="cell" data-execution_count="19">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>download_table[[<span class="st">'name'</span>, <span class="st">'metadataType'</span>, <span class="st">'assay'</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="18">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">name</th>
+<th data-quarto-table-cell-role="th">metadataType</th>
+<th data-quarto-table-cell-role="th">assay</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>Jax.IU.Pitt_5XFAD_assay_autorad_metadata.csv</td>
+<td>assay</td>
+<td>["autoradiography"]</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>Jax.IU.Pitt_5XFAD_assay_PET_metadata.csv</td>
+<td>assay</td>
+<td>["Positron Emission Tomography"]</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>Jax.IU.Pitt_5XFAD_individual_metadata.csv</td>
+<td>individual</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv</td>
+<td>biospecimen</td>
+<td>NaN</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv</td>
+<td>assay</td>
+<td>["rnaSeq"]</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>We are only interested in RNAseq data, so we will only read in the individual, biospecimen, and RNAseq assay metadata files.</p>
+<div id="1ba01dad" class="cell" data-execution_count="20">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># individual metadata</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>ind_meta <span class="op">=</span> pd.read_csv(<span class="st">"files/Jax.IU.Pitt_5XFAD_individual_metadata.csv"</span>)</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="co"># biospecimen metadata</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>bio_meta <span class="op">=</span> pd.read_csv(<span class="st">"files/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv"</span>)</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="co"># assay metadata</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>rna_meta <span class="op">=</span> pd.read_csv(<span class="st">"files/Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="note-on-best-practices" class="level5">
+<h5 class="anchored" data-anchor-id="note-on-best-practices">✏ Note on best practices</h5>
+<p>We’ve been using the <code>ifcollision = "overwrite.local"</code> argument to <code>syn.get()</code> to avoid making multiple copies of each file, so hard-coding the file names in the code block above works as expected. However, if you forget this argument or the file gets renamed on Synapse, you could be reading in an old file instead of the one you just downloaded!</p>
+<p><code>syn.get()</code> returns an object that contains the file path of the downloaded file, and it’s good practice to use this instead to avoid accidentally reading the wrong file. Some code to do this with the metadata files is below (but not executed in this notebook).</p>
+<div id="53237313" class="cell" data-execution_count="21">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>file_paths <span class="op">=</span> download_table[<span class="st">"id"</span>].<span class="bu">apply</span>(</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">lambda</span> syn_id: syn.get(syn_id, downloadLocation <span class="op">=</span> <span class="st">"files/"</span>, </span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>                         ifcollision <span class="op">=</span> <span class="st">"overwrite.local"</span>).path </span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="co"># See which files we want</span></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(file_paths)</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>ind_meta <span class="op">=</span> pd.read_csv(file_paths[<span class="dv">2</span>])</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>bio_meta <span class="op">=</span> pd.read_csv(file_paths[<span class="dv">3</span>])</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>rna_meta <span class="op">=</span> pd.read_csv(file_paths[<span class="dv">4</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="verify-file-contents" class="level3">
+<h3 class="anchored" data-anchor-id="verify-file-contents">Verify file contents</h3>
+<p>At this point we have downloaded and read in the counts file and 3 metadata files into the variables <code>counts</code>, <code>ind_meta</code>, <code>bio_meta</code>, and <code>rna_meta</code>.</p>
+<p>Let’s examine the data and metadata files a bit before we begin our analyses.</p>
+<section id="counts-data" class="level4">
+<h4 class="anchored" data-anchor-id="counts-data">Counts data</h4>
+<div id="42659609" class="cell" data-execution_count="22">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>counts.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="20">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">gene_id</th>
+<th data-quarto-table-cell-role="th">32043rh</th>
+<th data-quarto-table-cell-role="th">32044rh</th>
+<th data-quarto-table-cell-role="th">32046rh</th>
+<th data-quarto-table-cell-role="th">32047rh</th>
+<th data-quarto-table-cell-role="th">32048rh</th>
+<th data-quarto-table-cell-role="th">32049rh</th>
+<th data-quarto-table-cell-role="th">32050rh</th>
+<th data-quarto-table-cell-role="th">32052rh</th>
+<th data-quarto-table-cell-role="th">32053rh</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">46887rh</th>
+<th data-quarto-table-cell-role="th">46888rh</th>
+<th data-quarto-table-cell-role="th">46889rh</th>
+<th data-quarto-table-cell-role="th">46890rh</th>
+<th data-quarto-table-cell-role="th">46891rh</th>
+<th data-quarto-table-cell-role="th">46892rh</th>
+<th data-quarto-table-cell-role="th">46893rh</th>
+<th data-quarto-table-cell-role="th">46895rh</th>
+<th data-quarto-table-cell-role="th">46896rh</th>
+<th data-quarto-table-cell-role="th">46897rh</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>ENSG00000080815</td>
+<td>22554</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>16700</td>
+<td>0</td>
+<td>0</td>
+<td>19748</td>
+<td>14023</td>
+<td>...</td>
+<td>16072</td>
+<td>0</td>
+<td>16680</td>
+<td>13367</td>
+<td>0</td>
+<td>25119</td>
+<td>92</td>
+<td>0</td>
+<td>15934</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>ENSG00000142192</td>
+<td>344489</td>
+<td>4</td>
+<td>0</td>
+<td>1</td>
+<td>260935</td>
+<td>6</td>
+<td>8</td>
+<td>337456</td>
+<td>206851</td>
+<td>...</td>
+<td>258061</td>
+<td>0</td>
+<td>235530</td>
+<td>196721</td>
+<td>0</td>
+<td>371037</td>
+<td>1116</td>
+<td>0</td>
+<td>235343</td>
+<td>6</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>ENSMUSG00000000001</td>
+<td>5061</td>
+<td>3483</td>
+<td>3941</td>
+<td>3088</td>
+<td>2756</td>
+<td>3067</td>
+<td>2711</td>
+<td>3334</td>
+<td>3841</td>
+<td>...</td>
+<td>3719</td>
+<td>3899</td>
+<td>4173</td>
+<td>4008</td>
+<td>3037</td>
+<td>5967</td>
+<td>3459</td>
+<td>4262</td>
+<td>3923</td>
+<td>3486</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>ENSMUSG00000000003</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>...</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>ENSMUSG00000000028</td>
+<td>208</td>
+<td>162</td>
+<td>138</td>
+<td>127</td>
+<td>95</td>
+<td>154</td>
+<td>165</td>
+<td>124</td>
+<td>103</td>
+<td>...</td>
+<td>128</td>
+<td>210</td>
+<td>127</td>
+<td>156</td>
+<td>116</td>
+<td>260</td>
+<td>161</td>
+<td>189</td>
+<td>179</td>
+<td>117</td>
+</tr>
+</tbody>
+</table>
+
+<p>5 rows × 73 columns</p>
+</div>
+</div>
+</div>
+<p>The counts data file has a column of Ensembl gene ids and then a bunch of columns with count data, where the column headers correspond to the specimenIDs. These specimenIDs should all be in the RNAseq assay metadata file, so let’s check.</p>
+<div id="8e1d06ef" class="cell" data-execution_count="23">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>rna_meta.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="21">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
@@ -785,33 +1625,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div class="cell" data-execution_count="16">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># check that column headers in counts file match specimenIDs in assay metadata</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>col_names <span class="op">=</span> <span class="bu">list</span>(counts.columns.values)[<span class="dv">1</span>:]</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>spec_ids <span class="op">=</span> <span class="bu">list</span>(rna_meta.specimenID)</span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="bu">all</span>(item <span class="kw">in</span> col_names <span class="cf">for</span> item <span class="kw">in</span> spec_ids)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="15">
+<p>Are all the column headers from the counts matrix (except the first “gene_id” column) in the assay metadata?</p>
+<div id="543532c8" class="cell" data-execution_count="24">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="bu">all</span>(counts.columns[<span class="dv">1</span>:].isin(rna_meta[<span class="st">"specimenID"</span>]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="22">
 <pre><code>True</code></pre>
 </div>
 </div>
 </section>
 <section id="assay-metadata" class="level4">
 <h4 class="anchored" data-anchor-id="assay-metadata">Assay metadata</h4>
-<p>The assay metadata contains information about how data was generated on each sample in the assay. Each specimenID represents a unique sample. We can use some tools from pandas to explore the metadata.</p>
+<p>The assay metadata contains information about how data was generated on each sample in the assay. Each specimenID represents a unique sample. We can use some tools from dplyr to explore the metadata.</p>
 <p>How many unique specimens were sequenced?</p>
-<div class="cell" data-execution_count="17">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>rna_meta[<span class="st">'specimenID'</span>].nunique()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="16">
+<div id="7be69ecc" class="cell" data-execution_count="25">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>rna_meta[<span class="st">'specimenID'</span>].nunique()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="23">
 <pre><code>72</code></pre>
 </div>
 </div>
-<p>Were the samples all sequenced on the same platform, or in the same batch?</p>
-<div class="cell" data-execution_count="18">
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>rna_meta[[<span class="st">'platform'</span>, <span class="st">'sequencingBatch'</span>]].nunique()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="17">
+<p>Were the samples all sequenced on the same platform and in the same batch?</p>
+<div id="33a0858f" class="cell" data-execution_count="26">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>rna_meta[[<span class="st">'platform'</span>, <span class="st">'sequencingBatch'</span>]].nunique()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="24">
 <pre><code>platform           1
 sequencingBatch    1
 dtype: int64</code></pre>
@@ -821,43 +1656,314 @@ dtype: int64</code></pre>
 <section id="biospecimen-metadata" class="level4">
 <h4 class="anchored" data-anchor-id="biospecimen-metadata">Biospecimen metadata</h4>
 <p>The biospecimen metadata contains specimen-level information, including organ and tissue the specimen was taken from, how it was prepared, etc. Each specimenID is mapped to an individualID.</p>
-<div class="cell" data-execution_count="19">
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># all specimens from the RNAseq assay metadata file should be in the biospecimen file</span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>rna_meta[<span class="st">'specimenID'</span>].isin(bio_meta[<span class="st">'specimenID'</span>]).value_counts()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="18">
-<pre><code>True    72
-Name: specimenID, dtype: int64</code></pre>
+<div id="47db96a7" class="cell" data-execution_count="27">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>bio_meta.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="25">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">individualID</th>
+<th data-quarto-table-cell-role="th">specimenID</th>
+<th data-quarto-table-cell-role="th">specimenIdSource</th>
+<th data-quarto-table-cell-role="th">organ</th>
+<th data-quarto-table-cell-role="th">tissue</th>
+<th data-quarto-table-cell-role="th">BrodmannArea</th>
+<th data-quarto-table-cell-role="th">sampleStatus</th>
+<th data-quarto-table-cell-role="th">tissueWeight</th>
+<th data-quarto-table-cell-role="th">tissueVolume</th>
+<th data-quarto-table-cell-role="th">nucleicAcidSource</th>
+<th data-quarto-table-cell-role="th">cellType</th>
+<th data-quarto-table-cell-role="th">fastingState</th>
+<th data-quarto-table-cell-role="th">isPostMortem</th>
+<th data-quarto-table-cell-role="th">samplingAge</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>32040</td>
+<td>32040</td>
+<td>NaN</td>
+<td>blood</td>
+<td>serum</td>
+<td>NaN</td>
+<td>frozen</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>False</td>
+<td>False</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>32040</td>
+<td>32040GIS</td>
+<td>NaN</td>
+<td>brain</td>
+<td>whole brain</td>
+<td>NaN</td>
+<td>formalin-fixed</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>False</td>
+<td>True</td>
+<td>NaN</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>32040</td>
+<td>32040H&amp;E</td>
+<td>NaN</td>
+<td>brain</td>
+<td>whole brain</td>
+<td>NaN</td>
+<td>formalin-fixed</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>False</td>
+<td>True</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>32040</td>
+<td>32040X34</td>
+<td>NaN</td>
+<td>brain</td>
+<td>whole brain</td>
+<td>NaN</td>
+<td>formalin-fixed</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>False</td>
+<td>True</td>
+<td>NaN</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>32040</td>
+<td>32040LFI</td>
+<td>NaN</td>
+<td>brain</td>
+<td>whole brain</td>
+<td>NaN</td>
+<td>formalin-fixed</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>False</td>
+<td>True</td>
+<td>NaN</td>
+</tr>
+</tbody>
+</table>
+
 </div>
 </div>
-<div class="cell" data-execution_count="20">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># but the biospecimen file also contains specimens from different assays</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>bio_meta[<span class="st">'specimenID'</span>].isin(rna_meta[<span class="st">'specimenID'</span>]).value_counts()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="19">
-<pre><code>False    502
-True      72
-Name: specimenID, dtype: int64</code></pre>
+</div>
+<p>All specimens from the RNAseq assay metadata file should be in the biospecimen file…</p>
+<div id="a12b5d3e" class="cell" data-execution_count="28">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="bu">all</span>(rna_meta[<span class="st">'specimenID'</span>].isin(bio_meta[<span class="st">'specimenID'</span>]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="26">
+<pre><code>True</code></pre>
+</div>
+</div>
+<p>…But the biospecimen file also contains specimens from different assays.</p>
+<div id="cfa3880f" class="cell" data-execution_count="29">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="bu">all</span>(bio_meta[<span class="st">'specimenID'</span>].isin(rna_meta[<span class="st">'specimenID'</span>]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="27">
+<pre><code>False</code></pre>
 </div>
 </div>
 </section>
 <section id="individual-metadata" class="level4">
 <h4 class="anchored" data-anchor-id="individual-metadata">Individual metadata</h4>
 <p>The individual metadata contains information about all the individuals in the study, represented by unique individualIDs. For humans, this includes information on age, sex, race, diagnosis, etc. For MODEL-AD mouse models, the individual metadata has information on model genotypes, stock numbers, diet, and more.</p>
-<div class="cell" data-execution_count="21">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># all individualIDs in the biospecimen file should be in the individual file</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>bio_meta[<span class="st">'individualID'</span>].isin(ind_meta[<span class="st">'individualID'</span>]).value_counts()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="20">
-<pre><code>True    574
-Name: individualID, dtype: int64</code></pre>
+<div id="adbd3ed2" class="cell" data-execution_count="30">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>ind_meta.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="28">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">individualID</th>
+<th data-quarto-table-cell-role="th">individualIdSource</th>
+<th data-quarto-table-cell-role="th">species</th>
+<th data-quarto-table-cell-role="th">sex</th>
+<th data-quarto-table-cell-role="th">genotype</th>
+<th data-quarto-table-cell-role="th">genotypeBackground</th>
+<th data-quarto-table-cell-role="th">room</th>
+<th data-quarto-table-cell-role="th">litter</th>
+<th data-quarto-table-cell-role="th">matingID</th>
+<th data-quarto-table-cell-role="th">dateBirth</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">PhysicalMarker</th>
+<th data-quarto-table-cell-role="th">generation</th>
+<th data-quarto-table-cell-role="th">AnimalMatingStatus</th>
+<th data-quarto-table-cell-role="th">jobNumber</th>
+<th data-quarto-table-cell-role="th">microchipID</th>
+<th data-quarto-table-cell-role="th">rodentDiet</th>
+<th data-quarto-table-cell-role="th">birthID</th>
+<th data-quarto-table-cell-role="th">brainWeight</th>
+<th data-quarto-table-cell-role="th">rodentWeight</th>
+<th data-quarto-table-cell-role="th">modelCommonName</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>10000000</td>
+<td>IU</td>
+<td>Mouse</td>
+<td>female</td>
+<td>5XFAD_carrier</td>
+<td>C57BL6J</td>
+<td>IU-NB-109C</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>9/5/18</td>
+<td>...</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>Virgin</td>
+<td>12 Month</td>
+<td>10000000.0</td>
+<td>6%</td>
+<td>NaN</td>
+<td>21.3</td>
+<td>0.47</td>
+<td>5XFAD</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>10000001</td>
+<td>IU</td>
+<td>Mouse</td>
+<td>female</td>
+<td>5XFAD_carrier</td>
+<td>C57BL6J</td>
+<td>IU-NB-109C</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>8/5/18</td>
+<td>...</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>Virgin</td>
+<td>12 Month</td>
+<td>10000001.0</td>
+<td>6%</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>5XFAD</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>10000003</td>
+<td>IU</td>
+<td>Mouse</td>
+<td>female</td>
+<td>5XFAD_noncarrier</td>
+<td>C57BL6J</td>
+<td>IU-NB-109C</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>7/1/18</td>
+<td>...</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>Virgin</td>
+<td>12 Month</td>
+<td>10000003.0</td>
+<td>6%</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>5XFAD</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>10000004</td>
+<td>IU</td>
+<td>Mouse</td>
+<td>male</td>
+<td>5XFAD_noncarrier</td>
+<td>C57BL6J</td>
+<td>IU-NB-109C</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>7/1/18</td>
+<td>...</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>Virgin</td>
+<td>12 Month</td>
+<td>10000004.0</td>
+<td>6%</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>5XFAD</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>10000005</td>
+<td>IU</td>
+<td>Mouse</td>
+<td>female</td>
+<td>5XFAD_noncarrier</td>
+<td>C57BL6J</td>
+<td>IU-NB-109C</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>7/1/18</td>
+<td>...</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>Virgin</td>
+<td>12 Month</td>
+<td>10000005.0</td>
+<td>6%</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>5XFAD</td>
+</tr>
+</tbody>
+</table>
+
+<p>5 rows × 29 columns</p>
 </div>
 </div>
-<div class="cell" data-execution_count="22">
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># check model genotypes in this study</span></span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>ind_meta[<span class="st">'genotype'</span>].unique()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="21">
+</div>
+<p>All individualIDs in the biospecimen file should be in the individual file</p>
+<div id="2a3ede1e" class="cell" data-execution_count="31">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="bu">all</span>(bio_meta[<span class="st">'individualID'</span>].isin(ind_meta[<span class="st">'individualID'</span>]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="29">
+<pre><code>True</code></pre>
+</div>
+</div>
+<p>Which model genotypes are in this study?</p>
+<div id="f12a6097" class="cell" data-execution_count="32">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>ind_meta[<span class="st">'genotype'</span>].unique()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="30">
 <pre><code>array(['5XFAD_carrier', '5XFAD_noncarrier'], dtype=object)</code></pre>
 </div>
 </div>
@@ -865,19 +1971,19 @@ Name: individualID, dtype: int64</code></pre>
 <section id="joining-metadata" class="level4">
 <h4 class="anchored" data-anchor-id="joining-metadata">Joining metadata</h4>
 <p>We use the three-file structure for our metadata because it allows us to store metadata for each study in a tidy format. Every line in the assay and biospecimen files represents a unique specimen, and every line in the individual file represents a unique individual. This means the files can be easily joined by specimenID and individualID to get all levels of metadata that apply to a particular data file. We will use the <code>merge()</code> function from <code>pandas</code>, with the <code>how = "left"</code> option to specify a left join.</p>
-<div class="cell" data-execution_count="23">
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># join all the rows in the assay metadata that have a match in the biospecimen</span></span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="co"># metadata, then join all the rows in that dataframe to all rows that have a</span></span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="co"># match in the individual metadata</span></span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>joined_meta <span class="op">=</span> rna_meta.merge(bio_meta, how <span class="op">=</span> <span class="st">"left"</span>, on <span class="op">=</span> <span class="st">"specimenID"</span>).merge(ind_meta, how <span class="op">=</span> <span class="st">"left"</span>, on <span class="op">=</span> <span class="st">"individualID"</span>)</span>
-<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>joined_meta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="22">
+<div id="0fb9889e" class="cell" data-execution_count="33">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="co"># join all the rows in the assay metadata that have a match in the biospecimen</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a><span class="co"># metadata, then join all the rows in that dataframe to all rows that have a</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a><span class="co"># match in the individual metadata</span></span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>joined_meta <span class="op">=</span> rna_meta.merge(bio_meta, how <span class="op">=</span> <span class="st">"left"</span>, on <span class="op">=</span> <span class="st">"specimenID"</span>) <span class="op">\</span></span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>  .merge(ind_meta, how <span class="op">=</span> <span class="st">"left"</span>, on <span class="op">=</span> <span class="st">"individualID"</span>)</span>
+<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>joined_meta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="31">
 <div>
 
 
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
@@ -1177,775 +2283,136 @@ Name: individualID, dtype: int64</code></pre>
 </div>
 </div>
 <p>We now have a very wide dataframe that contains all the available metadata on each specimen in the RNAseq data from this study. This procedure can be used to join the three types of metadata files for every study in the AD Knowledge Portal, allowing you to filter individuals and specimens as needed based on your analysis criteria!</p>
+<hr>
 </section>
 </section>
-<section id="single-specimen-files" class="level3">
-<h3 class="anchored" data-anchor-id="single-specimen-files">Single-specimen files</h3>
-<p>For files that contain data from a single specimen (e.g.&nbsp;raw sequencing files, raw mass spectra, etc.), we can use the Synapse annotations to associate these files with the appropriate metadata.</p>
-<section id="excercise-3-use-explore-data-to-find-all-rnaseq-files-from-the-jax.iu.pitt_5xfad-study." class="level4">
-<h4 class="anchored" data-anchor-id="excercise-3-use-explore-data-to-find-all-rnaseq-files-from-the-jax.iu.pitt_5xfad-study.">Excercise 3: Use <a href="https://adknowledgeportal.synapse.org/Explore/Data">Explore Data</a> to find <em>all</em> RNAseq files from the Jax.IU.Pitt_5XFAD study.</h4>
-<p>If we filter for data where Study = “Jax.IU.Pitt_5XFAD” and Assay = “rnaSeq” we will get a list of 148 files, including raw fastqs and processed counts data.</p>
 </section>
-<section id="synapse-entity-annotations" class="level4">
-<h4 class="anchored" data-anchor-id="synapse-entity-annotations">Synapse entity annotations</h4>
-<p>We can use the function <code>syn.get_annotations()</code> to view the annotations associated with any file without downloading the file.</p>
-<div class="cell" data-execution_count="24">
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># the synID of a random fastq file from our filtered search of fastq files</span></span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>random_fastq <span class="op">=</span> <span class="st">"syn22108503"</span></span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="co"># extract the annotations as a dict</span></span>
-<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>fastq_annotations <span class="op">=</span> syn.get_annotations(random_fastq)</span>
-<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>fastq_annotations</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="23">
-<pre><code>{'sex': ['female'],
- 'room': ['JAX_MGL373'],
- 'assay': ['rnaSeq'],
- 'grant': ['U54AG054345'],
- 'organ': ['brain'],
- 'study': ['Jax.IU.Pitt_5XFAD'],
- 'tissue': ['right cerebral hemisphere'],
- 'bedding': ['aspen'],
- 'birthID': ['RMO1223'],
- 'climbID': ['298456'],
- 'species': ['Mouse'],
- 'waterpH': [2.85],
- 'ageDeath': [10.8196721311475],
- 'dataType': ['geneExpression'],
- 'genotype': ['5XFAD_carrier'],
- 'matingID': ['M-108-17'],
- 'dateBirth': ['1521417600000'],
- 'consortium': ['MODEL-AD'],
- 'fileFormat': ['fastq'],
- 'generation': ['N1F3'],
- 'rodentDiet': ['0.06'],
- 'specimenID': ['32043rh'],
- 'brainWeight': [0.503],
- 'dataSubtype': ['raw'],
- 'microchipID': ['288646853'],
- 'stockNumber': ['8730'],
- 'individualID': ['32043'],
- 'officialName': ['B6.Cg-Tg(APPSwFlLon,PSEN1*M146L*L286V)6799Vas/Mmjax'],
- 'resourceType': ['experimentalData'],
- 'rodentWeight': [28.76],
- 'ageDeathUnits': ['months'],
- 'isModelSystem': [False],
- 'materialOrigin': ['JAX'],
- 'isMultiSpecimen': [False],
- 'modelSystemName': ['5XFAD'],
- 'modelSystemType': ['animal'],
- 'nucleicAcidSource': ['bulk cell'],
- 'genotypeBackground': ['C57BL6J'],
- 'individualIdSource': ['JAX'],
- 'individualCommonGenotype': ['5XFAD']}</code></pre>
+<section id="rnaseq-data-exploration" class="level2">
+<h2 class="anchored" data-anchor-id="rnaseq-data-exploration">RNASeq data exploration</h2>
+<p>We will use the counts data and metadata to do some basic exploratory analysis of gene expression in the Jax 5XFAD mouse model.</p>
+<section id="explore-covariates" class="level3">
+<h3 class="anchored" data-anchor-id="explore-covariates">Explore covariates</h3>
+<p>Which covariates from the metadata are we interested in?</p>
+<div id="76b827f1" class="cell" data-execution_count="34">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(joined_meta[[<span class="st">"organ"</span>, <span class="st">"tissue"</span>, <span class="st">"sampleStatus"</span>]].drop_duplicates())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   organ       tissue sampleStatus
+0  brain  whole brain       frozen</code></pre>
 </div>
 </div>
-<p>The file annotations let us see which study the file is associated with (Jax.IU.Pitt.5XFAD), which species it’s from (Mouse), which assay generated the file (rnaSeq), and a whole bunch of other properties. Most importantly, single-specimen files are annotated with with the specimenID of the specimen in the file, and the individualID of the individual that specimen was taken from. We can use these annotations to link files to the rest of the metadata, including metadata that is not in annotations. This is especially helpful for human studies, as potentially identifying information like age, race, and diagnosis is not included in file annotations.</p>
-<div class="cell" data-execution_count="25">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># find records belonging to the individual this file maps to in our joined</span></span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="co"># metadata the annotation value is a string but the individualID column in the</span></span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="co"># metadat is type int so we have to convert</span></span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>joined_meta[(joined_meta[<span class="st">'individualID'</span>] <span class="op">==</span> <span class="bu">int</span>(fastq_annotations[<span class="st">'individualID'</span>][<span class="dv">0</span>]))]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="24">
+<div id="b7f7a7c2" class="cell" data-execution_count="35">
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(joined_meta[[<span class="st">"sex"</span>, <span class="st">"genotype"</span>]].drop_duplicates())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       sex          genotype
+0   female     5XFAD_carrier
+1     male  5XFAD_noncarrier
+4   female  5XFAD_noncarrier
+39    male     5XFAD_carrier</code></pre>
+</div>
+</div>
+<p>For this example, we will plot gene expression by sex, genotype, and age.</p>
+<section id="create-timepoint-column" class="level4">
+<h4 class="anchored" data-anchor-id="create-timepoint-column">Create timepoint column</h4>
+<p>The MODEL-AD individual mouse metadata contains columns with birth date and death date for each mouse. Using the <strong>RNASeq methods description</strong> from the <a href="https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage?Study=syn21983020">Jax 5XFAD study page in the AD Portal</a>, we expect this data to have equal numbers of individuals sampled at 4, 6, and 12 month timepoints. We can create a new column that captures this info in our joined metadata.</p>
+<p><em>Note: MODEL-AD studies added to the portal after June 2021 include an ‘ageDeath’ column that makes this simpler.</em></p>
+<div id="52f01ba7" class="cell" data-execution_count="36">
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>timepoint_column <span class="op">=</span> pd.to_datetime(joined_meta[<span class="st">"dateDeath"</span>]) <span class="op">-</span> <span class="op">\</span></span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>                   pd.to_datetime(joined_meta[<span class="st">"dateBirth"</span>])</span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>timepoint_column <span class="op">=</span> timepoint_column.<span class="bu">apply</span>(</span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">lambda</span> date_diff: date_diff.days <span class="op">/</span> <span class="dv">30</span></span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb59-7"><a href="#cb59-7" aria-hidden="true" tabindex="-1"></a>joined_meta[<span class="st">"timepoint"</span>] <span class="op">=</span> timepoint_column.<span class="bu">apply</span>(</span>
+<span id="cb59-8"><a href="#cb59-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">lambda</span> months: <span class="st">"12 mo"</span> <span class="cf">if</span> (months <span class="op">&gt;</span> <span class="dv">10</span>)</span>
+<span id="cb59-9"><a href="#cb59-9" aria-hidden="true" tabindex="-1"></a>                 <span class="cf">else</span> <span class="st">"6 mo"</span> <span class="cf">if</span> (months <span class="op">&lt;</span> <span class="dv">10</span>) <span class="op">&amp;</span> (months <span class="op">&gt;</span> <span class="fl">5.0</span>)</span>
+<span id="cb59-10"><a href="#cb59-10" aria-hidden="true" tabindex="-1"></a>                 <span class="cf">else</span> <span class="st">"4 mo"</span></span>
+<span id="cb59-11"><a href="#cb59-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We now have balanced samples across sex, genotype, and age:</p>
+<div id="3c35c050" class="cell" data-execution_count="37">
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>joined_meta.groupby([<span class="st">"sex"</span>, <span class="st">"genotype"</span>, <span class="st">"timepoint"</span>])[<span class="st">"specimenID"</span>].count()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="35">
+<pre><code>sex     genotype          timepoint
+female  5XFAD_carrier     12 mo        6
+                          4 mo         6
+                          6 mo         6
+        5XFAD_noncarrier  12 mo        6
+                          4 mo         6
+                          6 mo         6
+male    5XFAD_carrier     12 mo        6
+                          4 mo         6
+                          6 mo         6
+        5XFAD_noncarrier  12 mo        6
+                          4 mo         6
+                          6 mo         6
+Name: specimenID, dtype: int64</code></pre>
+</div>
+</div>
+</section>
+<section id="subset-covariates" class="level4">
+<h4 class="anchored" data-anchor-id="subset-covariates">Subset covariates</h4>
+<p>To reduce the width of the dataframe, we will subset only the columns that contain covariates we’re interested in exploring further. Retaining the individualID and specimenID columns will make sure we can map the covariates to the data and back to the original metadata if needed!</p>
+<div id="935c4acc" class="cell" data-execution_count="38">
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>covars <span class="op">=</span> joined_meta[[<span class="st">"individualID"</span>, <span class="st">"specimenID"</span>, <span class="st">"sex"</span>, <span class="st">"genotype"</span>, <span class="st">"timepoint"</span>]]</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>covars</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="36">
 <div>
 
 
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">specimenID</th>
-<th data-quarto-table-cell-role="th">platform</th>
-<th data-quarto-table-cell-role="th">RIN</th>
-<th data-quarto-table-cell-role="th">rnaBatch</th>
-<th data-quarto-table-cell-role="th">libraryBatch</th>
-<th data-quarto-table-cell-role="th">sequencingBatch</th>
-<th data-quarto-table-cell-role="th">libraryPrep</th>
-<th data-quarto-table-cell-role="th">libraryPreparationMethod</th>
-<th data-quarto-table-cell-role="th">isStranded</th>
-<th data-quarto-table-cell-role="th">readStrandOrigin</th>
-<th data-quarto-table-cell-role="th">...</th>
-<th data-quarto-table-cell-role="th">PhysicalMarker</th>
-<th data-quarto-table-cell-role="th">generation</th>
-<th data-quarto-table-cell-role="th">AnimalMatingStatus</th>
-<th data-quarto-table-cell-role="th">jobNumber</th>
-<th data-quarto-table-cell-role="th">microchipID</th>
-<th data-quarto-table-cell-role="th">rodentDiet</th>
-<th data-quarto-table-cell-role="th">birthID</th>
-<th data-quarto-table-cell-role="th">brainWeight</th>
-<th data-quarto-table-cell-role="th">rodentWeight</th>
-<th data-quarto-table-cell-role="th">modelCommonName</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">0</td>
-<td>32043rh</td>
-<td>IlluminaNovaseq6000</td>
-<td>NaN</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td>polyAselection</td>
-<td>NaN</td>
-<td>false</td>
-<td>NaN</td>
-<td>...</td>
-<td>NaN</td>
-<td>N1F3</td>
-<td>Virgin</td>
-<td>JAX 5xFAD 12mo</td>
-<td>288646853.0</td>
-<td>6%</td>
-<td>NaN</td>
-<td>0.503</td>
-<td>28.76</td>
-<td>5XFAD</td>
-</tr>
-</tbody>
-</table>
-
-<p>1 rows × 53 columns</p>
-</div>
-</div>
-</div>
-</section>
-<section id="annotations-during-bulk-download" class="level4">
-<h4 class="anchored" data-anchor-id="annotations-during-bulk-download">Annotations during bulk download</h4>
-<p>When bulk downloading many files, the best practice is to preserve the download manifest that is generated which lists all the files, their synIDs, and all their annotations. If using the Synapse R client, follow the instructions in the <a href="#bulk-download-files">Bulk download files</a> section above.</p>
-<p>If we use the “Programmatic Options” tab in the AD Portal download menu to download all 148 rnaSeq files from the 5XFAD study, we would get a table query that looks like this:</p>
-<div class="cell" data-execution_count="26">
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>query <span class="op">=</span> syn.tableQuery(<span class="st">"SELECT * FROM syn11346063 WHERE ( ( </span><span class="ch">\"</span><span class="st">study</span><span class="ch">\"</span><span class="st"> HAS ( 'Jax.IU.Pitt_5XFAD' ) ) AND ( </span><span class="ch">\"</span><span class="st">assay</span><span class="ch">\"</span><span class="st"> HAS ( 'rnaSeq' ) ) )"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>As we saw previously, this downloads a csv file with the results of our AD Portal query. Opening that file lets us see which specimens are associated with which files:</p>
-<div class="cell" data-execution_count="27">
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>annotations_table <span class="op">=</span> pd.read_csv(query.filepath)</span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>annotations_table</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="26">
-<div>
-
-
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">ROW_ID</th>
-<th data-quarto-table-cell-role="th">ROW_VERSION</th>
-<th data-quarto-table-cell-role="th">ROW_ETAG</th>
-<th data-quarto-table-cell-role="th">id</th>
-<th data-quarto-table-cell-role="th">name</th>
-<th data-quarto-table-cell-role="th">study</th>
-<th data-quarto-table-cell-role="th">dataType</th>
-<th data-quarto-table-cell-role="th">assay</th>
-<th data-quarto-table-cell-role="th">organ</th>
-<th data-quarto-table-cell-role="th">tissue</th>
-<th data-quarto-table-cell-role="th">...</th>
-<th data-quarto-table-cell-role="th">benefactorId</th>
-<th data-quarto-table-cell-role="th">projectId</th>
-<th data-quarto-table-cell-role="th">modifiedOn</th>
-<th data-quarto-table-cell-role="th">modifiedBy</th>
-<th data-quarto-table-cell-role="th">dataFileHandleId</th>
-<th data-quarto-table-cell-role="th">metaboliteType</th>
-<th data-quarto-table-cell-role="th">chromosome</th>
-<th data-quarto-table-cell-role="th">modelSystemType</th>
-<th data-quarto-table-cell-role="th">libraryPrep</th>
-<th data-quarto-table-cell-role="th">dataFileSizeBytes</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">0</td>
-<td>22108503</td>
-<td>1</td>
-<td>2e9f0fc9-ee3e-458c-a731-e08c7a8ae1e0</td>
-<td>syn22108503</td>
-<td>32043_GT19_12829_CCGCGGTT-AGCGCTAG_R1_001.fast...</td>
-<td>["Jax.IU.Pitt_5XFAD"]</td>
-<td>["geneExpression"]</td>
-<td>["rnaSeq"]</td>
-<td>brain</td>
-<td>["right cerebral hemisphere"]</td>
-<td>...</td>
-<td>syn2580853</td>
-<td>syn2580853</td>
-<td>1684529000205</td>
-<td>3427512</td>
-<td>75357319</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>animal</td>
-<td>NaN</td>
-<td>4234330492</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">1</td>
-<td>22108508</td>
-<td>1</td>
-<td>a1dff08a-2e5b-49da-923c-af9ecc3b8cb5</td>
-<td>syn22108508</td>
-<td>32044_GT19_12856_GGAGCGTC-GTCCGTGC_R1_001.fast...</td>
-<td>["Jax.IU.Pitt_5XFAD"]</td>
-<td>["geneExpression"]</td>
-<td>["rnaSeq"]</td>
-<td>brain</td>
-<td>["right cerebral hemisphere"]</td>
-<td>...</td>
-<td>syn2580853</td>
-<td>syn2580853</td>
-<td>1684529000273</td>
-<td>3427512</td>
-<td>75357320</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>animal</td>
-<td>NaN</td>
-<td>3157791076</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">2</td>
-<td>22108512</td>
-<td>1</td>
-<td>27d12b0a-756c-4703-88e8-01e81ab5025f</td>
-<td>syn22108512</td>
-<td>32046_GT19_12865_CAACAATG-CTTCACGG_R1_001.fast...</td>
-<td>["Jax.IU.Pitt_5XFAD"]</td>
-<td>["geneExpression"]</td>
-<td>["rnaSeq"]</td>
-<td>brain</td>
-<td>["right cerebral hemisphere"]</td>
-<td>...</td>
-<td>syn2580853</td>
-<td>syn2580853</td>
-<td>1684529000345</td>
-<td>3427512</td>
-<td>75357321</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>animal</td>
-<td>NaN</td>
-<td>3194898678</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">3</td>
-<td>22108519</td>
-<td>1</td>
-<td>d1f90004-582c-49db-bea0-478476437daf</td>
-<td>syn22108519</td>
-<td>32047_GT19_12836_ATGAGGCC-GTTAATTG_R1_001.fast...</td>
-<td>["Jax.IU.Pitt_5XFAD"]</td>
-<td>["geneExpression"]</td>
-<td>["rnaSeq"]</td>
-<td>brain</td>
-<td>["right cerebral hemisphere"]</td>
-<td>...</td>
-<td>syn2580853</td>
-<td>syn2580853</td>
-<td>1684529000413</td>
-<td>3427512</td>
-<td>75357323</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>animal</td>
-<td>NaN</td>
-<td>2542370766</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">4</td>
-<td>22108525</td>
-<td>1</td>
-<td>23aa924d-d8fc-406d-87ac-76bb15d6e557</td>
-<td>syn22108525</td>
-<td>32049_GT19_12881_GCCACAGG-CATGCCAT_R1_001.fast...</td>
-<td>["Jax.IU.Pitt_5XFAD"]</td>
-<td>["geneExpression"]</td>
-<td>["rnaSeq"]</td>
-<td>brain</td>
-<td>["right cerebral hemisphere"]</td>
-<td>...</td>
-<td>syn2580853</td>
-<td>syn2580853</td>
-<td>1684529000486</td>
-<td>3427512</td>
-<td>75357322</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>animal</td>
-<td>NaN</td>
-<td>2931163068</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">143</td>
-<td>22108846</td>
-<td>1</td>
-<td>1df3906a-c2a0-465b-8a97-2384f14a27a3</td>
-<td>syn22108846</td>
-<td>46896_GT19_12890_CATAGAGT-TGCCACCA_R2_001.fast...</td>
-<td>["Jax.IU.Pitt_5XFAD"]</td>
-<td>["geneExpression"]</td>
-<td>["rnaSeq"]</td>
-<td>brain</td>
-<td>["right cerebral hemisphere"]</td>
-<td>...</td>
-<td>syn2580853</td>
-<td>syn2580853</td>
-<td>1684529010148</td>
-<td>3427512</td>
-<td>75357566</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>animal</td>
-<td>NaN</td>
-<td>3566851836</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">144</td>
-<td>22108847</td>
-<td>2</td>
-<td>b73bc1b8-2af8-48ce-a51b-ea6ded5624b5</td>
-<td>syn22108847</td>
-<td>htseqcounts_5XFAD.txt</td>
-<td>["Jax.IU.Pitt_5XFAD"]</td>
-<td>["geneExpression"]</td>
-<td>["rnaSeq"]</td>
-<td>brain</td>
-<td>["right cerebral hemisphere"]</td>
-<td>...</td>
-<td>syn2580853</td>
-<td>syn2580853</td>
-<td>1684529010219</td>
-<td>3427512</td>
-<td>75357567</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>animal</td>
-<td>NaN</td>
-<td>12803625</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">145</td>
-<td>22108848</td>
-<td>2</td>
-<td>3384160a-6857-46b0-92fe-e0ae37c3d7ae</td>
-<td>syn22108848</td>
-<td>tpm_gene_5XFAD.txt</td>
-<td>["Jax.IU.Pitt_5XFAD"]</td>
-<td>["geneExpression"]</td>
-<td>["rnaSeq"]</td>
-<td>brain</td>
-<td>["right cerebral hemisphere"]</td>
-<td>...</td>
-<td>syn2580853</td>
-<td>syn2580853</td>
-<td>1684529010285</td>
-<td>3427512</td>
-<td>75357570</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>animal</td>
-<td>NaN</td>
-<td>15483508</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">146</td>
-<td>22108849</td>
-<td>2</td>
-<td>1b1aada8-5579-4de8-aaac-324f1b23074f</td>
-<td>syn22108849</td>
-<td>tpm_isoform_5XFAD.txt</td>
-<td>["Jax.IU.Pitt_5XFAD"]</td>
-<td>["geneExpression"]</td>
-<td>["rnaSeq"]</td>
-<td>brain</td>
-<td>["right cerebral hemisphere"]</td>
-<td>...</td>
-<td>syn2580853</td>
-<td>syn2580853</td>
-<td>1684529010351</td>
-<td>3427512</td>
-<td>75357576</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>animal</td>
-<td>NaN</td>
-<td>42994443</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">147</td>
-<td>22110328</td>
-<td>4</td>
-<td>69fc8a06-b928-4f37-969d-47c7aa4c1ca1</td>
-<td>syn22110328</td>
-<td>Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv</td>
-<td>["Jax.IU.Pitt_5XFAD"]</td>
-<td>["geneExpression"]</td>
-<td>["rnaSeq"]</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>...</td>
-<td>syn2580853</td>
-<td>syn2580853</td>
-<td>1684529010418</td>
-<td>3427512</td>
-<td>75357585</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>animal</td>
-<td>NaN</td>
-<td>5476</td>
-</tr>
-</tbody>
-</table>
-
-<p>148 rows × 46 columns</p>
-</div>
-</div>
-</div>
-<p>You could then use a for loop as we did in the <a href="#bulk-download-files">Bulk download files</a> example to loop through the column of synIDs and download all 148 files.</p>
-<p>Once you’ve downloaded all the files in the <code>id</code> column, you can link those files to their annotations by the <code>name</code> column. We’ll demonstrate this using the “random fastq” file that we got the annotations from earlier. To avoid downloading the whole 3GB file, we’ll use <code>syn.get()</code> with <code>downloadFile = False</code> to get only the Synapse entity object rather than the file.</p>
-<div class="cell" data-execution_count="28">
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>fastq <span class="op">=</span> syn.get(random_fastq, downloadFile <span class="op">=</span> <span class="va">False</span>)</span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="co"># filter the annotations table to rows that match the fastq filename</span></span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>annotations_table[(annotations_table[<span class="st">'name'</span>] <span class="op">==</span> fastq.properties.name)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="27">
-<div>
-
-
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">ROW_ID</th>
-<th data-quarto-table-cell-role="th">ROW_VERSION</th>
-<th data-quarto-table-cell-role="th">ROW_ETAG</th>
-<th data-quarto-table-cell-role="th">id</th>
-<th data-quarto-table-cell-role="th">name</th>
-<th data-quarto-table-cell-role="th">study</th>
-<th data-quarto-table-cell-role="th">dataType</th>
-<th data-quarto-table-cell-role="th">assay</th>
-<th data-quarto-table-cell-role="th">organ</th>
-<th data-quarto-table-cell-role="th">tissue</th>
-<th data-quarto-table-cell-role="th">...</th>
-<th data-quarto-table-cell-role="th">benefactorId</th>
-<th data-quarto-table-cell-role="th">projectId</th>
-<th data-quarto-table-cell-role="th">modifiedOn</th>
-<th data-quarto-table-cell-role="th">modifiedBy</th>
-<th data-quarto-table-cell-role="th">dataFileHandleId</th>
-<th data-quarto-table-cell-role="th">metaboliteType</th>
-<th data-quarto-table-cell-role="th">chromosome</th>
-<th data-quarto-table-cell-role="th">modelSystemType</th>
-<th data-quarto-table-cell-role="th">libraryPrep</th>
-<th data-quarto-table-cell-role="th">dataFileSizeBytes</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">0</td>
-<td>22108503</td>
-<td>1</td>
-<td>2e9f0fc9-ee3e-458c-a731-e08c7a8ae1e0</td>
-<td>syn22108503</td>
-<td>32043_GT19_12829_CCGCGGTT-AGCGCTAG_R1_001.fast...</td>
-<td>["Jax.IU.Pitt_5XFAD"]</td>
-<td>["geneExpression"]</td>
-<td>["rnaSeq"]</td>
-<td>brain</td>
-<td>["right cerebral hemisphere"]</td>
-<td>...</td>
-<td>syn2580853</td>
-<td>syn2580853</td>
-<td>1684529000205</td>
-<td>3427512</td>
-<td>75357319</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>animal</td>
-<td>NaN</td>
-<td>4234330492</td>
-</tr>
-</tbody>
-</table>
-
-<p>1 rows × 46 columns</p>
-</div>
-</div>
-</div>
-</section>
-</section>
-<section id="multispecimen-files" class="level3">
-<h3 class="anchored" data-anchor-id="multispecimen-files">Multispecimen files</h3>
-<p>Multispecimen files in the AD Knowledge Portal are files that contain data or information from more than one specimen. They are not annotated with individualIDs or specimenIDs, since these files may contain numbers of specimens that exceed the annotation limits. These files are usually processed or summary data (gene counts, peptide quantifications, etc), and are always annotated with <code>isMultiSpecimen = TRUE</code>.</p>
-<p>If we look at the processed and normalized data files in the table of 5XFAD RNAseq file annotations we just downloaded , we will see that it isMultiSpecimen = TRUE, but individualID and specimenID are blank:</p>
-<div class="cell" data-execution_count="29">
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>annotations_table[(annotations_table[<span class="st">'dataSubtype'</span>].isin([<span class="st">'processed'</span>, <span class="st">'normalized'</span>]))][[<span class="st">'name'</span>,<span class="st">'individualID'</span>, <span class="st">'specimenID'</span>, <span class="st">'isMultiSpecimen'</span>, <span class="st">'dataSubtype'</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="28">
-<div>
-
-
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">name</th>
 <th data-quarto-table-cell-role="th">individualID</th>
 <th data-quarto-table-cell-role="th">specimenID</th>
-<th data-quarto-table-cell-role="th">isMultiSpecimen</th>
-<th data-quarto-table-cell-role="th">dataSubtype</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">144</td>
-<td>htseqcounts_5XFAD.txt</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>True</td>
-<td>processed</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">145</td>
-<td>tpm_gene_5XFAD.txt</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>True</td>
-<td>normalized</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">146</td>
-<td>tpm_isoform_5XFAD.txt</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>True</td>
-<td>normalized</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-</div>
-<p>The multispecimen file should contain a row or column of specimenIDs that correspond to the specimenIDs used in a study’s metadata, as we have seen with the 5XFAD counts file.</p>
-<div class="cell" data-execution_count="30">
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="co"># In this example, we take a slice of the counts data to reduce computation,</span></span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="co"># transpose it so that each row represents a single specimen, and then join it</span></span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="co"># to the joined metadata by the specimenID</span></span>
-<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="co"># transpose</span></span>
-<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>small_counts <span class="op">=</span> counts.head()</span>
-<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a>transposed <span class="op">=</span> small_counts.transpose()</span>
-<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a><span class="co"># make geneIDs column headers</span></span>
-<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a>transposed <span class="op">=</span> transposed.rename(columns <span class="op">=</span> transposed.iloc[<span class="dv">0</span>]).drop(transposed.index[<span class="dv">0</span>])</span>
-<span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-14"><a href="#cb44-14" aria-hidden="true" tabindex="-1"></a><span class="co"># make rownames into a column of specimenIDs</span></span>
-<span id="cb44-15"><a href="#cb44-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-16"><a href="#cb44-16" aria-hidden="true" tabindex="-1"></a>transposed.index.name <span class="op">=</span> <span class="st">'specimenID'</span></span>
-<span id="cb44-17"><a href="#cb44-17" aria-hidden="true" tabindex="-1"></a>transposed <span class="op">=</span> transposed.reset_index()</span>
-<span id="cb44-18"><a href="#cb44-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-19"><a href="#cb44-19" aria-hidden="true" tabindex="-1"></a><span class="co"># join to metadata</span></span>
-<span id="cb44-20"><a href="#cb44-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-21"><a href="#cb44-21" aria-hidden="true" tabindex="-1"></a>transposed.merge(joined_meta, how <span class="op">=</span> <span class="st">'left'</span>, on <span class="op">=</span> <span class="st">'specimenID'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="29">
-<div>
-
-
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">specimenID</th>
-<th data-quarto-table-cell-role="th">ENSG00000080815</th>
-<th data-quarto-table-cell-role="th">ENSG00000142192</th>
-<th data-quarto-table-cell-role="th">ENSMUSG00000000001</th>
-<th data-quarto-table-cell-role="th">ENSMUSG00000000003</th>
-<th data-quarto-table-cell-role="th">ENSMUSG00000000028</th>
-<th data-quarto-table-cell-role="th">platform</th>
-<th data-quarto-table-cell-role="th">RIN</th>
-<th data-quarto-table-cell-role="th">rnaBatch</th>
-<th data-quarto-table-cell-role="th">libraryBatch</th>
-<th data-quarto-table-cell-role="th">...</th>
-<th data-quarto-table-cell-role="th">PhysicalMarker</th>
-<th data-quarto-table-cell-role="th">generation</th>
-<th data-quarto-table-cell-role="th">AnimalMatingStatus</th>
-<th data-quarto-table-cell-role="th">jobNumber</th>
-<th data-quarto-table-cell-role="th">microchipID</th>
-<th data-quarto-table-cell-role="th">rodentDiet</th>
-<th data-quarto-table-cell-role="th">birthID</th>
-<th data-quarto-table-cell-role="th">brainWeight</th>
-<th data-quarto-table-cell-role="th">rodentWeight</th>
-<th data-quarto-table-cell-role="th">modelCommonName</th>
+<th data-quarto-table-cell-role="th">sex</th>
+<th data-quarto-table-cell-role="th">genotype</th>
+<th data-quarto-table-cell-role="th">timepoint</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">0</td>
+<td>32043</td>
 <td>32043rh</td>
-<td>22554</td>
-<td>344489</td>
-<td>5061</td>
-<td>0</td>
-<td>208</td>
-<td>IlluminaNovaseq6000</td>
-<td>NaN</td>
-<td>1</td>
-<td>1</td>
-<td>...</td>
-<td>NaN</td>
-<td>N1F3</td>
-<td>Virgin</td>
-<td>JAX 5xFAD 12mo</td>
-<td>288646853.0</td>
-<td>6%</td>
-<td>NaN</td>
-<td>0.503</td>
-<td>28.76</td>
-<td>5XFAD</td>
+<td>female</td>
+<td>5XFAD_carrier</td>
+<td>12 mo</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">1</td>
+<td>32044</td>
 <td>32044rh</td>
-<td>0</td>
-<td>4</td>
-<td>3483</td>
-<td>0</td>
-<td>162</td>
-<td>IlluminaNovaseq6000</td>
-<td>NaN</td>
-<td>1</td>
-<td>1</td>
-<td>...</td>
-<td>NaN</td>
-<td>N1F3</td>
-<td>Virgin</td>
-<td>JAX 5xFAD 12mo</td>
-<td>289822454.0</td>
-<td>6%</td>
-<td>NaN</td>
-<td>0.482</td>
-<td>46.51</td>
-<td>5XFAD</td>
+<td>male</td>
+<td>5XFAD_noncarrier</td>
+<td>12 mo</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">2</td>
+<td>32046</td>
 <td>32046rh</td>
-<td>0</td>
-<td>0</td>
-<td>3941</td>
-<td>0</td>
-<td>138</td>
-<td>IlluminaNovaseq6000</td>
-<td>NaN</td>
-<td>1</td>
-<td>1</td>
-<td>...</td>
-<td>NaN</td>
-<td>N1F3</td>
-<td>Virgin</td>
-<td>JAX 5xFAD 12mo</td>
-<td>289859181.0</td>
-<td>6%</td>
-<td>NaN</td>
-<td>0.470</td>
-<td>41.00</td>
-<td>5XFAD</td>
+<td>male</td>
+<td>5XFAD_noncarrier</td>
+<td>12 mo</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">3</td>
+<td>32047</td>
 <td>32047rh</td>
-<td>0</td>
-<td>1</td>
-<td>3088</td>
-<td>0</td>
-<td>127</td>
-<td>IlluminaNovaseq6000</td>
-<td>NaN</td>
-<td>1</td>
-<td>1</td>
-<td>...</td>
-<td>NaN</td>
-<td>N1F3</td>
-<td>Virgin</td>
-<td>JAX 5xFAD 12mo</td>
-<td>289777416.0</td>
-<td>6%</td>
-<td>NaN</td>
-<td>0.454</td>
-<td>42.89</td>
-<td>5XFAD</td>
+<td>male</td>
+<td>5XFAD_noncarrier</td>
+<td>12 mo</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">4</td>
-<td>32048rh</td>
-<td>16700</td>
-<td>260935</td>
-<td>2756</td>
-<td>0</td>
-<td>95</td>
-<td>IlluminaNovaseq6000</td>
-<td>NaN</td>
-<td>1</td>
-<td>1</td>
-<td>...</td>
-<td>NaN</td>
-<td>N1F4</td>
-<td>Virgin</td>
-<td>JAX 5xFAD 12mo</td>
-<td>288855717.0</td>
-<td>6%</td>
-<td>NaN</td>
-<td>0.447</td>
-<td>25.57</td>
-<td>5XFAD</td>
+<td>32049</td>
+<td>32049rh</td>
+<td>female</td>
+<td>5XFAD_noncarrier</td>
+<td>12 mo</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
 <td>...</td>
 <td>...</td>
 <td>...</td>
@@ -1954,135 +2421,794 @@ Name: individualID, dtype: int64</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">67</td>
-<td>46892rh</td>
-<td>25119</td>
-<td>371037</td>
-<td>5967</td>
-<td>0</td>
-<td>260</td>
-<td>IlluminaNovaseq6000</td>
-<td>NaN</td>
-<td>1</td>
-<td>1</td>
-<td>...</td>
-<td>NaN</td>
-<td>N1F4</td>
-<td>Virgin</td>
-<td>JAX DMP 5xFAD 6month</td>
-<td>NaN</td>
-<td>6%</td>
-<td>NaN</td>
-<td>0.491</td>
-<td>30.54</td>
-<td>5XFAD</td>
+<td>46886</td>
+<td>46886rh</td>
+<td>female</td>
+<td>5XFAD_carrier</td>
+<td>6 mo</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">68</td>
-<td>46893rh</td>
-<td>92</td>
-<td>1116</td>
-<td>3459</td>
-<td>0</td>
-<td>161</td>
-<td>IlluminaNovaseq6000</td>
-<td>NaN</td>
-<td>1</td>
-<td>1</td>
-<td>...</td>
-<td>NaN</td>
-<td>N1F4</td>
-<td>Virgin</td>
-<td>JAX DMP 5xFAD 4month</td>
-<td>NaN</td>
-<td>6%</td>
-<td>NaN</td>
-<td>0.537</td>
-<td>25.37</td>
-<td>5XFAD</td>
+<td>46889</td>
+<td>46889rh</td>
+<td>male</td>
+<td>5XFAD_carrier</td>
+<td>6 mo</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">69</td>
-<td>46895rh</td>
-<td>0</td>
-<td>0</td>
-<td>4262</td>
-<td>0</td>
-<td>189</td>
-<td>IlluminaNovaseq6000</td>
-<td>NaN</td>
-<td>1</td>
-<td>1</td>
-<td>...</td>
-<td>NaN</td>
-<td>N1F4</td>
-<td>Virgin</td>
-<td>JAX DMP 5xFAD 4month</td>
-<td>NaN</td>
-<td>6%</td>
-<td>NaN</td>
-<td>0.501</td>
-<td>30.52</td>
-<td>5XFAD</td>
+<td>46890</td>
+<td>46890rh</td>
+<td>male</td>
+<td>5XFAD_carrier</td>
+<td>6 mo</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">70</td>
-<td>46896rh</td>
-<td>15934</td>
-<td>235343</td>
-<td>3923</td>
-<td>0</td>
-<td>179</td>
-<td>IlluminaNovaseq6000</td>
-<td>NaN</td>
-<td>1</td>
-<td>1</td>
-<td>...</td>
-<td>NaN</td>
-<td>N1F4</td>
-<td>Virgin</td>
-<td>JAX DMP 5xFAD 4month</td>
-<td>NaN</td>
-<td>6%</td>
-<td>NaN</td>
-<td>0.499</td>
-<td>28.78</td>
-<td>5XFAD</td>
+<td>46892</td>
+<td>46892rh</td>
+<td>male</td>
+<td>5XFAD_carrier</td>
+<td>6 mo</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">71</td>
-<td>46897rh</td>
-<td>0</td>
-<td>6</td>
-<td>3486</td>
-<td>0</td>
-<td>117</td>
-<td>IlluminaNovaseq6000</td>
-<td>NaN</td>
-<td>1</td>
-<td>1</td>
-<td>...</td>
-<td>NaN</td>
-<td>N1F4</td>
-<td>Virgin</td>
-<td>JAX DMP 5xFAD 4month</td>
-<td>NaN</td>
-<td>6%</td>
-<td>NaN</td>
-<td>0.514</td>
-<td>35.80</td>
-<td>5XFAD</td>
+<td>46896</td>
+<td>46896rh</td>
+<td>male</td>
+<td>5XFAD_carrier</td>
+<td>4 mo</td>
 </tr>
 </tbody>
 </table>
 
-<p>72 rows × 58 columns</p>
+<p>72 rows × 5 columns</p>
 </div>
 </div>
 </div>
-<p>You could now begin to compare counts of different genes across specimens from this study, perhaps grouping by sex, genotype, or age.</p>
+</section>
+</section>
+<section id="convert-ensembleids-to-common-gene-names" class="level3">
+<h3 class="anchored" data-anchor-id="convert-ensembleids-to-common-gene-names">Convert ensembleIDs to common gene names</h3>
+<p>Return to the gene counts matrix we read in earlier. 5XFAD mice express human APP and PSEN1, and the counts matrix includes these human genes (recognizable as starting with <code>ENSG</code> instead of <code>ENSMUS</code>):</p>
+<div id="abbac3ba" class="cell" data-execution_count="39">
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>counts.loc[counts[<span class="st">"gene_id"</span>].<span class="bu">str</span>.contains(<span class="st">"ENSG"</span>)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="37">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">gene_id</th>
+<th data-quarto-table-cell-role="th">32043rh</th>
+<th data-quarto-table-cell-role="th">32044rh</th>
+<th data-quarto-table-cell-role="th">32046rh</th>
+<th data-quarto-table-cell-role="th">32047rh</th>
+<th data-quarto-table-cell-role="th">32048rh</th>
+<th data-quarto-table-cell-role="th">32049rh</th>
+<th data-quarto-table-cell-role="th">32050rh</th>
+<th data-quarto-table-cell-role="th">32052rh</th>
+<th data-quarto-table-cell-role="th">32053rh</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">46887rh</th>
+<th data-quarto-table-cell-role="th">46888rh</th>
+<th data-quarto-table-cell-role="th">46889rh</th>
+<th data-quarto-table-cell-role="th">46890rh</th>
+<th data-quarto-table-cell-role="th">46891rh</th>
+<th data-quarto-table-cell-role="th">46892rh</th>
+<th data-quarto-table-cell-role="th">46893rh</th>
+<th data-quarto-table-cell-role="th">46895rh</th>
+<th data-quarto-table-cell-role="th">46896rh</th>
+<th data-quarto-table-cell-role="th">46897rh</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>ENSG00000080815</td>
+<td>22554</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>16700</td>
+<td>0</td>
+<td>0</td>
+<td>19748</td>
+<td>14023</td>
+<td>...</td>
+<td>16072</td>
+<td>0</td>
+<td>16680</td>
+<td>13367</td>
+<td>0</td>
+<td>25119</td>
+<td>92</td>
+<td>0</td>
+<td>15934</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>ENSG00000142192</td>
+<td>344489</td>
+<td>4</td>
+<td>0</td>
+<td>1</td>
+<td>260935</td>
+<td>6</td>
+<td>8</td>
+<td>337456</td>
+<td>206851</td>
+<td>...</td>
+<td>258061</td>
+<td>0</td>
+<td>235530</td>
+<td>196721</td>
+<td>0</td>
+<td>371037</td>
+<td>1116</td>
+<td>0</td>
+<td>235343</td>
+<td>6</td>
+</tr>
+</tbody>
+</table>
+
+<p>2 rows × 73 columns</p>
+</div>
+</div>
+</div>
+<p>We will have to manually add gene symbols for the human genes, but we can automatically get the Ensembl ID to gene symbol mapping for all of the mouse genes. Unlike R, there is no well-maintained Python package to query Biomart, so you can either 1) go to the Biomart website, query the list of Ensembl IDs, and download the result, 2) use a third-party package from pypi, or 3) use the pre-made mapping file we’ve provided.</p>
+<p>We’ll use option #3 for this workshop:</p>
+<div id="cda0a5a3" class="cell" data-execution_count="40">
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>ensembl_to_gene <span class="op">=</span> pd.read_csv(<span class="st">"ensembl_translation_key.csv"</span>)</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>named_counts <span class="op">=</span> pd.merge(left <span class="op">=</span> counts, right <span class="op">=</span> ensembl_to_gene,</span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>                        how <span class="op">=</span> <span class="st">"left"</span>, left_on <span class="op">=</span> <span class="st">"gene_id"</span>, right_on <span class="op">=</span> <span class="st">"gene_id"</span>)</span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a>named_counts.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="38">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">gene_id</th>
+<th data-quarto-table-cell-role="th">32043rh</th>
+<th data-quarto-table-cell-role="th">32044rh</th>
+<th data-quarto-table-cell-role="th">32046rh</th>
+<th data-quarto-table-cell-role="th">32047rh</th>
+<th data-quarto-table-cell-role="th">32048rh</th>
+<th data-quarto-table-cell-role="th">32049rh</th>
+<th data-quarto-table-cell-role="th">32050rh</th>
+<th data-quarto-table-cell-role="th">32052rh</th>
+<th data-quarto-table-cell-role="th">32053rh</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">46888rh</th>
+<th data-quarto-table-cell-role="th">46889rh</th>
+<th data-quarto-table-cell-role="th">46890rh</th>
+<th data-quarto-table-cell-role="th">46891rh</th>
+<th data-quarto-table-cell-role="th">46892rh</th>
+<th data-quarto-table-cell-role="th">46893rh</th>
+<th data-quarto-table-cell-role="th">46895rh</th>
+<th data-quarto-table-cell-role="th">46896rh</th>
+<th data-quarto-table-cell-role="th">46897rh</th>
+<th data-quarto-table-cell-role="th">gene_name</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>ENSG00000080815</td>
+<td>22554</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>16700</td>
+<td>0</td>
+<td>0</td>
+<td>19748</td>
+<td>14023</td>
+<td>...</td>
+<td>0</td>
+<td>16680</td>
+<td>13367</td>
+<td>0</td>
+<td>25119</td>
+<td>92</td>
+<td>0</td>
+<td>15934</td>
+<td>0</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>ENSG00000142192</td>
+<td>344489</td>
+<td>4</td>
+<td>0</td>
+<td>1</td>
+<td>260935</td>
+<td>6</td>
+<td>8</td>
+<td>337456</td>
+<td>206851</td>
+<td>...</td>
+<td>0</td>
+<td>235530</td>
+<td>196721</td>
+<td>0</td>
+<td>371037</td>
+<td>1116</td>
+<td>0</td>
+<td>235343</td>
+<td>6</td>
+<td>NaN</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>ENSMUSG00000000001</td>
+<td>5061</td>
+<td>3483</td>
+<td>3941</td>
+<td>3088</td>
+<td>2756</td>
+<td>3067</td>
+<td>2711</td>
+<td>3334</td>
+<td>3841</td>
+<td>...</td>
+<td>3899</td>
+<td>4173</td>
+<td>4008</td>
+<td>3037</td>
+<td>5967</td>
+<td>3459</td>
+<td>4262</td>
+<td>3923</td>
+<td>3486</td>
+<td>Gnai3</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>ENSMUSG00000000003</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>...</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>Pbsn</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>ENSMUSG00000000028</td>
+<td>208</td>
+<td>162</td>
+<td>138</td>
+<td>127</td>
+<td>95</td>
+<td>154</td>
+<td>165</td>
+<td>124</td>
+<td>103</td>
+<td>...</td>
+<td>210</td>
+<td>127</td>
+<td>156</td>
+<td>116</td>
+<td>260</td>
+<td>161</td>
+<td>189</td>
+<td>179</td>
+<td>117</td>
+<td>Cdc45</td>
+</tr>
+</tbody>
+</table>
+
+<p>5 rows × 74 columns</p>
+</div>
+</div>
+</div>
+<p>How many genes are missing a gene symbol?</p>
+<div id="f95d849d" class="cell" data-execution_count="41">
+<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="bu">sum</span>(named_counts[<span class="st">"gene_name"</span>].isna())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="39">
+<pre><code>3907</code></pre>
+</div>
+</div>
+<p>Are all the gene names unique?</p>
+<div id="23d95100" class="cell" data-execution_count="42">
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>non_na_genes <span class="op">=</span> named_counts.loc[(named_counts[<span class="st">"gene_name"</span>].isna()) <span class="op">==</span> <span class="va">False</span>]</span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a><span class="bu">len</span>(non_na_genes[<span class="st">"gene_name"</span>]) <span class="op">-</span> <span class="bu">len</span>(non_na_genes[<span class="st">"gene_name"</span>].drop_duplicates())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="40">
+<pre><code>55</code></pre>
+</div>
+</div>
+<p>We need to clean up the humanized gene names and append unique identifiers to the duplicate names.</p>
+<div id="fa2a8791" class="cell" data-execution_count="43">
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The first two genes in the matrix are the humanized genes PSEN1 (ENSG00000080815)</span></span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a><span class="co"># and APP (ENSG00000142192). Set these manually:</span></span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>named_counts.loc[<span class="dv">0</span>, <span class="st">"gene_name"</span>] <span class="op">=</span> <span class="st">"PSEN1"</span></span>
+<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a>named_counts.loc[<span class="dv">1</span>, <span class="st">"gene_name"</span>] <span class="op">=</span> <span class="st">"APP"</span></span>
+<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-6"><a href="#cb69-6" aria-hidden="true" tabindex="-1"></a>named_counts[<span class="st">"gene_name"</span>] <span class="op">=</span> named_counts[<span class="st">"gene_name"</span>].fillna(<span class="st">"UNKNOWN"</span>)</span>
+<span id="cb69-7"><a href="#cb69-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-8"><a href="#cb69-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Paste the index of each duplicated gene to the end of each duplicated gene name</span></span>
+<span id="cb69-9"><a href="#cb69-9" aria-hidden="true" tabindex="-1"></a>duplicates <span class="op">=</span> named_counts[<span class="st">"gene_name"</span>].duplicated()</span>
+<span id="cb69-10"><a href="#cb69-10" aria-hidden="true" tabindex="-1"></a>named_counts.loc[duplicates, <span class="st">"gene_name"</span>] <span class="op">=</span> (</span>
+<span id="cb69-11"><a href="#cb69-11" aria-hidden="true" tabindex="-1"></a>  named_counts.loc[duplicates, <span class="st">"gene_name"</span>] <span class="op">+</span> <span class="st">"."</span> <span class="op">+</span> </span>
+<span id="cb69-12"><a href="#cb69-12" aria-hidden="true" tabindex="-1"></a>  named_counts.index[duplicates].astype(<span class="bu">str</span>)</span>
+<span id="cb69-13"><a href="#cb69-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb69-14"><a href="#cb69-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-15"><a href="#cb69-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Set the index/rownames to the gene symbol, remove the gene_id and gene_name columns</span></span>
+<span id="cb69-16"><a href="#cb69-16" aria-hidden="true" tabindex="-1"></a>named_counts <span class="op">=</span> named_counts.set_index(<span class="st">"gene_name"</span>, drop <span class="op">=</span> <span class="va">True</span>)</span>
+<span id="cb69-17"><a href="#cb69-17" aria-hidden="true" tabindex="-1"></a>named_counts <span class="op">=</span> named_counts.drop(columns <span class="op">=</span> <span class="st">"gene_id"</span>)</span>
+<span id="cb69-18"><a href="#cb69-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-19"><a href="#cb69-19" aria-hidden="true" tabindex="-1"></a>named_counts.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="41">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">32043rh</th>
+<th data-quarto-table-cell-role="th">32044rh</th>
+<th data-quarto-table-cell-role="th">32046rh</th>
+<th data-quarto-table-cell-role="th">32047rh</th>
+<th data-quarto-table-cell-role="th">32048rh</th>
+<th data-quarto-table-cell-role="th">32049rh</th>
+<th data-quarto-table-cell-role="th">32050rh</th>
+<th data-quarto-table-cell-role="th">32052rh</th>
+<th data-quarto-table-cell-role="th">32053rh</th>
+<th data-quarto-table-cell-role="th">32057rh</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">46887rh</th>
+<th data-quarto-table-cell-role="th">46888rh</th>
+<th data-quarto-table-cell-role="th">46889rh</th>
+<th data-quarto-table-cell-role="th">46890rh</th>
+<th data-quarto-table-cell-role="th">46891rh</th>
+<th data-quarto-table-cell-role="th">46892rh</th>
+<th data-quarto-table-cell-role="th">46893rh</th>
+<th data-quarto-table-cell-role="th">46895rh</th>
+<th data-quarto-table-cell-role="th">46896rh</th>
+<th data-quarto-table-cell-role="th">46897rh</th>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">gene_name</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">PSEN1</td>
+<td>22554</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>16700</td>
+<td>0</td>
+<td>0</td>
+<td>19748</td>
+<td>14023</td>
+<td>0</td>
+<td>...</td>
+<td>16072</td>
+<td>0</td>
+<td>16680</td>
+<td>13367</td>
+<td>0</td>
+<td>25119</td>
+<td>92</td>
+<td>0</td>
+<td>15934</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">APP</td>
+<td>344489</td>
+<td>4</td>
+<td>0</td>
+<td>1</td>
+<td>260935</td>
+<td>6</td>
+<td>8</td>
+<td>337456</td>
+<td>206851</td>
+<td>1</td>
+<td>...</td>
+<td>258061</td>
+<td>0</td>
+<td>235530</td>
+<td>196721</td>
+<td>0</td>
+<td>371037</td>
+<td>1116</td>
+<td>0</td>
+<td>235343</td>
+<td>6</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">Gnai3</td>
+<td>5061</td>
+<td>3483</td>
+<td>3941</td>
+<td>3088</td>
+<td>2756</td>
+<td>3067</td>
+<td>2711</td>
+<td>3334</td>
+<td>3841</td>
+<td>4068</td>
+<td>...</td>
+<td>3719</td>
+<td>3899</td>
+<td>4173</td>
+<td>4008</td>
+<td>3037</td>
+<td>5967</td>
+<td>3459</td>
+<td>4262</td>
+<td>3923</td>
+<td>3486</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">Pbsn</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>...</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">Cdc45</td>
+<td>208</td>
+<td>162</td>
+<td>138</td>
+<td>127</td>
+<td>95</td>
+<td>154</td>
+<td>165</td>
+<td>124</td>
+<td>103</td>
+<td>164</td>
+<td>...</td>
+<td>128</td>
+<td>210</td>
+<td>127</td>
+<td>156</td>
+<td>116</td>
+<td>260</td>
+<td>161</td>
+<td>189</td>
+<td>179</td>
+<td>117</td>
+</tr>
+</tbody>
+</table>
+
+<p>5 rows × 72 columns</p>
+</div>
+</div>
+</div>
+</section>
+<section id="visualize-gene-count-data" class="level3">
+<h3 class="anchored" data-anchor-id="visualize-gene-count-data">Visualize gene count data</h3>
+<p>We now have a nicely formatted data frame with gene symbols as the row names, and specimenIDs as the column names. From here you could save the counts data frame and joined metadata data frame for plotting elsewhere (i.e.&nbsp;in R, or using stats software), or you can use one of Python’s many plotting libraries.</p>
+<p>For this notebook, we have directly translated the code from the R notebook into Python’s port of the <code>ggplot2</code> library, which you can install from the command line with</p>
+<pre class="{bash}"><code>pip3 install plotnine</code></pre>
+<section id="transpose-counts-matrix-and-join-to-covariates" class="level4">
+<h4 class="anchored" data-anchor-id="transpose-counts-matrix-and-join-to-covariates">Transpose counts matrix and join to covariates</h4>
+<p>First, we need to transpose the counts dataframe so that each row contains count data cross all genes for an individual, and join our covariates by specimenID.</p>
+<div id="45d5d79d" class="cell" data-execution_count="44">
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>counts_tposed <span class="op">=</span> named_counts.transpose()</span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>counts_tposed[<span class="st">"specimenID"</span>] <span class="op">=</span> counts_tposed.index</span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>counts_tposed <span class="op">=</span> pd.merge(</span>
+<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a>  left <span class="op">=</span> counts_tposed, right <span class="op">=</span> covars, how <span class="op">=</span> <span class="st">"left"</span>,</span>
+<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>  left_on <span class="op">=</span> <span class="st">"specimenID"</span>, right_on <span class="op">=</span> <span class="st">"specimenID"</span></span>
+<span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-9"><a href="#cb71-9" aria-hidden="true" tabindex="-1"></a>counts_tposed.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="42">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">PSEN1</th>
+<th data-quarto-table-cell-role="th">APP</th>
+<th data-quarto-table-cell-role="th">Gnai3</th>
+<th data-quarto-table-cell-role="th">Pbsn</th>
+<th data-quarto-table-cell-role="th">Cdc45</th>
+<th data-quarto-table-cell-role="th">H19</th>
+<th data-quarto-table-cell-role="th">Scml2</th>
+<th data-quarto-table-cell-role="th">Apoh</th>
+<th data-quarto-table-cell-role="th">Narf</th>
+<th data-quarto-table-cell-role="th">Cav2</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">Gm17693</th>
+<th data-quarto-table-cell-role="th">Gm50487</th>
+<th data-quarto-table-cell-role="th">Gm30172</th>
+<th data-quarto-table-cell-role="th">Gm50464</th>
+<th data-quarto-table-cell-role="th">Gm21870</th>
+<th data-quarto-table-cell-role="th">specimenID</th>
+<th data-quarto-table-cell-role="th">individualID</th>
+<th data-quarto-table-cell-role="th">sex</th>
+<th data-quarto-table-cell-role="th">genotype</th>
+<th data-quarto-table-cell-role="th">timepoint</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>22554</td>
+<td>344489</td>
+<td>5061</td>
+<td>0</td>
+<td>208</td>
+<td>44</td>
+<td>143</td>
+<td>22</td>
+<td>7165</td>
+<td>3728</td>
+<td>...</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>74</td>
+<td>0</td>
+<td>32043rh</td>
+<td>32043</td>
+<td>female</td>
+<td>5XFAD_carrier</td>
+<td>12 mo</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>0</td>
+<td>4</td>
+<td>3483</td>
+<td>0</td>
+<td>162</td>
+<td>17</td>
+<td>88</td>
+<td>6</td>
+<td>5013</td>
+<td>2316</td>
+<td>...</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>45</td>
+<td>0</td>
+<td>32044rh</td>
+<td>32044</td>
+<td>male</td>
+<td>5XFAD_noncarrier</td>
+<td>12 mo</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>0</td>
+<td>0</td>
+<td>3941</td>
+<td>0</td>
+<td>138</td>
+<td>14</td>
+<td>121</td>
+<td>10</td>
+<td>5581</td>
+<td>2238</td>
+<td>...</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>83</td>
+<td>0</td>
+<td>32046rh</td>
+<td>32046</td>
+<td>male</td>
+<td>5XFAD_noncarrier</td>
+<td>12 mo</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>0</td>
+<td>1</td>
+<td>3088</td>
+<td>0</td>
+<td>127</td>
+<td>28</td>
+<td>117</td>
+<td>11</td>
+<td>4011</td>
+<td>1965</td>
+<td>...</td>
+<td>0</td>
+<td>0</td>
+<td>6</td>
+<td>52</td>
+<td>0</td>
+<td>32047rh</td>
+<td>32047</td>
+<td>male</td>
+<td>5XFAD_noncarrier</td>
+<td>12 mo</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>16700</td>
+<td>260935</td>
+<td>2756</td>
+<td>0</td>
+<td>95</td>
+<td>23</td>
+<td>115</td>
+<td>11</td>
+<td>4104</td>
+<td>1822</td>
+<td>...</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>31</td>
+<td>0</td>
+<td>32048rh</td>
+<td>32048</td>
+<td>female</td>
+<td>5XFAD_carrier</td>
+<td>12 mo</td>
+</tr>
+</tbody>
+</table>
+
+<p>5 rows × 55494 columns</p>
+</div>
+</div>
+</div>
+</section>
+<section id="plotting" class="level4">
+<h4 class="anchored" data-anchor-id="plotting">Plotting</h4>
+<p>Create simple box plots showing counts by genotype and time point, faceted by sex. Time point needs to be set as a categorical variable in a sensible order for display.</p>
+<div id="0c7bf668" class="cell" data-execution_count="45">
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> ggplot, aes, geom_boxplot, geom_point</span>
+<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> facet_wrap, position_jitterdodge, theme_bw</span>
+<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Put time point categories in order</span></span>
+<span id="cb72-5"><a href="#cb72-5" aria-hidden="true" tabindex="-1"></a>counts_tposed[<span class="st">"timepoint"</span>] <span class="op">=</span> pd.Categorical(counts_tposed[<span class="st">"timepoint"</span>], </span>
+<span id="cb72-6"><a href="#cb72-6" aria-hidden="true" tabindex="-1"></a>                                            categories<span class="op">=</span>[<span class="st">"4 mo"</span>, <span class="st">"6 mo"</span>, <span class="st">"12 mo"</span>])</span>
+<span id="cb72-7"><a href="#cb72-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb72-8"><a href="#cb72-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Look at APP levels -- this model is the 5X FAD mutant, so we expect it to be high!</span></span>
+<span id="cb72-9"><a href="#cb72-9" aria-hidden="true" tabindex="-1"></a>plt <span class="op">=</span> (</span>
+<span id="cb72-10"><a href="#cb72-10" aria-hidden="true" tabindex="-1"></a>  ggplot(counts_tposed)</span>
+<span id="cb72-11"><a href="#cb72-11" aria-hidden="true" tabindex="-1"></a>  <span class="op">+</span> aes(x <span class="op">=</span> <span class="st">"timepoint"</span>, y <span class="op">=</span> <span class="st">"APP"</span>, color <span class="op">=</span> <span class="st">"genotype"</span>)</span>
+<span id="cb72-12"><a href="#cb72-12" aria-hidden="true" tabindex="-1"></a>  <span class="op">+</span> geom_boxplot()</span>
+<span id="cb72-13"><a href="#cb72-13" aria-hidden="true" tabindex="-1"></a>  <span class="op">+</span> geom_point(position <span class="op">=</span> position_jitterdodge())</span>
+<span id="cb72-14"><a href="#cb72-14" aria-hidden="true" tabindex="-1"></a>  <span class="op">+</span> facet_wrap(<span class="st">"~sex"</span>)</span>
+<span id="cb72-15"><a href="#cb72-15" aria-hidden="true" tabindex="-1"></a>  <span class="op">+</span> theme_bw()</span>
+<span id="cb72-16"><a href="#cb72-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb72-17"><a href="#cb72-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb72-18"><a href="#cb72-18" aria-hidden="true" tabindex="-1"></a>plt.draw()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="43">
+<div>
+<figure class="figure">
+<p><img src="5XFADdata_python_tutorial_files/figure-html/cell-46-output-1.png" width="678" height="481" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Examine any gene of interest by setting the y argument in the <code>aes()</code> mapping equal to the gene name. Ex: <code>y = Trem2</code></p>
+<div id="100ffb18" class="cell" data-execution_count="46">
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> ggplot, aes, geom_boxplot, geom_point</span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> facet_wrap, position_jitterdodge, theme_bw</span>
+<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Look at APP levels -- this model is the 5X FAD mutant, so we expect it to be high!</span></span>
+<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a>plt <span class="op">=</span> (</span>
+<span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a>  ggplot(counts_tposed)</span>
+<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">+</span> aes(x <span class="op">=</span> <span class="st">"timepoint"</span>, y <span class="op">=</span> <span class="st">"Trem2"</span>, color <span class="op">=</span> <span class="st">"genotype"</span>)</span>
+<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">+</span> geom_boxplot()</span>
+<span id="cb73-9"><a href="#cb73-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">+</span> geom_point(position <span class="op">=</span> position_jitterdodge())</span>
+<span id="cb73-10"><a href="#cb73-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">+</span> facet_wrap(<span class="st">"~sex"</span>)</span>
+<span id="cb73-11"><a href="#cb73-11" aria-hidden="true" tabindex="-1"></a>  <span class="op">+</span> theme_bw()</span>
+<span id="cb73-12"><a href="#cb73-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb73-13"><a href="#cb73-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-14"><a href="#cb73-14" aria-hidden="true" tabindex="-1"></a>plt.draw()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="44">
+<div>
+<figure class="figure">
+<p><img src="5XFADdata_python_tutorial_files/figure-html/cell-47-output-1.png" width="678" height="481" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Ex: <code>y = Apoe</code></p>
+<div id="16acc3c8" class="cell" data-execution_count="47">
+<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> ggplot, aes, geom_boxplot, geom_point</span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> facet_wrap, position_jitterdodge, theme_bw</span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb74-4"><a href="#cb74-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Look at APP levels -- this model is the 5X FAD mutant, so we expect it to be high!</span></span>
+<span id="cb74-5"><a href="#cb74-5" aria-hidden="true" tabindex="-1"></a>plt <span class="op">=</span> (</span>
+<span id="cb74-6"><a href="#cb74-6" aria-hidden="true" tabindex="-1"></a>  ggplot(counts_tposed)</span>
+<span id="cb74-7"><a href="#cb74-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">+</span> aes(x <span class="op">=</span> <span class="st">"timepoint"</span>, y <span class="op">=</span> <span class="st">"Apoe"</span>, color <span class="op">=</span> <span class="st">"genotype"</span>)</span>
+<span id="cb74-8"><a href="#cb74-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">+</span> geom_boxplot()</span>
+<span id="cb74-9"><a href="#cb74-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">+</span> geom_point(position <span class="op">=</span> position_jitterdodge())</span>
+<span id="cb74-10"><a href="#cb74-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">+</span> facet_wrap(<span class="st">"~sex"</span>)</span>
+<span id="cb74-11"><a href="#cb74-11" aria-hidden="true" tabindex="-1"></a>  <span class="op">+</span> theme_bw()</span>
+<span id="cb74-12"><a href="#cb74-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb74-13"><a href="#cb74-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb74-14"><a href="#cb74-14" aria-hidden="true" tabindex="-1"></a>plt.draw()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="45">
+<div>
+<figure class="figure">
+<p><img src="5XFADdata_python_tutorial_files/figure-html/cell-48-output-1.png" width="678" height="481" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
 <hr>
+<p><img src="images/ADKP_logo.png" class="img-fluid" width="236"></p>
 
 
+</section>
 </section>
 </section>
 
@@ -2122,18 +3248,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     }
     return false;
   }
-  const clipboard = new window.ClipboardJS('.code-copy-button', {
-    text: function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
-        }
-      }
-      return codeEl.innerText;
-    }
-  });
-  clipboard.on('success', function(e) {
+  const onCopySuccess = function(e) {
     // button target
     const button = e.trigger;
     // don't keep focus
@@ -2165,11 +3280,50 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     }, 1000);
     // clear code selection
     e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
   });
-  function tippyHover(el, contentFn) {
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
     const config = {
       allowHTML: true,
-      content: contentFn,
       maxWidth: 500,
       delay: 100,
       arrow: false,
@@ -2179,8 +3333,17 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       interactive: true,
       interactiveBorder: 10,
       theme: 'quarto',
-      placement: 'bottom-start'
+      placement: 'bottom-start',
     };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
     window.tippy(el, config); 
   }
   const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
@@ -2192,7 +3355,130 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       try { href = new URL(href).hash; } catch {}
       const id = href.replace(/^#\/?/, "");
       const note = window.document.getElementById(id);
-      return note.innerHTML;
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
     });
   }
       let selectedAnnoteEl;
@@ -2236,6 +3522,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             }
             div.style.top = top - 2 + "px";
             div.style.height = height + 4 + "px";
+            div.style.left = 0;
             let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
             if (gutterDiv === null) {
               gutterDiv = window.document.createElement("div");
@@ -2261,6 +3548,32 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         });
         selectedAnnoteEl = undefined;
       };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
       // Attach click handler to the DT
       const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
       for (const annoteDlNode of annoteDls) {
@@ -2321,6 +3634,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
+
 
 
 
