@@ -122,6 +122,9 @@ synGet(counts_id,
        downloadLocation = "files/",
        ifcollision = "overwrite.local") # Prevents making multiple copies
 ```
+The argument `ifcollision = "overwrite.local"` means that instead of downloading the file and saving it as a new copy, it will overwrite the current file at that location if it already exists, to avoid cluttering your hard drive with multiple copies of the same file. Before downloading, `synGet` will check if the file on your hard drive is the same as the version on Synapse, and will only download from Synapse if the two files are different. 
+
+This is very useful for large files especially: you can ensure that you always have the latest copy of a file from Synapse, without having to re-download the file if you already have the current version on your hard drive.
 
 Let's take a quick look at the file we just downloaded. Calling a tibble object will print the first ten rows in a nice tidy output; doing the same for a base R dataframe will print the whole thing until it runs out of memory. If you want to inspect a large dataframe, use `head(df)`.
 
@@ -313,7 +316,7 @@ We are only interested in RNAseq data, so we will only read in the individual, b
 Now we can read all the metadata files in to R as data frames.
 
 ```{r read-metadata-files}
-#individual metadata
+# individual metadata
 ind_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv",
                      show_col_types = FALSE)
 
@@ -321,7 +324,7 @@ ind_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv",
 bio_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv",
                      show_col_types = FALSE)
 
-#assay metadata
+# assay metadata
 rna_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv",
                      show_col_types = FALSE)
 ```
