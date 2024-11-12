@@ -112,7 +112,7 @@ To download a single file from the AD Knowledge Portal, you can click the linked
 
 This filters the table to a single file. In the "Id" column for this `htseqcounts_5XFAD.txt` file, there is a unique Synapse ID (synID).
 
-![](images/Screenshot%202023-05-07%20at%2011.10.31%20AM.png){width="448"}
+![](images/portal-search-counts-file.png){width="448"}
 
 We can then use that synID to download the file. Some information about the file and its storage location within Synapse is printed to the R console when we call `synGet`.
 
@@ -143,7 +143,7 @@ Use the facets and search bar to look for data you want to download from the AD 
 
 In the window that pops up, select the "R" tab from the top menu bar. This will display some R code that constructs a SQL query of the Synapse data table that drives the AD Knowledge Portal. This query will allow us to download only the files that meet our search criteria.
 
-![](images/Screenshot%202023-05-07%20at%2011.17.01%20AM.png){width="411"}
+![](images/download-programmatic-output.png){width="411"}
 
 **We'll download our files using two steps:**
 

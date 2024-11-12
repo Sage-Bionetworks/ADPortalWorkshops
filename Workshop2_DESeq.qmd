@@ -332,3 +332,17 @@ write.csv(res, file="5XFAD_DEresults_12mo_males.csv", row.names=FALSE)
 ggsave("VolcanoPlot.png", width = 8, height = 6, units = "in")
 
 ```
+
+------------------------------------------------------------------------
+
+![](images/ADKP_logo.png){width="236"}
+
+<details>
+
+<summary>R Package Info</summary>
+
+```{r session-info}
+sessionInfo()
+```
+
+</details>
