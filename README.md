@@ -11,6 +11,6 @@
 ### Versions of the tutorials you can download and run interactively from RStudio or VSCode
 -   [Quarto notebook - Working with AD portal Data in R](https://github.com/Sage-Bionetworks/ADPortalWorkshops/blob/main/5XFAD_data_R_tutorial.qmd)
 -   [Quarto notebook - Working with AD portal Data in python](https://github.com/Sage-Bionetworks/ADPortalWorkshops/blob/main/5XFAD_data_python_tutorial.qmd)
--   [R notebook - Differential expression with DESeq2 in R](https://github.com/Sage-Bionetworks/ADPortalWorkshops/blob/main/Workshop2_DESeq.nb.html)
+-   [R notebook - Differential expression with DESeq2 in R](https://github.com/Sage-Bionetworks/ADPortalWorkshops/blob/main/Workshop2_DESeq.qmd)
 
 [Synapse workshop project](https://www.synapse.org/Synapse:syn26165425/wiki/612752)
