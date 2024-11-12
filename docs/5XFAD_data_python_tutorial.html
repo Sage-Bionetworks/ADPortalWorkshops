@@ -9,7 +9,7 @@
 <meta name="author" content="Abby Vander Linden (Sage Bionetworks)">
 <meta name="author" content="Victor Baham (Sage Bionetworks)">
 <meta name="author" content="Jaclyn Beck (Sage Bionetworks)">
-<meta name="dcterms.date" content="2024-11-11">
+<meta name="dcterms.date" content="2024-11-12">
 
 <title>AD Knowledge Portal Workshop: Download and explore 5XFAD mouse data in Python</title>
 <style>
@@ -173,7 +173,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">November 11, 2024</p>
+      <p class="date">November 12, 2024</p>
     </div>
   </div>
   
@@ -207,7 +207,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>We will also use the python package <code>pandas</code> for data wrangling. If you don’t have it installed, install from the command line:</p>
 <pre class="{bash}"><code>pip3 install pandas</code></pre>
 <p>Import the synapseclient and pandas libraries and create a Synapse object.</p>
-<div id="d6e8a82c" class="cell" data-execution_count="1">
+<div id="c4f29fe1" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> synapseclient</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> datetime</span>
@@ -219,11 +219,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Next, you will need to log in to your Synapse account.</p>
 <p>Follow these instructions to <a href="https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin">generate a personal access token</a>, then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.</p>
 <p><strong>⚠ DO NOT put your Synapse access token in scripts that will be shared with others, or they will be able to log in as you.</strong></p>
-<div id="e426963b" class="cell" data-execution_count="2">
+<div id="555cfd77" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>syn.login(authToken <span class="op">=</span> <span class="st">"&lt;paste your personal access token here&gt;"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>For more information on managing Synapse credentials with <code>synapseclient</code>, see the documentation <a href="https://python-docs.synapse.org/tutorials/configuration/">here</a>. If you have a <code>.synapseConfig</code> file stored in your home directory, you can simply run</p>
-<div id="c4a72eff" class="cell" data-execution_count="3">
+<div id="991d27c6" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>syn.login()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <hr>
@@ -240,7 +240,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This filters the table to a single file. In the “Id” column for this <code>htseqcounts_5XFAD.txt</code> file, there is a unique Synapse ID (synID).</p>
 <p><img src="images/portal-search-counts-file.png" class="img-fluid" width="448"></p>
 <p>We can then use that synID to download the file. Some information about the file and its storage location within Synapse is assigned to the variable <code>counts_file</code>.</p>
-<div id="2073e8d7" class="cell" data-execution_count="4">
+<div id="787c006d" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>counts_id <span class="op">=</span><span class="st">"syn22108847"</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>counts_file <span class="op">=</span> syn.get(counts_id, downloadLocation <span class="op">=</span> <span class="st">"files/"</span>, ifcollision <span class="op">=</span> <span class="st">"overwrite.local"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -248,28 +248,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This is very useful for large files especially: you can ensure that you always have the latest copy of a file from Synapse, without having to re-download the file if you already have the current version on your hard drive.</p>
 <p>The variable <code>counts_file</code> is a Synapse entity object. It has a variety of attributes, including <code>.path</code>, <code>.properties</code>, and <code>.annotations</code> that contain information about where the file is in Synapse, how it is labeled, what version it is, etc.</p>
 <p>Synapse ID of the file:</p>
-<div id="75ccab13" class="cell" data-execution_count="5">
+<div id="ac235aae" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>counts_file.<span class="bu">id</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="4">
 <pre><code>'syn22108847'</code></pre>
 </div>
 </div>
 <p>The local path where the file was download:</p>
-<div id="65bebe1b" class="cell" data-execution_count="6">
+<div id="248f48bf" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>counts_file.path </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="5">
 <pre><code>'/Users/jbeck/Code/ADPortalWorkshops/files/htseqcounts_5XFAD.txt'</code></pre>
 </div>
 </div>
 <p>The file version:</p>
-<div id="d79c4cea" class="cell" data-execution_count="7">
+<div id="f5edf083" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>counts_file.properties.versionNumber</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="6">
 <pre><code>2</code></pre>
 </div>
 </div>
 <p>Let’s take a quick look at the file we just downloaded.</p>
-<div id="446a4872" class="cell" data-execution_count="8">
+<div id="cd38f5d3" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>counts <span class="op">=</span> pd.read_table(counts_file.path, sep <span class="op">=</span> <span class="st">"</span><span class="ch">\t</span><span class="st">"</span>)</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>counts.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
@@ -452,7 +452,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Splitting this into steps can be extremely helpful for cases where you might not want to download all of the files back-to-back. For example, if the file sizes are very large or if you are downloading hundreds of files. Downloading the table first lets you: a) Fetch helpful annotations about the files without downloading them first, and b) do things like loop through the list one by one, download a file, do some processing, and delete the file before downloading the next one to save hard drive space.</p>
 <p><strong>Back to downloading…</strong></p>
 <p>The function <code>syn.tableQuery()</code> returns a Synapse object wrapper around the CSV file, which is automatically downloaded to a folder called <code>.synapseCache</code> in your home directory. You can use <code>query.filepath</code> to see the path to the file in the Synapse cache.</p>
-<div id="474d0bb3" class="cell" data-execution_count="9">
+<div id="ff621836" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># download the results of the filtered table query</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>query <span class="op">=</span> syn.tableQuery(</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"SELECT * FROM syn11346063 WHERE ( ( `study` HAS ( 'Jax.IU.Pitt_5XFAD' ) ) "</span> <span class="op">+</span></span>
@@ -463,20 +463,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co"># view the file path of the resulting csv</span></span>
 <span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>query.filepath</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Downloading files:   0%|          | 0.00/1.00 [00:00&lt;?, ?B/s, syn11346063]Downloading files:   0%|          | 0.00/2.14k [00:00&lt;?, ?B/s, syn11346063]Downloading files: 100%|██████████| 2.14k/2.14k [00:00&lt;00:00, 4.82kB/s, syn11346063]</code></pre>
+<pre><code>Downloading files:   0%|          | 0.00/1.00 [00:00&lt;?, ?B/s, syn11346063]Downloading files:   0%|          | 0.00/2.14k [00:00&lt;?, ?B/s, syn11346063]Downloading files: 100%|██████████| 2.14k/2.14k [00:00&lt;00:00, 4.42kB/s, syn11346063]</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Downloaded syn11346063 to /Users/jbeck/.synapseCache/75/149675075/SYNAPSE_TABLE_QUERY_149675075.csv</code></pre>
+<pre><code>Downloaded syn11346063 to /Users/jbeck/.synapseCache/793/149695793/SYNAPSE_TABLE_QUERY_149695793.csv</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Downloading files: 100%|██████████| 2.14k/2.14k [00:00&lt;00:00, 4.78kB/s, syn11346063]</code></pre>
+<pre><code>Downloading files: 100%|██████████| 2.14k/2.14k [00:00&lt;00:00, 4.39kB/s, syn11346063]</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="8">
-<pre><code>'/Users/jbeck/.synapseCache/75/149675075/SYNAPSE_TABLE_QUERY_149675075.csv'</code></pre>
+<pre><code>'/Users/jbeck/.synapseCache/793/149695793/SYNAPSE_TABLE_QUERY_149695793.csv'</code></pre>
 </div>
 </div>
 <p>We’ll use the pandas function <code>read.csv</code> to read the CSV file as a data frame. We can explore the <code>download_table</code> object and see that it contains information on all of the AD Portal data files we want to download. Some columns like the “id” and “parentId” columns contain info about where the file is in Synapse, and some columns contain AD Portal annotations for each file, like “dataType”, “specimenID”, and “assay”. This annotation table will later allow us to link downloaded files to additional metadata variables!</p>
-<div id="5affc6c8" class="cell" data-execution_count="10">
+<div id="6bd885f1" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># read in the table query csv file</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>download_table <span class="op">=</span> pd.read_csv(query.filepath)</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>download_table</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -640,7 +640,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Let’s look at a subset of columns that might be useful:</p>
-<div id="c4868f28" class="cell" data-execution_count="11">
+<div id="a6a0b983" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># read in the table query csv file</span></span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>download_table[[<span class="st">"id"</span>, <span class="st">"name"</span>, <span class="st">"metadataType"</span>, <span class="st">"assay"</span>, <span class="st">"fileFormat"</span>, <span class="st">"currentVersion"</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="10">
@@ -713,7 +713,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p><strong>Tip:</strong> Copy this file and save it somewhere memorable to have a complete record of all the files you are using and what version of each file was downloaded – for reproducibility!</p>
 <p>Finally, we can use a <code>for</code> loop to loop through the “id” column and apply the <code>syn.get()</code> function to each file’s synID.</p>
-<div id="8fa63270" class="cell" data-execution_count="12">
+<div id="6dce5e8b" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># loop through the column of synIDs and download each file</span></span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="bu">id</span> <span class="kw">in</span> download_table.<span class="bu">id</span>:</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  syn.get(<span class="bu">id</span>, downloadLocation <span class="op">=</span> <span class="st">"files/"</span>, ifcollision <span class="op">=</span> <span class="st">"overwrite.local"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -735,7 +735,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="synapse-entity-annotations" class="level4">
 <h4 class="anchored" data-anchor-id="synapse-entity-annotations">Synapse entity annotations</h4>
 <p>We can use the function <code>syn.get_annotations()</code> to view the annotations associated with any file <em>before</em> actually downloading the file.</p>
-<div id="86588609" class="cell" data-execution_count="13">
+<div id="37d78e85" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># the synID of a random fastq file from our filtered search of fastq files</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>random_fastq <span class="op">=</span> <span class="st">"syn22108503"</span></span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -787,7 +787,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>The file annotations let us see which study the file is associated with (Jax.IU.Pitt.5XFAD), which species it’s from (Mouse), which assay generated the file (rnaSeq), and a whole bunch of other properties. Most importantly, single-specimen files are annotated with with the specimenID of the specimen in the file, and the individualID of the individual that specimen was taken from. We can use these annotations to link files to the rest of the metadata, including metadata that is not in annotations. This is especially helpful for human studies, as potentially identifying information like age, race, and diagnosis is not included in file annotations.</p>
-<div id="182970c1" class="cell" data-execution_count="14">
+<div id="aa3f4cd6" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>ind_meta <span class="op">=</span> pd.read_csv(<span class="st">"files/Jax.IU.Pitt_5XFAD_individual_metadata.csv"</span>)</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Find records belonging to the individual this file maps to in our joined</span></span>
@@ -862,7 +862,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h4 class="anchored" data-anchor-id="annotations-during-bulk-download">Annotations during bulk download</h4>
 <p>When bulk downloading many files, the best practice is to preserve the download manifest that is generated which lists all the files, their synIDs, and all their annotations. If using the Synapse R client, follow the instructions in the <a href="#bulk-download-files">Bulk download files</a> section above.</p>
 <p>If we use the “Programmatic Options” tab in the AD Portal download menu to download all 148 rnaSeq files from the 5XFAD study, we would get a table query that looks like this:</p>
-<div id="be872b2e" class="cell" data-execution_count="15">
+<div id="3cd8520a" class="cell" data-execution_count="15">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>query <span class="op">=</span> syn.tableQuery(</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"SELECT * FROM syn11346063 WHERE ( ( </span><span class="ch">\"</span><span class="st">study</span><span class="ch">\"</span><span class="st"> HAS ( 'Jax.IU.Pitt_5XFAD' ) ) "</span> <span class="op">+</span></span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"AND ( </span><span class="ch">\"</span><span class="st">assay</span><span class="ch">\"</span><span class="st"> HAS ( 'rnaSeq' ) ) )"</span>,</span>
@@ -872,14 +872,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code>Downloading files:   0%|          | 0.00/1.00 [00:00&lt;?, ?B/s, syn11346063]</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Downloaded syn11346063 to /Users/jbeck/.synapseCache/77/149675077/SYNAPSE_TABLE_QUERY_149675077.csv</code></pre>
+<pre><code>Downloaded syn11346063 to /Users/jbeck/.synapseCache/795/149695795/SYNAPSE_TABLE_QUERY_149695795.csv</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Downloading files: 100%|██████████| 69.7k/69.7k [00:00&lt;00:00, 149kB/s, syn11346063]</code></pre>
+<pre><code>Downloading files: 100%|██████████| 69.7k/69.7k [00:00&lt;00:00, 281kB/s, syn11346063]</code></pre>
 </div>
 </div>
 <p>As we saw previously, this downloads a csv file with the results of our AD Portal query. Opening that file lets us see which specimens are associated with which files:</p>
-<div id="189a5da5" class="cell" data-execution_count="16">
+<div id="0ddb61a6" class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>annotations_table <span class="op">=</span> pd.read_csv(query.filepath)</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>annotations_table</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -1193,7 +1193,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="multispecimen-files">Multispecimen files</h3>
 <p>Multispecimen files in the AD Knowledge Portal are files that contain data or information from more than one specimen. They are not annotated with individualIDs or specimenIDs, since these files may contain numbers of specimens that exceed the annotation limits. These files are usually processed or summary data (gene counts, peptide quantifications, etc), and are always annotated with <code>isMultiSpecimen = TRUE</code>.</p>
 <p>If we look at the processed data files in the table of 5XFAD RNAseq file annotations we just downloaded, we will see that isMultiSpecimen = TRUE, but individualID and specimenID are blank:</p>
-<div id="3b58758e" class="cell" data-execution_count="17">
+<div id="b011e10d" class="cell" data-execution_count="17">
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>annotations_table.loc[</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  annotations_table[<span class="st">'fileFormat'</span>] <span class="op">==</span> <span class="st">"txt"</span>, </span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  [<span class="st">'name'</span>,<span class="st">'individualID'</span>, <span class="st">'specimenID'</span>, <span class="st">'isMultiSpecimen'</span>]</span>
@@ -1241,7 +1241,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>The multispecimen file should contain a row or column of specimenIDs that correspond to the specimenIDs used in a study’s metadata, as we have seen with the 5XFAD counts file.</p>
-<div id="10f3debc" class="cell" data-execution_count="18">
+<div id="32853d40" class="cell" data-execution_count="18">
 <div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>counts.columns</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="17">
 <pre><code>Index(['gene_id', '32043rh', '32044rh', '32046rh', '32047rh', '32048rh',
@@ -1269,7 +1269,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="metadata-basics">Metadata basics</h3>
 <p>We have now downloaded several metadata files and an RNAseq counts file from the portal. For our next exercises, we want to read those files in as R data so we can work with them.</p>
 <p>We can see from the <code>download_table</code> we got during the bulk download step that we have five metadata files. Two of these should be the individual and biospecimen files, and three of them are assay metadata files.</p>
-<div id="4b0d6415" class="cell" data-execution_count="19">
+<div id="19761ef9" class="cell" data-execution_count="19">
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>download_table[[<span class="st">'name'</span>, <span class="st">'metadataType'</span>, <span class="st">'assay'</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="18">
 <div>
@@ -1322,7 +1322,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>We are only interested in RNAseq data, so we will only read in the individual, biospecimen, and RNAseq assay metadata files.</p>
-<div id="9d5ec149" class="cell" data-execution_count="20">
+<div id="ef2ac195" class="cell" data-execution_count="20">
 <div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># individual metadata</span></span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>ind_meta <span class="op">=</span> pd.read_csv(<span class="st">"files/Jax.IU.Pitt_5XFAD_individual_metadata.csv"</span>)</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1336,7 +1336,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h5 class="anchored" data-anchor-id="note-on-best-practices">✏ Note on best practices</h5>
 <p>We’ve been using the <code>ifcollision = "overwrite.local"</code> argument to <code>syn.get()</code> to avoid making multiple copies of each file, so hard-coding the file names in the code block above works as expected. However, if you forget this argument or the file gets renamed on Synapse, you could be reading in an old file instead of the one you just downloaded!</p>
 <p><code>syn.get()</code> returns an object that contains the file path of the downloaded file, and it’s good practice to use this instead to avoid accidentally reading the wrong file. Some code to do this with the metadata files is below (but not executed in this notebook).</p>
-<div id="3fa52254" class="cell" data-execution_count="21">
+<div id="73cdcd64" class="cell" data-execution_count="21">
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>file_paths <span class="op">=</span> download_table[<span class="st">"id"</span>].<span class="bu">apply</span>(</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">lambda</span> syn_id: syn.get(syn_id, downloadLocation <span class="op">=</span> <span class="st">"files/"</span>, </span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>                         ifcollision <span class="op">=</span> <span class="st">"overwrite.local"</span>).path </span>
@@ -1357,7 +1357,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Let’s examine the data and metadata files a bit before we begin our analyses.</p>
 <section id="counts-data" class="level4">
 <h4 class="anchored" data-anchor-id="counts-data">Counts data</h4>
-<div id="a42209eb" class="cell" data-execution_count="22">
+<div id="6c0a540f" class="cell" data-execution_count="22">
 <div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>counts.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="20">
 <div>
@@ -1519,7 +1519,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>The counts data file has a column of Ensembl gene ids and then a bunch of columns with count data, where the column headers correspond to the specimenIDs. These specimenIDs should all be in the RNAseq assay metadata file, so let’s check.</p>
-<div id="e6d17957" class="cell" data-execution_count="23">
+<div id="82edefb9" class="cell" data-execution_count="23">
 <div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>rna_meta.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="21">
 <div>
@@ -1626,7 +1626,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Are all the column headers from the counts matrix (except the first “gene_id” column) in the assay metadata?</p>
-<div id="612eb607" class="cell" data-execution_count="24">
+<div id="f5d93380" class="cell" data-execution_count="24">
 <div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="bu">all</span>(counts.columns[<span class="dv">1</span>:].isin(rna_meta[<span class="st">"specimenID"</span>]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="22">
 <pre><code>True</code></pre>
@@ -1637,14 +1637,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h4 class="anchored" data-anchor-id="assay-metadata">Assay metadata</h4>
 <p>The assay metadata contains information about how data was generated on each sample in the assay. Each specimenID represents a unique sample. We can use some tools from dplyr to explore the metadata.</p>
 <p>How many unique specimens were sequenced?</p>
-<div id="438236e4" class="cell" data-execution_count="25">
+<div id="41476805" class="cell" data-execution_count="25">
 <div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>rna_meta[<span class="st">'specimenID'</span>].nunique()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="23">
 <pre><code>72</code></pre>
 </div>
 </div>
 <p>Were the samples all sequenced on the same platform and in the same batch?</p>
-<div id="c13dcff5" class="cell" data-execution_count="26">
+<div id="ee44958b" class="cell" data-execution_count="26">
 <div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>rna_meta[[<span class="st">'platform'</span>, <span class="st">'sequencingBatch'</span>]].nunique()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="24">
 <pre><code>platform           1
@@ -1656,7 +1656,7 @@ dtype: int64</code></pre>
 <section id="biospecimen-metadata" class="level4">
 <h4 class="anchored" data-anchor-id="biospecimen-metadata">Biospecimen metadata</h4>
 <p>The biospecimen metadata contains specimen-level information, including organ and tissue the specimen was taken from, how it was prepared, etc. Each specimenID is mapped to an individualID.</p>
-<div id="9612fbf2" class="cell" data-execution_count="27">
+<div id="95349d56" class="cell" data-execution_count="27">
 <div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>bio_meta.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="25">
 <div>
@@ -1775,14 +1775,14 @@ dtype: int64</code></pre>
 </div>
 </div>
 <p>All specimens from the RNAseq assay metadata file should be in the biospecimen file…</p>
-<div id="a590af53" class="cell" data-execution_count="28">
+<div id="555ba572" class="cell" data-execution_count="28">
 <div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="bu">all</span>(rna_meta[<span class="st">'specimenID'</span>].isin(bio_meta[<span class="st">'specimenID'</span>]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="26">
 <pre><code>True</code></pre>
 </div>
 </div>
 <p>…But the biospecimen file also contains specimens from different assays.</p>
-<div id="3b4dd420" class="cell" data-execution_count="29">
+<div id="65e06045" class="cell" data-execution_count="29">
 <div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="bu">all</span>(bio_meta[<span class="st">'specimenID'</span>].isin(rna_meta[<span class="st">'specimenID'</span>]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="27">
 <pre><code>False</code></pre>
@@ -1792,7 +1792,7 @@ dtype: int64</code></pre>
 <section id="individual-metadata" class="level4">
 <h4 class="anchored" data-anchor-id="individual-metadata">Individual metadata</h4>
 <p>The individual metadata contains information about all the individuals in the study, represented by unique individualIDs. For humans, this includes information on age, sex, race, diagnosis, etc. For MODEL-AD mouse models, the individual metadata has information on model genotypes, stock numbers, diet, and more.</p>
-<div id="bdcc9dfb" class="cell" data-execution_count="30">
+<div id="fc4c9333" class="cell" data-execution_count="30">
 <div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>ind_meta.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="28">
 <div>
@@ -1954,14 +1954,14 @@ dtype: int64</code></pre>
 </div>
 </div>
 <p>All individualIDs in the biospecimen file should be in the individual file</p>
-<div id="e039720a" class="cell" data-execution_count="31">
+<div id="a7f97938" class="cell" data-execution_count="31">
 <div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="bu">all</span>(bio_meta[<span class="st">'individualID'</span>].isin(ind_meta[<span class="st">'individualID'</span>]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="29">
 <pre><code>True</code></pre>
 </div>
 </div>
 <p>Which model genotypes are in this study?</p>
-<div id="b02b3c4e" class="cell" data-execution_count="32">
+<div id="c38d22a8" class="cell" data-execution_count="32">
 <div class="sourceCode cell-code" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>ind_meta[<span class="st">'genotype'</span>].unique()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="30">
 <pre><code>array(['5XFAD_carrier', '5XFAD_noncarrier'], dtype=object)</code></pre>
@@ -1971,7 +1971,7 @@ dtype: int64</code></pre>
 <section id="joining-metadata" class="level4">
 <h4 class="anchored" data-anchor-id="joining-metadata">Joining metadata</h4>
 <p>We use the three-file structure for our metadata because it allows us to store metadata for each study in a tidy format. Every line in the assay and biospecimen files represents a unique specimen, and every line in the individual file represents a unique individual. This means the files can be easily joined by specimenID and individualID to get all levels of metadata that apply to a particular data file. We will use the <code>merge()</code> function from <code>pandas</code>, with the <code>how = "left"</code> option to specify a left join.</p>
-<div id="91cd3d57" class="cell" data-execution_count="33">
+<div id="e126d865" class="cell" data-execution_count="33">
 <div class="sourceCode cell-code" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="co"># join all the rows in the assay metadata that have a match in the biospecimen</span></span>
 <span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a><span class="co"># metadata, then join all the rows in that dataframe to all rows that have a</span></span>
 <span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a><span class="co"># match in the individual metadata</span></span>
@@ -2293,14 +2293,14 @@ dtype: int64</code></pre>
 <section id="explore-covariates" class="level3">
 <h3 class="anchored" data-anchor-id="explore-covariates">Explore covariates</h3>
 <p>Which covariates from the metadata are we interested in?</p>
-<div id="74eb0d91" class="cell" data-execution_count="34">
+<div id="be47b943" class="cell" data-execution_count="34">
 <div class="sourceCode cell-code" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(joined_meta[[<span class="st">"organ"</span>, <span class="st">"tissue"</span>, <span class="st">"sampleStatus"</span>]].drop_duplicates())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   organ       tissue sampleStatus
 0  brain  whole brain       frozen</code></pre>
 </div>
 </div>
-<div id="9ef6a3dc" class="cell" data-execution_count="35">
+<div id="d58b9f63" class="cell" data-execution_count="35">
 <div class="sourceCode cell-code" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(joined_meta[[<span class="st">"sex"</span>, <span class="st">"genotype"</span>]].drop_duplicates())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>       sex          genotype
@@ -2315,7 +2315,7 @@ dtype: int64</code></pre>
 <h4 class="anchored" data-anchor-id="create-timepoint-column">Create timepoint column</h4>
 <p>The MODEL-AD individual mouse metadata contains columns with birth date and death date for each mouse. Using the <strong>RNASeq methods description</strong> from the <a href="https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage?Study=syn21983020">Jax 5XFAD study page in the AD Portal</a>, we expect this data to have equal numbers of individuals sampled at 4, 6, and 12 month timepoints. We can create a new column that captures this info in our joined metadata.</p>
 <p><em>Note: MODEL-AD studies added to the portal after June 2021 include an ‘ageDeath’ column that makes this simpler.</em></p>
-<div id="0f5bbb00" class="cell" data-execution_count="36">
+<div id="4bf3d1a8" class="cell" data-execution_count="36">
 <div class="sourceCode cell-code" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>timepoint_column <span class="op">=</span> pd.to_datetime(joined_meta[<span class="st">"dateDeath"</span>]) <span class="op">-</span> <span class="op">\</span></span>
 <span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>                   pd.to_datetime(joined_meta[<span class="st">"dateBirth"</span>])</span>
 <span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>timepoint_column <span class="op">=</span> timepoint_column.<span class="bu">apply</span>(</span>
@@ -2329,7 +2329,7 @@ dtype: int64</code></pre>
 <span id="cb59-11"><a href="#cb59-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We now have balanced samples across sex, genotype, and age:</p>
-<div id="279459da" class="cell" data-execution_count="37">
+<div id="9092bc29" class="cell" data-execution_count="37">
 <div class="sourceCode cell-code" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>joined_meta.groupby([<span class="st">"sex"</span>, <span class="st">"genotype"</span>, <span class="st">"timepoint"</span>])[<span class="st">"specimenID"</span>].count()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="35">
 <pre><code>sex     genotype          timepoint
@@ -2352,7 +2352,7 @@ Name: specimenID, dtype: int64</code></pre>
 <section id="subset-covariates" class="level4">
 <h4 class="anchored" data-anchor-id="subset-covariates">Subset covariates</h4>
 <p>To reduce the width of the dataframe, we will subset only the columns that contain covariates we’re interested in exploring further. Retaining the individualID and specimenID columns will make sure we can map the covariates to the data and back to the original metadata if needed!</p>
-<div id="3e741cd9" class="cell" data-execution_count="38">
+<div id="ed27a47d" class="cell" data-execution_count="38">
 <div class="sourceCode cell-code" id="cb62"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>covars <span class="op">=</span> joined_meta[[<span class="st">"individualID"</span>, <span class="st">"specimenID"</span>, <span class="st">"sex"</span>, <span class="st">"genotype"</span>, <span class="st">"timepoint"</span>]]</span>
 <span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>covars</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="36">
@@ -2471,7 +2471,7 @@ Name: specimenID, dtype: int64</code></pre>
 <section id="convert-ensembleids-to-common-gene-names" class="level3">
 <h3 class="anchored" data-anchor-id="convert-ensembleids-to-common-gene-names">Convert ensembleIDs to common gene names</h3>
 <p>Return to the gene counts matrix we read in earlier. 5XFAD mice express human APP and PSEN1, and the counts matrix includes these human genes (recognizable as starting with <code>ENSG</code> instead of <code>ENSMUS</code>):</p>
-<div id="c072075e" class="cell" data-execution_count="39">
+<div id="cc183d6f" class="cell" data-execution_count="39">
 <div class="sourceCode cell-code" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>counts.loc[counts[<span class="st">"gene_id"</span>].<span class="bu">str</span>.contains(<span class="st">"ENSG"</span>)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="37">
 <div>
@@ -2562,7 +2562,7 @@ Name: specimenID, dtype: int64</code></pre>
 </div>
 <p>We will have to manually add gene symbols for the human genes, but we can automatically get the Ensembl ID to gene symbol mapping for all of the mouse genes. Unlike R, there is no well-maintained Python package to query Biomart, so you can either 1) go to the Biomart website, query the list of Ensembl IDs, and download the result, 2) use a third-party package from pypi, or 3) use the pre-made mapping file we’ve provided.</p>
 <p>We’ll use option #3 for this workshop:</p>
-<div id="edc815ad" class="cell" data-execution_count="40">
+<div id="5743d979" class="cell" data-execution_count="40">
 <div class="sourceCode cell-code" id="cb64"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>ensembl_to_gene <span class="op">=</span> pd.read_csv(<span class="st">"ensembl_translation_key.csv"</span>)</span>
 <span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>named_counts <span class="op">=</span> pd.merge(left <span class="op">=</span> counts, right <span class="op">=</span> ensembl_to_gene,</span>
@@ -2729,14 +2729,14 @@ Name: specimenID, dtype: int64</code></pre>
 </div>
 </div>
 <p>How many genes are missing a gene symbol?</p>
-<div id="f7a562c0" class="cell" data-execution_count="41">
+<div id="4ad76cf3" class="cell" data-execution_count="41">
 <div class="sourceCode cell-code" id="cb65"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="bu">sum</span>(named_counts[<span class="st">"gene_name"</span>].isna())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="39">
 <pre><code>3907</code></pre>
 </div>
 </div>
 <p>Are all the gene names unique?</p>
-<div id="2dd4a174" class="cell" data-execution_count="42">
+<div id="d64f5f86" class="cell" data-execution_count="42">
 <div class="sourceCode cell-code" id="cb67"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>non_na_genes <span class="op">=</span> named_counts.loc[(named_counts[<span class="st">"gene_name"</span>].isna()) <span class="op">==</span> <span class="va">False</span>]</span>
 <span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a><span class="bu">len</span>(non_na_genes[<span class="st">"gene_name"</span>]) <span class="op">-</span> <span class="bu">len</span>(non_na_genes[<span class="st">"gene_name"</span>].drop_duplicates())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="40">
@@ -2744,7 +2744,7 @@ Name: specimenID, dtype: int64</code></pre>
 </div>
 </div>
 <p>We need to clean up the humanized gene names and append unique identifiers to the duplicate names.</p>
-<div id="01ed99bd" class="cell" data-execution_count="43">
+<div id="c85d231c" class="cell" data-execution_count="43">
 <div class="sourceCode cell-code" id="cb69"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The first two genes in the matrix are the humanized genes PSEN1 (ENSG00000080815)</span></span>
 <span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a><span class="co"># and APP (ENSG00000142192). Set these manually:</span></span>
 <span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>named_counts.loc[<span class="dv">0</span>, <span class="st">"gene_name"</span>] <span class="op">=</span> <span class="st">"PSEN1"</span></span>
@@ -2956,7 +2956,7 @@ Name: specimenID, dtype: int64</code></pre>
 <section id="transpose-counts-matrix-and-join-to-covariates" class="level4">
 <h4 class="anchored" data-anchor-id="transpose-counts-matrix-and-join-to-covariates">Transpose counts matrix and join to covariates</h4>
 <p>First, we need to transpose the counts dataframe so that each row contains count data cross all genes for an individual, and join our covariates by specimenID.</p>
-<div id="1047b2bb" class="cell" data-execution_count="44">
+<div id="a8793416" class="cell" data-execution_count="44">
 <div class="sourceCode cell-code" id="cb71"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>counts_tposed <span class="op">=</span> named_counts.transpose()</span>
 <span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>counts_tposed[<span class="st">"specimenID"</span>] <span class="op">=</span> counts_tposed.index</span>
 <span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -3129,7 +3129,7 @@ Name: specimenID, dtype: int64</code></pre>
 <section id="plotting" class="level4">
 <h4 class="anchored" data-anchor-id="plotting">Plotting</h4>
 <p>Create simple box plots showing counts by genotype and time point, faceted by sex. Time point needs to be set as a categorical variable in a sensible order for display.</p>
-<div id="814feb30" class="cell" data-execution_count="45">
+<div id="10b8713e" class="cell" data-execution_count="45">
 <div class="sourceCode cell-code" id="cb72"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> ggplot, aes, geom_boxplot, geom_point</span>
 <span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> facet_wrap, position_jitterdodge, theme_bw</span>
 <span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -3157,7 +3157,7 @@ Name: specimenID, dtype: int64</code></pre>
 </div>
 </div>
 <p>Examine any gene of interest by setting the y argument in the <code>aes()</code> mapping equal to the gene name. Ex: <code>y = Trem2</code></p>
-<div id="c73f5283" class="cell" data-execution_count="46">
+<div id="5271f63c" class="cell" data-execution_count="46">
 <div class="sourceCode cell-code" id="cb73"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> ggplot, aes, geom_boxplot, geom_point</span>
 <span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> facet_wrap, position_jitterdodge, theme_bw</span>
 <span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -3181,7 +3181,7 @@ Name: specimenID, dtype: int64</code></pre>
 </div>
 </div>
 <p>Ex: <code>y = Apoe</code></p>
-<div id="2a342465" class="cell" data-execution_count="47">
+<div id="6d7d8729" class="cell" data-execution_count="47">
 <div class="sourceCode cell-code" id="cb74"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> ggplot, aes, geom_boxplot, geom_point</span>
 <span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> facet_wrap, position_jitterdodge, theme_bw</span>
 <span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a></span>
