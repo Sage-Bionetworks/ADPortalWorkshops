@@ -1,28 +1,13 @@
 ---
 title: "AD Knowledge Portal Workshop: Download and explore 5XFAD mouse data in RStudio"
-author: 
+
+author:
   - Abby Vander Linden (Sage Bionetworks)
   - Laura Heath (Sage Bionetworks)
   - Jaclyn Beck (Sage Bionetworks)
-date: "`r Sys.Date()`"
-format: 
-  html: 
-    toc: true
-    toc-depth: 3
-    df-print: paged
-knit: (function(input_file, encoding) {
-   out_dir <- 'docs';
-   rmarkdown::render(input_file,
-     encoding=encoding,
-     output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
 ---
 
 ```{r, set-opts, include=FALSE}
-knitr::opts_chunk$set(
-  eval = TRUE,
-  print.rows = 10
-)
-
 # Prevent individual IDs from printing out in scientific notation
 options(scipen = 999)
 ```
@@ -31,7 +16,7 @@ options(scipen = 999)
 
 ## Overview
 
-We will be working with metadata and RNAseq counts data from The Jax.IU.Pitt_5XFAD Study (Jax.IU.Pitt_5XFAD), which can be found [here on the AD Knowledge Portal](https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage/StudyData?Study=syn21983020). During this workshop we will use R to:
+We will be working with metadata and RNAseq counts data from The Jax.IU.Pitt_5XFAD Study (Jax.IU.Pitt_5XFAD), which can be found [here on the AD Knowledge Portal](https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage/StudyData?Study=syn66318332). During this workshop we will use R to:
 
 1. Log in to Synapse
 
@@ -49,55 +34,73 @@ We will be working with metadata and RNAseq counts data from The Jax.IU.Pitt_5XF
 
 ### Install and load packages
 
-If you haven't already, install `synapser` (the [Synapse R client](https://r-docs.synapse.org/articles/synapser.html)), as well as the `tidyverse` family of packages. The "tidyverse" package is shorthand for installing a bunch of packages we need for this notebook (dplyr, ggplot2, purrr, readr, stringr, tibble). It also installs "forcats" and "tidyr", which are not used in this notebook.
+#### reticulate and tidyverse
 
-```{r install-synapser, eval = FALSE}
-install.packages("synapser", repos = c("http://ran.synapse.org"))
-install.packages(c("tidyverse", "lubridate"))
+You will need `reticulate` and the `tidyverse` family of packages. The "tidyverse" package is shorthand for installing a bunch of packages we need for this notebook (dplyr, ggplot2, purrr, readr, stringr, tibble). It also installs "forcats" and "tidyr", which are not used in this notebook.
+
+**✏ Note:** This notebook requires `reticulate` version 1.41 or later. If you already have an older version of `reticulate` installed, running the code below will update it.
+
+```{r install-r-packages, eval = FALSE}
+install.packages(c("reticulate", "tidyverse"))
 ```
 
-Load libraries
 
-```{r load-libraries, message=FALSE, warning=TRUE}
-library(synapser)
+#### synapseclient
+
+We will use `synapseclient` (the [Synapse python client](https://python-docs.synapse.org/) package) from R via `reticulate`. You don't need to have Python installed: the `py_require()` function from `reticulate` will automatically download Python and `synapseclient` into a Python environment that `reticulate` manages for you. The first time you run this, it may take a minute or two. After that, the environment is cached and loads quickly.
+
+**✏ Note:** A [Synapse R client](https://r-docs.synapse.org/articles/synapser.html) also exists, but is in the process of being updated to accommodate recent changes to `synapseclient`. Therefore we will be using `synapseclient` in R with `reticulate` for this workshop rather than the native R client.
+
+#### Load libraries and set up Python
+
+`py_require()` must be called *before* importing any Python packages. If you get an error that Python has already been initialized, restart your R session (*Session > Restart R* in RStudio) and run this code again.
+
+```{r load-libraries, message=FALSE, warning=FALSE}
+library(reticulate)
 library(dplyr)
 library(purrr)
 library(readr)
-library(lubridate)
 library(stringr)
 library(tibble)
 library(ggplot2)
+
+# Tell reticulate to use the Python environment it manages, even if you have
+# other Python installations or environments on your computer
+Sys.setenv(RETICULATE_USE_MANAGED_VENV = "yes")
+
+# Install Python, synapseclient, and pandas, if needed, and activate the environment
+py_require(c("synapseclient", "pandas"))
+
+# python import
+syncli <- import("synapseclient")
+builtins <- import("builtins")
 ```
 
 ### Login to Synapse
 
 Next, you will need to log in to your Synapse account.
 
-#### Login option 1: Synapser takes credentials from your Synapse web session
+#### Login option 1: Synapseclient takes credentials from your Synapse web session
 
-If you are logged into the [Synapse](https://www.synapse.org/) web browser, `synapser` will automatically use your login credentials to log you in during your R session! All you have to do is call `synLogin()` from a script or the R console.
+If you are logged into the [Synapse](https://www.synapse.org/) web browser, `synapseclient` will automatically use your login credentials to log you in during your R session! All you have to do is call `syn$login()` from a script or the R console.
 
-```{r synlogin_run, include = FALSE}
-# For prettier rendered display: This executes the code without showing the
-# printed welcome statements. The next block will show the code but not run it.
-synLogin()
-```
-
-```{r synlogin, eval=FALSE}
-synLogin()
+```{r synlogin_run}
+#| output: false
+syn = syncli$Synapse()
+syn$login()
 ```
 
 #### Login option 2: Synapse PAT
 
-Follow these instructions to [generate a Personal Access Token](https://help.synapse.org/docs/Managing-Your-Account.2055405596.html#ManagingYourAccount-Loggingin), then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.
+If you have never used `synapseclient` (or `synapser`) before, follow these instructions to [generate a personal access token](https://docs.synapse.org/synapse-docs/managing-your-account#Logging-in-programmatically), then paste the PAT into the code below. Make sure you scope your access token to allow you to View, Download, and Modify.
 
 **⚠ DO NOT put your Synapse access token in scripts that will be shared with others, or they will be able to log in as you.**
 
 ```{r eval=FALSE}
-synLogin(authToken = "<paste your personal access token here>")
+syn$login(authToken = "<paste your personal access token here>")
 ```
 
-For more information on managing Synapse credentials with `synapser`, see the documentation [here](https://r-docs.synapse.org/articles/manageSynapseCredentials.html).
+For more information on managing Synapse credentials with `synapseclient`, see the documentation [here](https://python-docs.synapse.org/en/stable/tutorials/authentication/).
 
 ------------------------------------------------------------------------
 
@@ -107,52 +110,64 @@ While you can always download data from the AD Portal website via your web brows
 
 ### Download a single file
 
-To download a single file from the AD Knowledge Portal, you can click the linked file name to go to a page in the Synapse platform where that file is stored. Using the synID on that page, you can call the `synGet()` function from `synapser` to download the file.
+To download a single file from the AD Knowledge Portal, copy its Synapse ID from the search results in the portal or go directly to the file's page in Synapse to find its ID. Then use the `get()` function from `synapseclient` to download the file.
 
 #### Exercise 1: Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to find processed RNAseq data from the Jax.IU.Pitt_5XFAD Study
 
-This filters the table to a single file. In the "Id" column for this `htseqcounts_5XFAD.txt` file, there is a unique Synapse ID (synID).
+This exercise filters the table to four files. We will download `rnaseq_rsem.merged.gene_counts.tsv`. The Synapse ID for this file is in the "Id" column.
 
-![](images/portal-search-counts-file.png){width="448"}
+![](images/portal-search-counts-file.png){width="800"}
 
-We can then use that synID to download the file. Some information about the file and its storage location within Synapse is printed to the R console when we call `synGet`.
+We can then use that synID to download the file. Some information about the file and its storage location within Synapse is assigned to the variable `counts_file`.
 
-```{r single-synGet, results = "hide"}
-counts_id <- "syn22108847"
-synGet(counts_id,
-       downloadLocation = "files/",
-       ifcollision = "overwrite.local") # Prevents making multiple copies
+```{r single-synGet}
+#| output: false
+counts_id <- "syn63855360"
+counts_file <- syn$get(counts_id,
+                       downloadLocation = "files/",
+                       ifcollision = "overwrite.local")
 ```
-The argument `ifcollision = "overwrite.local"` means that instead of downloading the file and saving it as a new copy, it will overwrite the current file at that location if it already exists, to avoid cluttering your hard drive with multiple copies of the same file. Before downloading, `synGet` will check if the file on your hard drive is the same as the version on Synapse, and will only download from Synapse if the two files are different. 
+
+The `ifcollision="overwrite.local"` argument overwrites any local copies with the same name/path on your computer, avoiding multiple copies piling up. The client checks the local file against the Synapse version and downloads it only when needed.
 
 This is very useful for large files especially: you can ensure that you always have the latest copy of a file from Synapse, without having to re-download the file if you already have the current version on your hard drive.
 
-Let's take a quick look at the file we just downloaded. Calling a tibble object will print the first ten rows in a nice tidy output; doing the same for a base R dataframe will print the whole thing until it runs out of memory. If you want to inspect a large dataframe, use `head(df)`.
+The variable `counts_file` is a Synapse `File` entity object. Its attributes include `.path`, `.annotations`, and `.version_number`, which contain information about where the file is in Synapse, how it is labeled, what version it is, etc.
+
+Some info on the file from Synapse:
+
+```{r}
+counts_file$id
+counts_file$path
+counts_file$versionNumber
+```
+
+Let's take a quick look at the file we just downloaded.
 
 ```{r print-counts}
-counts <- read_tsv("files/htseqcounts_5XFAD.txt", show_col_types = FALSE)
-head(counts)
+counts <- read_tsv(counts_file$path, show_col_types = FALSE)
+head(select(counts, -`transcript_id(s)`)) # Removing a wide column for display purposes
 ```
 
 ### Bulk download files {#bulk-download-files}
 
-#### Exercise 2: Use [Explore Studies](https://adknowledgeportal.synapse.org/Explore/Studies) to find all metadata files from the Jax.IU.Pitt_5XFAD study
+#### Exercise 2: Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to find all metadata files from the Jax.IU.Pitt_5XFAD study
 
 Use the facets and search bar to look for data you want to download from the AD Knowledge Portal. Once you've identified the files you want, click on the download arrow icon on the top right of the Explore Data table and select "Programmatic Options" from the drop-down menu.
 
 ![](images/download-programmatic-options.png){width="300"}
 
-In the window that pops up, select the "R" tab from the top menu bar. This will display some R code that constructs a SQL query of the Synapse data table that drives the AD Knowledge Portal. This query will allow us to download only the files that meet our search criteria.
+In the window that pops up, select the "Python" tab from the top menu bar (or the "R" tab, if you use `synapser`). This will display some Python/R code that constructs a SQL query of the Synapse data table that drives the AD Knowledge Portal. This query will allow us to download only the files that meet our search criteria.
 
-![](images/download-programmatic-output.png){width="411"}
+![](images/download-programmatic-output-python.png){width="700"}
 
 **We'll download our files using two steps:**
 
-1.  We will use the `synTableQuery()` code the portal gave us to download a CSV file that lists all of the files we want. This CSV file is a table, one row per file in the list, containing the Synapse ID, file name, annotations, etc associated with each file.
+1.  We will use the `tableQuery()` code the portal gave us to download a CSV file that lists all of the files we want. This CSV file is a table, one row per file in the list, containing the Synapse ID, file name, annotations, etc associated with each file.
 
     a.  This does NOT download the files themselves. It only fetches a list of the files plus their annotations for you.
 
-2.  We will call `synGet()` on each Synapse ID in the table to download the files.
+2.  We will call `get()` on each Synapse ID in the table to download the files.
 
 **Why isn't this just one step instead of two?**
 
@@ -160,26 +175,35 @@ Splitting this into steps can be extremely helpful for cases where you might not
 
 **Back to downloading...**
 
-The function `synTableQuery()` returns a Synapse object wrapper around the CSV file, which is automatically downloaded to a folder called `.synapseCache` in your home directory. You can use `query$filepath` to see the path to the file in the Synapse cache.
+The function `tableQuery()` returns an object with information about the downloaded results file. If no `downloadLocation` is specified, the file is automatically downloaded to a folder called `.synapseCache` in your home directory.
 
 ```{r portal-query}
+#| output: false
+
 # download the results of the filtered table query
 query_string <- paste(
-  "SELECT * FROM syn11346063 WHERE (( `study` HAS ( 'Jax.IU.Pitt_5XFAD' ))",
-  "AND ( `resourceType` = 'metadata' ) )"
+  "SELECT * FROM syn11346063.88 WHERE ( ( \"resourceType\" = 'metadata' ) AND ",
+  "( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) )"
 )
 
-query <- synTableQuery(query_string, includeRowIdAndRowVersion = FALSE)
-
-# view the file path of the resulting csv
-query$filepath
+results <- syn$tableQuery(
+  query_string,
+  includeRowIdAndRowVersion = FALSE, 
+  downloadLocation = "files/"
+)
 ```
 
-We'll use `read_csv` (from the `readr` package) to read the CSV file into R (although the provided `read.table` or any other base R version is also fine!). We can explore the `download_table` object and see that it contains information on all of the AD Portal data files we want to download. Some columns like the "id" and "parentId" columns contain info about where the file is in Synapse, and some columns contain AD Portal annotations for each file, like "dataType", "specimenID", and "assay". This annotation table will later allow us to link downloaded files to additional metadata variables!
+Filepath of the downloaded CSV:
 
-```{r download-query-table}
+```{r}
+results$filepath
+```
+
+We can directly convert `results` into a data frame to work with it. Exploring the table, we and see that it contains information on all of the AD Portal data files we want to download. Some columns like the "id" and "parentId" columns contain info about where the file is in Synapse, and some columns contain AD Portal annotations for each file, like "dataType", "specimenID", and "assay". This annotation table will later allow us to link downloaded files to additional metadata variables!
+
+```{r read-query-table}
 # read in the table query csv file
-download_table <- read_csv(query$filepath, show_col_types = FALSE)
+download_table <- results$asDataFrame()
 
 download_table
 ```
@@ -187,39 +211,39 @@ download_table
 Let's look at a subset of columns that might be useful:
 
 ```{r view_download_table}
-download_table %>% 
-  dplyr::select(id, name, metadataType, assay, fileFormat, currentVersion)
+download_table |>
+  select(id, name, metadataType, assay, fileFormat, currentVersion)
 ```
 
-**Tip:** Copy this file and save it somewhere memorable to have a complete record of all the files you are using and what version of each file was downloaded – for reproducibility!
+**Tip:** Rename and save this file somewhere memorable to have a complete record of all the files you are using and what version of each file was downloaded – for reproducibility!
 
-Finally, we use a mapping function from the `purrr` package to loop through the "id" column and apply the `synGet()` function to each file's synID. In this case, we use `purrr::walk()` because it lets us call `synGet()` for its side effect (downloading files to a location we specify), and returns nothing.
+*Note: `|>` is the base R pipe operator. If you are unfamiliar with the pipe, think of it as a shorthand for "take this (the preceding object) and do that (the subsequent command)". See [here](https://r4ds.hadley.nz/data-transform.html#sec-the-pipe) for more info on piping in R.*
 
-```{r bulk-download-purrr, results="hide"}
+Finally, we use a mapping function from the `purrr` package to loop through the "id" column and apply the `syn$get()` function to each file's synID. In this case, we use `purrr::walk()` because it lets us call `syn$get()` for its side effect (downloading files to a location we specify), and returns nothing.
+
+```{r bulk-download-purrr}
+#| output: false
+
 # loop through the column of synIDs and download each file
-purrr::walk(download_table$id, ~synGet(.x, downloadLocation = "files/", 
-                                       ifcollision = "overwrite.local"))
+purrr::walk(download_table$id, ~syn$get(.x, downloadLocation = "files/",
+                                        ifcollision = "overwrite.local"))
 ```
 
 You can also do this as a `for` loop, i.e.:
 
 ```{r bulk-download-for-loop, eval=FALSE}
 for (syn_id in download_table$id) {
-  synGet(syn_id,
-         downloadLocation = "files/",
-         ifcollision = "overwrite.local")
+  syn$get(syn_id,
+          downloadLocation = "files/",
+          ifcollision = "overwrite.local")
 }
 ```
 
 Congratulations, you have bulk downloaded files from the AD Knowledge Portal!
 
-##### ✏ Note on download speeds
-
-For situations where you are downloading many large files, the R client performs substantially slower than the command line client or the Python client. In these cases, you can use the instructions and code snippets for the command line or Python client provided in the "Programmatic Options" menu.
-
 ##### ✏ Note on file versions
 
-All files in the AD Portal are versioned, meaning that if the file represented by a particular synID changes, a new version will be created. You can access a specific versions by using the `version` argument in `synGet()`. More info on version control in the AD Portal and the Synapse platform can be found [here](https://help.synapse.org/docs/Versioning-Files.2667708547.html).
+All files in the AD Portal are versioned, meaning that if the file represented by a particular synID changes, a new version will be created. To download a specific version, set the `version` argument in `syn$get()`. More info on version control in the AD Portal and the Synapse platform can be found [here](https://docs.synapse.org/synapse-docs/versioning-files).
 
 ### Single-specimen files
 
@@ -227,71 +251,79 @@ For files that contain data from a single specimen (e.g. raw sequencing files, r
 
 #### Excercise 3: Use [Explore Data](https://adknowledgeportal.synapse.org/Explore/Data) to find *all* RNAseq files from the Jax.IU.Pitt_5XFAD study.
 
-If we filter for data where Study = "Jax.IU.Pitt_5XFAD" and Assay = "rnaSeq" we will get a list of 148 files, including raw fastqs and processed counts data.
+If we filter for data where Study = "Jax.IU.Pitt_5XFAD" and Assay = "rnaSeq" we will get a list of 149 files, including raw fastqs and processed counts data.
 
 #### Synapse entity annotations
 
-We can use the function `synGetAnnotations` to view the annotations associated with any file *before* actually downloading the file.
+We can use the function `get_annotations()` to view the annotations associated with any file *before* actually downloading the file.
 
 ```{r json-single-file-annotations}
 # the synID of a random fastq file from this list
-random_fastq <- "syn22108503"
+fastq_id <- "syn22108503"
 
-# extract the annotations as a nested list
-fastq_annotations <- synGetAnnotations(random_fastq)
+# this is an Annotations object that wraps a python dict, and is usable as a
+# named list
+fastq_annotations <- syn$get_annotations(fastq_id)
 
-head(fastq_annotations)
+# Use Python's print(), this object doesn't print its values in R's print() function
+builtins$print(fastq_annotations)
+
+# Access values by key like you would a named list
+print(paste("individualID:", fastq_annotations$individualID))
+print(paste("specimenID:", fastq_annotations$specimenID))
 ```
 
 The file annotations let us see which study the file is associated with (Jax.IU.Pitt.5XFAD), which species it's from (Mouse), which assay generated the file (rnaSeq), and a whole bunch of other properties. Most importantly, single-specimen files are annotated with with the specimenID of the specimen in the file, and the individualID of the individual that specimen was taken from. We can use these annotations to link files to the rest of the metadata, including metadata that is not in annotations. This is especially helpful for human studies, as potentially identifying information like age, race, and diagnosis is not included in file annotations.
 
 ```{r join-annotations-to-metadata}
-ind_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv",
+ind_meta <- read_csv("files/individual_animal_metadata_Jax.IU.Pitt_5XFAD.csv",
                      show_col_types = FALSE)
 
 # find records belonging to the individual this file maps to in our joined metadata
-filter(ind_meta, individualID == fastq_annotations$individualID[[1]])
+filter(ind_meta, individualID == fastq_annotations$individualID)
 ```
+
+**⚠ Caution:** In this study, the individualIDs are numbers, and may be treated differently depending on how you get the data. Always check that the fields are the same type before comparison.
 
 #### Annotations during bulk download
 
-When bulk downloading many files, the best practice is to preserve the download manifest that is generated which lists all the files, their synIDs, and all their annotations. If using the Synapse R client, follow the instructions in the [Bulk download files](#bulk-download-files) section above.
+When bulk downloading many files, the best practice is to preserve the download manifest that is generated which lists all the files, their synIDs, and all their annotations.
 
-If we use the "Programmatic Options" tab in the AD Portal download menu to download all 148 rnaSeq files from the 5XFAD study, we would get a table query that looks like this:
+If we use the "Programmatic Options" tab in the AD Portal download menu to download all 149 rnaSeq files from the 5XFAD study, we would get a table query that looks like this:
 
-```{r all-rnaseq-portal-query}
+```{r all-rnaseq-portal-query, results = "hide"}
 query_str <- paste(
-  "SELECT * FROM syn11346063 WHERE ( ( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) )",
-  "AND ( \"assay\" HAS ( 'rnaSeq' ) ) )"
+  "SELECT * FROM syn11346063.88 WHERE ( ( \"assay\" HAS ( 'rnaSeq' ) ) AND ",
+  "( \"study\" HAS ( 'Jax.IU.Pitt_5XFAD' ) ) )"
 )
-query <- synTableQuery(query_str, includeRowIdAndRowVersion = FALSE)
+results <- syn$tableQuery(query_str, 
+                          includeRowIdAndRowVersion = FALSE, 
+                          downloadLocation = "files/")
 ```
 
-As we saw previously, this downloads a csv file with the results of our AD Portal query. Opening that file lets us see which specimens are associated with which files:
+As before, this downloads a csv file with the results of our AD Portal query. We can see which specimens are associated with which files:
 
 ```{r read-annotations-table, warning = FALSE, message = FALSE}
-annotations_table <- read_csv(query$filepath, show_col_types = FALSE)
+annotations_table <- results$asDataFrame()
 
-annotations_table
+head(annotations_table)
 ```
 
-You could then use `purrr::walk(download_table$id, ~synGet(.x, downloadLocation = <your-download-directory>))` to walk through the column of synIDs and download all 148 files. However, because these are large files, it might be preferable to use the [Python client](https://python-docs.synapse.org/build/html/index.html) or [command line client](https://python-docs.synapse.org/build/html/CommandLineClient.html) for increased speed.
+You could then use `purrr::walk()` as we did in the [Bulk download files](#bulk-download-files) example to walk through the column of synIDs and download all 149 files.
 
 ### Multispecimen files
 
 Multispecimen files in the AD Knowledge Portal are files that contain data or information from more than one specimen. They are not annotated with individualIDs or specimenIDs, since these files may contain numbers of specimens that exceed the annotation limits. These files are usually processed or summary data (gene counts, peptide quantifications, etc), and are always annotated with `isMultiSpecimen = TRUE`.
 
-If we look at the processed data files in the table of 5XFAD RNAseq file annotations we just downloaded, we will see that isMultiSpecimen = TRUE, but individualID and specimenID are blank:
+If we look at the processed data files in the table of 5XFAD RNAseq file annotations we just downloaded, we will see that `isMultiSpecimen = TRUE`, but individualID and specimenID are blank:
 
 ```{r filter-multispecimen-files}
 annotations_table |>
-  filter(fileFormat == "txt") |>
-  dplyr::select(name, individualID, specimenID, isMultiSpecimen)
+  filter(fileFormat == "tsv") |>
+  select(name, individualID, specimenID, isMultiSpecimen)
 ```
 
-*Note: `|>` is the base R pipe operator. If you are unfamiliar with the pipe, think of it as a shorthand for "take this (the preceding object) and do that (the subsequent command)". See [here](https://r4ds.hadley.nz/data-transform.html#sec-the-pipe) for more info on piping in R.*
-
-The multispecimen file should contain a row or column of specimenIDs that correspond to the specimenIDs used in a study's metadata, as we have seen with the 5XFAD counts file.
+The multispecimen file should contain a row or column of specimenIDs that correspond to the specimenIDs used in a study's metadata. **Note:** this study uses `individualIDs` instead, which is unusual. Most studies use `specimenID` for column names in data like this.
 
 ```{r counts-specimen-ids, message=FALSE, warning=FALSE}
 colnames(counts)[1:20]
@@ -305,53 +337,63 @@ colnames(counts)[1:20]
 
 We have now downloaded several metadata files and an RNAseq counts file from the portal. For our next exercises, we want to read those files in as R data so we can work with them.
 
-We can see from the `download_table` we got during the bulk download step that we have five metadata files. Two of these should be the individual and biospecimen files, and three of them are assay metadata files.
+We can see from the `download_table` we got during the bulk download step that we have six metadata files. Two of these should be the individual and biospecimen files, and four of them are assay metadata files.
 
 ```{r explore-download-table}
 download_table |> 
-  dplyr::select(name, metadataType, assay)
+  select(name, metadataType, assay)
+```
+
+The assay values are all 1-item lists. Let's pull those values out so we can see them:
+
+```{r}
+download_table$assay <- sapply(download_table$assay, function(items) {
+  ifelse(length(items) == 0, NA, items[1])
+})
+
+download_table |> 
+  select(name, metadataType, assay)
 ```
 
 We are only interested in RNAseq data, so we will only read in the individual, biospecimen, and RNAseq assay metadata files.
 
-Now we can read all the metadata files in to R as data frames.
+Now we can read all the metadata files in to R as data frames. Here we have to force `readr` to treat the individualID column as a string, because individualIDs in this study are strings of numbers.
 
 ```{r read-metadata-files}
 # individual metadata
-ind_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_individual_metadata.csv",
+ind_meta <- read_csv("files/individual_animal_metadata_Jax.IU.Pitt_5XFAD.csv",
+                     col_types = list(individualID = col_character()),
                      show_col_types = FALSE)
 
 # biospecimen metadata
-bio_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_biospecimen_metadata.csv",
+bio_meta <- read_csv("files/biospecimen_metadata_Jax.IU.Pitt_5XFAD.csv",
+                     col_types = list(individualID = col_character()),
                      show_col_types = FALSE)
 
 # assay metadata
-rna_meta <- read_csv("files/Jax.IU.Pitt_5XFAD_assay_RNAseq_metadata.csv",
+rna_meta <- read_csv("files/assay_RNAseq_Jax.IU.Pitt_5XFAD.csv",
                      show_col_types = FALSE)
 ```
 
 ##### ✏ Note on best practices
 
-We've been using the `ifcollision = "overwrite.local"` argument to `synGet()` to avoid making multiple copies of each file, so hard-coding the file names in the code block above works as expected. However, if you forget this argument or the file gets renamed on Synapse, you could be reading in an old file instead of the one you just downloaded!
+We've been using the `ifcollision = "overwrite.local"` argument to `syn$get()` to avoid making multiple copies of each file, so hard-coding the file names in the code block above works as expected. However, if you forget this argument or the file gets renamed on Synapse, you could be reading in an old file instead of the one you just downloaded!
 
-`synGet()` returns an object that contains the file path of the downloaded file, and it's good practice to use this instead to avoid accidentally reading the wrong file. Some code to do this with the metadata files is below (but not executed in this notebook).
+It's good practice to use the `$path` variable from the output of `syn$get()` instead of hard-coding the file name, to avoid accidentally reading the wrong file. Here is some code to find the correct metadata files (not executed in this notebook), using the annotations we downloaded already.
 
 ```{r download-best-practices, eval=FALSE}
-# "sapply" loops through each item, applies the function to each one, and returns
-# a vector of results.
-file_paths <- sapply(download_table$id, function(syn_id) {
-  syn_obj <- synGet(syn_id,
-                    downloadLocation = "files/",
+ind_file_id <- subset(download_table, metadataType == "individual")$id
+bio_file_id <- subset(download_table, metadataType == "biospecimen")$id
+assay_file_id <- subset(download_table, metadataType == "assay metadata" & 
+                          assay == "rnaSeq")$id
+
+ind_file <- syn$get(ind_file_id, 
+                    downloadLocation = "files/", 
                     ifcollision = "overwrite.local")
-  return(syn_obj$path)
-})
-
-# See which files we want
-print(file_paths)
-
-ind_meta <- read_csv(file_paths[3], show_col_types = FALSE)
-bio_meta <- read_csv(file_paths[4], show_col_types = FALSE)
-rna_meta <- read_csv(file_paths[5], show_col_types = FALSE)
+ind_meta <- read_csv(ind_file$path,
+                     col_types = list(individualID = col_character()),
+                     show_col_types = FALSE)
+# ... etc with the biospecimen and assay metadata
 ```
 
 ### Verify file contents
@@ -363,24 +405,32 @@ Let's examine the data and metadata files a bit before we begin our analyses.
 #### Counts data
 
 ```{r view-counts}
-head(counts)
+head(select(counts, -`transcript_id(s)`))
 ```
 
-The counts data file has a column of Ensembl gene ids and then a bunch of columns with count data, where the column headers correspond to the specimenIDs. These specimenIDs should all be in the RNAseq assay metadata file, so let's check.
+The counts data file has a column of Ensembl gene IDs, a column of transcript IDs (not shown above), and the rest of the columns are count data, where the column headers correspond to the individualID of the sample.
+
+Remember, typically for studies these column headers would be specimenIDs instead, which should all match what is in the RNAseq assay metadata file.
 
 ```{r view-assay}
 head(rna_meta)
 ```
 
-Are all the column headers from the counts matrix (except the first "gene_id" column) in the assay metadata?
+Are all the column headers from the counts matrix (except the first two columns) in the assay metadata?
 
 ```{r check-specIDs-data}
-all(colnames(counts[-1]) %in% rna_meta$specimenID)
+all(colnames(counts)[c(-1, -2)] %in% rna_meta$specimenID)
+```
+
+No, because these are individualIDs, which are in the individual metadata file:
+
+```{r}
+all(colnames(counts)[c(-1, -2)] %in% ind_meta$individualID)
 ```
 
 #### Assay metadata
 
-The assay metadata contains information about how data was generated on each sample in the assay. Each specimenID represents a unique sample. We can use some tools from dplyr to explore the metadata.
+The assay metadata contains information about how data was generated on each sample in the assay. Each specimenID represents a unique sample.
 
 How many unique specimens were sequenced?
 
@@ -388,10 +438,10 @@ How many unique specimens were sequenced?
 n_distinct(rna_meta$specimenID)
 ```
 
-Were the samples all sequenced on the same platform?
+Were the samples all sequenced on the same platform and in the same batch?
 
 ```{r}
-distinct(rna_meta, platform)
+distinct(rna_meta, platform, sequencingBatch)
 ```
 
 #### Biospecimen metadata
@@ -412,6 +462,7 @@ all(rna_meta$specimenID %in% bio_meta$specimenID)
 
 ```{r}
 all(bio_meta$specimenID %in% rna_meta$specimenID)
+unique(bio_meta$assay)
 ```
 
 #### Individual metadata
@@ -422,7 +473,7 @@ The individual metadata contains information about all the individuals in the st
 head(ind_meta)
 ```
 
-All individualIDs in the biospecimen file should be in the individual file
+All individualIDs in the biospecimen file should be in the individual file.
 
 ```{r check-individual}
 all(bio_meta$individualID %in% ind_meta$individualID)
@@ -448,7 +499,7 @@ joined_meta <- rna_meta |> #start with the rnaseq assay metadata
   # join rows from individual that match individualID
   left_join(ind_meta, by = "individualID")
 
-joined_meta
+head(joined_meta)
 ```
 
 We now have a very wide dataframe that contains all the available metadata on each specimen in the RNAseq data from this study. This procedure can be used to join the three types of metadata files for every study in the AD Knowledge Portal, allowing you to filter individuals and specimens as needed based on your analysis criteria!
@@ -464,44 +515,35 @@ We will use the counts data and metadata to do some basic exploratory analysis o
 Which covariates from the metadata are we interested in?
 
 ```{r distinct-meta-covars}
-# all samples are from the same organ and tissue, so we can probably discard those
-distinct(joined_meta, organ, tissue, sampleStatus)
+# all samples are from the same organ and tissue, so we can probably discard
+# these variables
+distinct(joined_meta, organ, tissue)
 
 # we have different sexes and genotypes, so we are probably interested in those
 distinct(joined_meta, sex, genotype)
+
+# there are different ages, so we are probably interested in age
+joined_meta$ageDeath |> unique() |> sort()
 ```
 
 For this example, we will plot gene expression by sex, genotype, and age.
 
-#### Create timepoint column
+#### Create age group column
 
-The MODEL-AD individual mouse metadata contains columns with birth date and death date for each mouse. Using the **RNASeq methods description** from the [Jax 5XFAD study page in the AD Portal](https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage?Study=syn21983020), we expect this data to have equal numbers of individuals sampled at 4, 6, and 12 month timepoints. We can create a new column that captures this info in our joined metadata.
+This study has three main age groups, but the ages of the mice are non-integer values. Here we bin the ages into groups where age <= 5: 4 months, > 5 and <= 10: 6 mo, and > 10: 12 months.
 
-*Note: MODEL-AD studies added to the portal after June 2021 include an 'ageDeath' column that makes this simpler.*
-
-```{r, add-timepoint-column, warning = FALSE, message = FALSE}
-# Convert columns of strings to month-date-year format using the lubridate package
-joined_meta_time <- joined_meta |>
-  mutate(dateBirth = mdy(dateBirth),
-         dateDeath = mdy(dateDeath)) |>
-  
-  # create a new column that subtracts dateBirth from dateDeath in days, then
-  # divide by 30 to get months
-  mutate(timepoint = as.numeric(difftime(dateDeath, dateBirth, 
-                                         units = "days")) / 30) |>
-  
-  # convert numeric ages to timepoint categories
-  mutate(timepoint = case_when(timepoint > 10 ~ "12 mo",
-                               timepoint < 10 & timepoint > 5 ~ "6 mo",
-                               timepoint < 5 ~ "4 mo"))
+```{r, add-age-group-column, warning = FALSE, message = FALSE}
+joined_meta <- joined_meta |>
+  mutate(age_group = cut(ageDeath,
+                         breaks = c(0, 5, 10, Inf),
+                         labels = c("4 mo", "6 mo", "12 mo")))
 ```
 
 We now have balanced samples across sex, genotype, and age:
 
 ```{r group-metadata-by-covars}
-# check that the timepoint column looks ok
-joined_meta_time |>
-  group_by(sex, genotype, timepoint) |>
+joined_meta |>
+  group_by(sex, genotype, age_group) |>
   dplyr::count()
 ```
 
@@ -510,89 +552,28 @@ joined_meta_time |>
 To reduce the width of the dataframe, we will subset only the columns that contain covariates we're interested in exploring further. Retaining the individualID and specimenID columns will make sure we can map the covariates to the data and back to the original metadata if needed!
 
 ```{r subset-covars}
-# many packages have a "select" function that masks dplyr so we have to specify
-covars <- joined_meta_time |>
-  dplyr::select(individualID, specimenID, sex, genotype, timepoint)
+covars <- joined_meta |>
+  select(individualID, specimenID, sex, genotype, age_group)
 
-# check the result
-covars
+head(covars)
 ```
 
-### Convert ensembleIDs to common gene names
+### Convert ensemblIDs to common gene names
 
 Return to the gene counts matrix we read in earlier. 5XFAD mice express human APP and PSEN1, and the counts matrix includes these human genes (recognizable as starting with `ENSG` instead of `ENSMUS`):
 
 ```{r check-non-mouse-genes}
 counts |> 
-  filter(!str_detect(gene_id, "MUS"))
-```
-We will have to manually add gene symbols for the human genes, but we can automatically get the Ensembl ID to gene symbol mapping for all of the mouse genes. There are many possible ways to do this in R. Below are two options:
-
-##### 1. BiomaRt option:
-
-OPTIONAL: Transform the Ensembl IDs in the matrix to common gene names, using the R package `biomaRt` (note: must specify to use the mouse database, although the two genes in the 5XFAD model we identified above are humanized and won't be translated by the program).
-
-For this option, use the BioconductoR package manager to install `biomaRt`.
-
-```{r install-biomaRt, eval = FALSE}
-
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-BiocManager::install("biomaRt")
-
-library(biomaRt)
+  filter(str_detect(gene_id, "ENSG")) |>
+  select(-`transcript_id(s)`)
 ```
 
-**⚠️ The next two code chunks will not automatically execute in this notebook because they can take a long time -- the code is included if you'd like to try this on your own.**
+For display, we want to map all Ensembl IDs to their gene symbols. There are several R libraries that will let you query for this information, but for this workshop we will use a pre-made mapping file.
 
-We will use the two custom functions below to convert ensemblIDs to gene names:
-
-```{r gene-name-conversion-functions, eval=FALSE}
-# This function uses biomaRt and converts ensemblIDs to HGNC names
-convertEnsemblToHgnc <- function(ensemblIds) {
-  ensembl <- biomaRt::useMart('ENSEMBL_MART_ENSEMBL', 
-                              dataset = 'mmusculus_gene_ensembl')
-  
-  genes <- getBM(attributes = c('ensembl_gene_id', 'external_gene_name'),
-                 filters = 'ensembl_gene_id',
-                 values = ensemblIds,
-                 mart = ensembl)
-  return(genes)
-}
-
-# This function calls the previous function and further converts HGNC names to
-# Gene symbols
-Make.Gene.Symb <- function(GeneENSG) {
-  GeneConv <- convertEnsemblToHgnc(GeneENSG)
-  rownames(GeneConv) <- GeneConv$ensembl_gene_id
-  
-  # If the Ensembl ID wasn't found in the BioMart query, the symbol will be NA
-  # for that ID. Otherwise this will match symbols to gene names and return them
-  # in the same order as GeneENSG.
-  Symb <- GeneConv[GeneENSG, "external_gene_name"]
-  return(Symb)
-}
-```
-
-Call the `Make.Gene.Symb()` function to add a new column with short gene names to our counts dataframe. This will take a minute -- there are over 55k genes in our matrix!
-
-```{r convert-gene-ids, eval=FALSE}
-named_counts <- counts |>
-  # The ".after" argument puts the new gene_name column right after the gene_id column
-  mutate(gene_name = Make.Gene.Symb(gene_id), .after = gene_id) 
-
-head(named_counts)
-```
-
-##### 2. Pre-translated option:
-
-For this demonstration, instead of running biomaRt, which can be unreliable at times and take a long time to respond, we will append a dataframe to our counts matrix with short gene names already translated
-
-```{r read-preconverted-ensembl-counts}
+```{r read-ensembl-translation}
 ensembl_to_gene <- read.csv(file = "ensembl_translation_key.csv")
-named_counts <- counts %>%
-  dplyr::left_join(ensembl_to_gene, by = "gene_id") %>%
+named_counts <- counts |>
+  dplyr::left_join(ensembl_to_gene, by = "gene_id") |>
   relocate(gene_name, .after = gene_id)
 
 head(named_counts)
@@ -612,14 +593,9 @@ non_na_genes <- named_counts$gene_name[!is.na(named_counts$gene_name) &
 length(non_na_genes) - n_distinct(non_na_genes)
 ```
 
-We need to clean up the humanized gene names and append unique identifiers to the duplicate names.
+We need to clean up missing gene names and append unique identifiers to the duplicate names.
 
 ```{r clean-gene-names}
-# The first two genes in the matrix are the humanized genes PSEN1 (ENSG00000080815)
-# and APP (ENSG00000142192). Set these manually:
-named_counts[1, "gene_name"] <- "PSEN1"
-named_counts[2, "gene_name"] <- "APP"
-
 # Make all gene names unique and remove unneeded column
 named_counts <- named_counts |>
   
@@ -628,8 +604,8 @@ named_counts <- named_counts |>
          gene_name = replace(gene_name, gene_name == "", "UNKNOWN"),
          gene_name = make.unique(gene_name)) |>
   
-  # Throw away Ensembl IDs
-  dplyr::select(-gene_id) |>
+  # Throw away Ensembl IDs and transcript IDs
+  select(-gene_id, -`transcript_id(s)`) |>
   
   # Set rownames to gene_name, also removes the gene_name column
   column_to_rownames(var = "gene_name")
@@ -637,46 +613,52 @@ named_counts <- named_counts |>
 head(named_counts)
 ```
 
+### Visualize gene count data
+
+We now have a nicely formatted data frame with gene symbols as the row names, and specimenIDs as the column names. From here you could save the counts data frame and joined metadata data frame for plotting elsewhere (i.e. stats software), or you can use `ggplot2` or other plotting libraries in R.
+
 #### Transpose counts matrix and join to covariates
 
-Now we can transpose the dataframe so that each row contains count data cross all genes for an individual, and join our covariates by specimenID.
+First, we need to transpose the counts dataframe so that each row contains count data cross all genes for an individual, and join our covariates by specimenID.
+
+**Note:** most studies in the ADKP use the `specimenID` to label columns in their data files. This study used `individualID` values instead, so we are joining on individualID.
 
 ```{r transpose-counts, warning=FALSE}
 counts_tposed <- named_counts |>
   t() |>  # transposing also forces the df to a matrix
-  as_tibble(rownames = "specimenID") |> # reconvert to tibble and specify rownames
-  left_join(covars, by = "specimenID") # join covariates by specimenID
-```
+  as_tibble(rownames = "individualID") |> # reconvert to tibble and specify rownames
+  left_join(covars, by = "individualID") # join covariates by ID
 
-```{r check-transposed-counts}
-# check the transposed matrix looks ok
+  # For most studies this would join on specimenID instead:
+  #as_tibble(rownames = "specimenID") |>
+  #left_join(covars, by = "specimenID")
+
 head(counts_tposed)
 ```
 
 Let's check that the covariates got included at the end by cutting out most of the genes:
 
 ```{r check-transposed-counts-metadata, warning=FALSE}
-counts_tposed %>%
-  dplyr::select(1:3, which(colnames(.) %in% colnames(covars))) %>%
+counts_tposed |>
+  select(1:3, any_of(colnames(covars))) |>
   head()
 ```
 
 ### Visualize gene count data
 
-Create simple box plots showing counts by genotype and time point, faceted by sex.
+Create simple box plots showing counts by genotype and age group, faceted by sex. `age_group` needs to be set as a categorical variable in a sensible order for display.
 
-```{r refactor-timepoints}
-# first make the timepoints column a factor and re-order the levels
-counts_tposed$timepoint <- factor(counts_tposed$timepoint, 
+```{r refactor-age-group}
+counts_tposed$age_group <- factor(counts_tposed$age_group,
                                   levels = c("4 mo", "6 mo", "12 mo"))
 ```
 
 Use ggplot to plot gene counts for each specimen by age, sex, and genotype.
 
-```{r plot-app}
+```{r plot-APP}
 # Look at APP levels -- this model is the 5X FAD mutant, so we expect it to be high!
 g <- counts_tposed |>
-  ggplot(aes(x = timepoint, y = APP, color = genotype)) +
+  ggplot(aes(x = age_group, y = APP, color = genotype)) +
     geom_boxplot() +
     geom_point(position = position_jitterdodge()) +
     facet_wrap( ~ sex) +
@@ -686,11 +668,11 @@ g <- counts_tposed |>
 g
 ```
 
-Examine any gene of interest by setting the y argument in the `ggplot(aes()` mapping equal to the gene name. Ex: `y = Trem2`
+Examine any gene of interest by setting the y argument in the `aes()` mapping equal to the gene name. Example: `y = Trem2`
 
 ```{r plot-Trem2}
 g <- counts_tposed |>
-  ggplot(aes(x = timepoint, y = Trem2, color = genotype)) +
+  ggplot(aes(x = age_group, y = Trem2, color = genotype)) +
     geom_boxplot() +
     geom_point(position = position_jitterdodge()) +
     facet_wrap( ~ sex) +
@@ -700,11 +682,11 @@ g <- counts_tposed |>
 g
 ```
 
-Ex: `y = Apoe`
+Example: `y = Apoe`
 
 ```{r plot-Apoe}
 g <- counts_tposed |>
-  ggplot(aes(x = timepoint, y = Apoe, color = genotype)) +
+  ggplot(aes(x = age_group, y = Apoe, color = genotype)) +
     geom_boxplot() +
     geom_point(position = position_jitterdodge()) +
     facet_wrap( ~ sex) +

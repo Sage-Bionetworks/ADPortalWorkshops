@@ -1,3 +1,11 @@
 project:
   type: website
   output-dir: docs
+
+date: today
+
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    df-print: paged

@@ -1,35 +1,17 @@
 ---
-title: "AD Knowledge Portal Workshop: Differential Expression Analysis of 5xFAD mouse models"
-date: "`r Sys.Date()`"
+title: "AD Knowledge Portal Workshop: Differential Expression Analysis of 5XFAD mouse models"
 author: 
   - Laura Heath & Jaclyn Beck (Sage Bionetworks)
   - Adapted from code written by Ravi Pandey (Jackson Laboratories)
-format: 
-  html: 
-    toc: true
-    toc-depth: 3
-    df-print: paged
-knit: (function(input_file, encoding) {
-   out_dir <- 'docs';
-   rmarkdown::render(input_file,
-     encoding=encoding,
-     output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
 ---
 
 This notebook will take the raw counts matrix and metadata files we downloaded in the first part of the workshop (`5XFAD_data_R_tutorial.qmd`) to run a basic differential expression analysis on a single time point (12 months) in male mice. You can amend the code to compare wild type and 5XFAD mice from either sex, at any time point. For a more in-depth tutorial on DESeq2 and how to handle more complicated experimental setups, see [this vignette](https://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html) on DESeq2. 
 
-The data used in this notebook is obtained from The Jax.IU.Pitt_5XFAD Study (Jax.IU.Pitt_5XFAD), which can be found [here on the AD Knowledge Portal](https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage/StudyData?Study=syn21983020).
+The data used in this notebook is obtained from The Jax.IU.Pitt_5XFAD Study, which can be found [here on the AD Knowledge Portal](https://adknowledgeportal.synapse.org/Explore/Studies/DetailsPage/StudyData?Study=syn66318332).
 
 ------------------------------------------------------------------------
 
 ## Setup
-
-```{r, set-opts, include=FALSE}
-knitr::opts_chunk$set(
-  eval = TRUE,
-  print.rows = 10
-)
-```
 
 ### Install and load packages
 
@@ -42,19 +24,28 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install(c("DESeq2", "EnhancedVolcano"))
 ```
 
-If not already installed, be sure to install the `synapser`, `tidyverse`, and `lubridate` packages from part 1 of this workshop.
+If not already installed, be sure to install the `reticulate`, `tidyverse`, and `synapseclient` packages from part 1 of this workshop. As in part one of the workshop, we will be using the Python `synapseclient` via reticulate.
 
 Load necessary libraries.
 
-```{r load-libraries, message=FALSE, warning=TRUE}
+```{r load-libraries, message=FALSE, warning=FALSE}
 library(DESeq2)
 library(ggplot2)
 library(EnhancedVolcano)
 library(dplyr)
-library(synapser)
 library(readr)
 library(tibble)
-library(lubridate)
+library(reticulate)
+
+# Tell reticulate to use the Python environment it manages, even if you have
+# other Python installations or environments on your computer
+Sys.setenv(RETICULATE_USE_MANAGED_VENV = "yes")
+
+# Install Python and synapseclient, if needed, and activate the environment
+py_require("synapseclient")
+
+# python import
+syncli <- import("synapseclient")
 ```
 
 ------------------------------------------------------------------------
@@ -65,51 +56,53 @@ The code below is a (more condensed) repeat of the code from Part 1 of the works
 
 First, we log in to Syanpse:
 
-```{r synlogin_run, include = FALSE}
-# This executes the code without showing the printed welcome statements. The
-# next block will show the code but not run it.
-synLogin()
+```{r synlogin_run}
+#| output: false
+syn = syncli$Synapse()
+syn$login()
 ```
 
-```{r synlogin, eval=FALSE}
-synLogin()
-```
-
-Then, we fetch the counts and metadata files. As mentioned in part 1, it is good practice to assign the output of `synGet` to a variable and use `variable$path` to reference the file name, as done below. For this part of the workshop, we will skip the bulk download step for metadata files and instead download each file by ID.
+Then, we fetch the counts and metadata files. As mentioned in part 1, it is good practice to assign the output of `syn$get` to a variable and use `variable$path` to reference the file name, as done below. For this part of the workshop, we will skip the bulk download step for metadata files and instead download each file by ID.
 
 ```{r download-data, results="hide"}
 # counts
-counts_id <- "syn22108847"
-counts_file <- synGet(counts_id,
-                      downloadLocation = "files/",
-                      ifcollision = "overwrite.local")
+counts_id <- "syn63855360"
+counts_file <- syn$get(counts_id,
+                       downloadLocation = "files/",
+                       ifcollision = "overwrite.local")
 counts <- read_tsv(counts_file$path, show_col_types = FALSE)
 
 # individual metadata
-ind_metaID <- "syn22103212"
-ind_file <- synGet(ind_metaID,
-                   downloadLocation = "files/",
-                   ifcollision = "overwrite.local")
-ind_meta <- read_csv(ind_file$path, show_col_types = FALSE)
+ind_metaID <- "syn63084319"
+ind_file <- syn$get(ind_metaID,
+                    downloadLocation = "files/",
+                    ifcollision = "overwrite.local")
+ind_meta <- read_csv(ind_file$path,
+                     # Force individualID to be read as a string
+                     col_types = list(individualID = col_character()),
+                     show_col_types = FALSE)
 
 # biospecimen metadata
-bio_metaID <- "syn22103213"
-bio_file <- synGet(bio_metaID,
-                   downloadLocation = "files/",
-                   ifcollision = "overwrite.local")
-bio_meta <- read_csv(bio_file$path, show_col_types = FALSE)
+bio_metaID <- "syn63587028"
+bio_file <- syn$get(bio_metaID,
+                    downloadLocation = "files/",
+                    ifcollision = "overwrite.local")
+bio_meta <- read_csv(bio_file$path,
+                     # Force individualID to be read as a string
+                     col_types = list(individualID = col_character()),
+                     show_col_types = FALSE)
 
 # RNA assay metadata
-rna_metaID <- "syn22110328"
-rna_file <- synGet(rna_metaID,
-                   downloadLocation = "files/",
-                   ifcollision = "overwrite.local")
+rna_metaID <- "syn63090748"
+rna_file <- syn$get(rna_metaID,
+                    downloadLocation = "files/",
+                    ifcollision = "overwrite.local")
 rna_meta <- read_csv(rna_file$path, show_col_types = FALSE)
 ```
 
 ### Join metadata files together
 
-Join the three metadata files by IDs in common so we can associate the column names of `counts` (which are specimenIDs) with individual mice from the individual metadata file.
+Join the three metadata files by IDs in common so we can associate the column names of `counts` (which are individualIDs) with individual mouse metadata and any assay-related metadata for each sample.
 
 ```{r join-metadata}
 joined_meta <- rna_meta |> # start with the rnaseq assay metadata
@@ -121,101 +114,90 @@ joined_meta <- rna_meta |> # start with the rnaseq assay metadata
   left_join(ind_meta, by = "individualID") 
 ```
 
-Create a timepoint variable (months since birth) from the `dateBirth` and `dateDeath` fields in the metadata.
+Create age group column: This study has three main age groups, but the ages of the mice are non-integer values. Here we bin the ages into groups.
 
-```{r create-age-death}
-# convert columns of strings to month-date-year format using lubridate
-joined_meta_time <- joined_meta |>
-  mutate(dateBirth = mdy(dateBirth),
-         dateDeath = mdy(dateDeath)) |>
-  
-  # create a new column that subtracts dateBirth from dateDeath in days, then
-  # divide by 30 to get months
-  mutate(timepoint = as.numeric(difftime(dateDeath, dateBirth, 
-                                         units = "days")) / 30) |>
-  
-  # convert numeric ages to timepoint categories
-  mutate(timepoint = case_when(timepoint > 10 ~ "12 mo",
-                               timepoint < 10 & timepoint > 5 ~ "6 mo",
-                               timepoint < 5 ~ "4 mo"))
+```{r, add-age-group-column, warning = FALSE, message = FALSE}
+joined_meta <- joined_meta |>
+  # convert numeric ages to age_group categories --
+  # <= 5: 4 mo, > 5 and <= 10: 6 mo, > 10: 12 mo
+  mutate(age_group = cut(ageDeath,
+                         breaks = c(0, 5, 10, Inf),
+                         labels = c("4 mo", "6 mo", "12 mo")))
 
-# check that the timepoint column looks ok (should be 6 mice in each group)
-joined_meta_time |>
-  group_by(sex, genotype, timepoint) |>
-  count()
+# Check that our sample groups look right (there should be 6 mice per group)
+joined_meta |>
+  group_by(sex, genotype, age_group) |>
+  dplyr::count()
 ```
 
 Select the covariates needed for the analysis
 
 ```{r select-covars}
-covars <- joined_meta_time |>
-  dplyr::select(individualID, specimenID, sex, genotype, timepoint)
+covars <- joined_meta |>
+  dplyr::select(individualID, specimenID, sex, genotype, age_group)
 
-covars
+head(covars)
 ```
-
-Utility function that maps Ensembl IDs to gene symbols (copied from Part 1)
-
-```{r map-function}
-# Assumes that the rownames of "df" are the Ensembl IDs
-map_ensembl_ids <- function(df) {
-  ensembl_to_gene <- read.csv(file = "ensembl_translation_key.csv")
-  
-  mapped_df <- df |>
-    # Make a gene_id column that matches the ensembl_to_gene table
-    rownames_to_column("gene_id") |>
-    dplyr::left_join(ensembl_to_gene, by = "gene_id") |>
-    relocate(gene_name, .after = gene_id)
-  
-  # The first two genes in the matrix are the humanized genes PSEN1
-  # (ENSG00000080815) and APP (ENSG00000142192). Set these manually:
-  mapped_df[1, "gene_name"] <- "PSEN1"
-  mapped_df[2, "gene_name"] <- "APP"
-  
-  return(mapped_df)
-}
-```
-
-**End of repeated code from part 1.** 
 
 ## Modify the data for analysis
 
-Clean up the `covars` data: coerce covars into a dataframe, label the rows by specimenID, and check the result
+Clean up the `covars` data: coerce covars into a dataframe, label the rows by individualID, and check the result
 
 ```{r covars-cleanup}
 covars <- as.data.frame(covars)
-rownames(covars) <- covars$specimenID
-covars
+rownames(covars) <- covars$individualID
+head(covars)
+```
+
+Map Ensembl IDs to gene symbols using the symbol map (for readability). In reality you would want to
+use the Ensembl IDs as the gene identifiers in DE analysis because they are unique and not missing any values.
+
+```{r map-gene-symbols}
+ensembl_to_gene <- read.csv(file = "ensembl_translation_key.csv")
+named_counts <- counts |>
+  dplyr::left_join(ensembl_to_gene, by = "gene_id") |>
+  relocate(gene_name, .after = gene_id) |>
+  mutate(
+    # Fill missing gene symbols
+    gene_name = replace(gene_name, is.na(gene_name), "UNKNOWN"),
+    gene_name = replace(gene_name, gene_name == "", "UNKNOWN"),
+    # Force all symbols to have unique names
+    gene_name = make.unique(gene_name)
+  ) |>
+  # Remove transcript ID and gene_id column
+  select(-gene_id, -`transcript_id(s)`)
+  
+head(named_counts)
 ```
 
 Order the data (counts columns and metadata rows MUST be in the same order), and subset the counts matrix and metadata to include only 12 month old male mice
 
 ```{r subset-12m-male}
 meta.12M.Male <- covars |>
-  subset(sex == "male" & timepoint == "12 mo")
+  subset(sex == "male" & age_group == "12 mo")
 
 # Subsets counts to only the 12 month male samples, and puts the samples in the
 # same order they appear in meta.12M.Male
-counts.12M.Male <- counts |>
-  # Set the rownames to the gene ID, remove "gene_id" column
-  column_to_rownames("gene_id") |>
-  # Only use columns that appear in meta.12M.Male
-  select(meta.12M.Male$specimenID)
+counts.12M.Male <- named_counts |>
+  # Set the rownames to the gene symbol, which also removes the "gene_name" column
+  column_to_rownames("gene_name") |>
+  # Only use columns that appear in meta.12M.Male, in that order
+  select(meta.12M.Male$individualID)
 ```
 
 This leaves us with 12 samples, 6 per genotype:
 
 ```{r check-subset}
 meta.12M.Male |>
-  group_by(sex, genotype, timepoint) |>
+  group_by(sex, genotype, age_group) |>
   dplyr::count()
 ```
 
-Verify that the columns in `counts.12M.Male` are in the same order as the specimenIDs in 
+Verify that the columns in `counts.12M.Male` are in the same order as the individualIDs in 
 `meta.12M.Male`:
 
 ```{r verify-colnames}
-all(colnames(counts.12M.Male) == meta.12M.Male$specimenID)
+all(colnames(counts.12M.Male) == meta.12M.Male$individualID)
 ```
 
 We should now have:
@@ -232,12 +214,15 @@ We can now analyze this data with DESeq2.
 
 Set up data for analysis. All samples are male, 12 month old mice, so we are only interested in looking at the effect of genotype on the data. We specify this for DESeq2 by setting the `design` argument to `~ genotype`. This tells DESeq2 to use the linear model `expression ~ genotype` when solving for the effect of genotype. For this to work properly, we need to make sure `genotype` is a factor so DESeq2 knows it is a categorical value.
 
+**Note:** RSEM outputs non-integer count data, so we also need to round the values to integers for DESeq2.
+
 ```{r make-deseq2-obj, message=FALSE}
 meta.12M.Male$genotype <- factor(meta.12M.Male$genotype)
+counts.12M.Male <- round(counts.12M.Male)
 
-ddsHTSeq <- DESeqDataSetFromMatrix(countData = counts.12M.Male,
-                                   colData = meta.12M.Male,
-                                   design = ~ genotype)
+dds <- DESeqDataSetFromMatrix(countData = counts.12M.Male,
+                              colData = meta.12M.Male,
+                              design = ~ genotype)
 ```
 
 *Note on R formula syntax:* Using `~ variable` will automatically be expanded to represent the linear equation `expression ~ (beta1 * 1) + (beta2 * variable)`, where 1 represents the intercept of the equation and `beta1` and `beta2` are the coefficients that should be estimated. 
@@ -246,19 +231,19 @@ For more complicated formula setup, refer to the [DESeq2 vignette](https://bioco
 
 **Back to analysis...**
 
-Filter out genes that have all zero counts across all samples. You can also use more stringent criteria like only keeping genes that have at least *X* counts in at least *Y* samples, but for this workshop we will just remove zero-genes.
+Filter out genes that have less than 10 counts across all samples. You can also use more stringent criteria like only keeping genes that have at least *X* counts in at least *Y* samples, but for this workshop we will just remove genes that sum to less than 10 counts total.
 
 ```{r filter-genes}
-paste("Total genes before filtering:", nrow(ddsHTSeq))
-ddsHTSeq <- ddsHTSeq[rowSums(counts(ddsHTSeq)) >= 1, ]
+paste("Total genes before filtering:", nrow(dds))
+dds <- dds[rowSums(counts(dds)) >= 10, ]
 
-paste("Total genes after filtering:", nrow(ddsHTSeq))
+paste("Total genes after filtering:", nrow(dds))
 ```
 
 Set wild-type mice (5XFAD_noncarrier) as the reference genotype, so the comparison is 5XFAD_carrier - 5XFAD_noncarrier.
 
 ```{r relevel-genotype}
-ddsHTSeq$genotype <- relevel(ddsHTSeq$genotype, ref = "5XFAD_noncarrier")   
+dds$genotype <- relevel(dds$genotype, ref = "5XFAD_noncarrier")   
 ```
 
 ### Run DESeq
@@ -266,7 +251,7 @@ ddsHTSeq$genotype <- relevel(ddsHTSeq$genotype, ref = "5XFAD_noncarrier")
 This function normalizes the read counts, estimates dispersions, and fits the linear model using the formula we specified in `design` above (`~ genotype`)
 
 ```{r run-deseq2, results = "hide", message=FALSE}
-dds <- DESeq(ddsHTSeq, parallel = TRUE)
+dds <- DESeq(dds, parallel = TRUE)
 ```
 
 ### Extract a table of results
@@ -276,29 +261,25 @@ The significance threshold can be set using the `alpha` argument of the `results
 ```{r get-results}
 res <- results(dds, alpha = 0.05)
 summary(res)
-head(as.data.frame(res))
-```
 
-Add gene symbols to the results
-
-```{r add-gene-symbols}
-res <- map_ensembl_ids(as.data.frame(res))
+res <- as.data.frame(res)
+head(res)
 ```
 
 What are some of the top up-regulated genes?
 ```{r upreg-genes}
 res |>
   subset(padj < 0.05) |>
-  slice_max(order_by = log2FoldChange, n = 10) %>%
-  select(gene_id, gene_name, log2FoldChange, padj)
+  slice_max(order_by = log2FoldChange, n = 10) |>
+  select(log2FoldChange, padj)
 ```
 What are some of the top down-regulated genes?
 
 ```{r downreg-genes}
 res |>
   subset(padj < 0.05) |>
-  slice_min(order_by = log2FoldChange, n = 10) %>%
-  select(gene_id, gene_name, log2FoldChange, padj)
+  slice_min(order_by = log2FoldChange, n = 10) |>
+  select(log2FoldChange, padj)
 ```
 
 ------------------------------------------------------------------------
@@ -308,18 +289,21 @@ res |>
 Volcano plot of differential expression results: all genes with p \< 0.05 and log2FC \> 0.5
 
 ```{r volcano-plot, warning=FALSE}
-plot_DEGvolcano <- EnhancedVolcano(res,
-                                   lab = res$gene_name,
-                                   x = 'log2FoldChange',
-                                   y = 'padj',
-                                   legendPosition = 'none',
-                                   title = 'DE Results of 12 mo. old Male Mice',
-                                   subtitle = '',
-                                   FCcutoff = 0.5,
-                                   pCutoff = 0.05,
-                                   xlim = c(-3, 17),
-                                   pointSize = 1,
-                                   labSize = 4)
+plot_DEGvolcano <- EnhancedVolcano(
+  res,
+  lab = rownames(res),
+  x = 'log2FoldChange',
+  y = 'padj',
+  legendPosition = 'none',
+  title = 'DE Results of 12 mo. old Male Mice',
+  subtitle = '',
+  FCcutoff = 0.5,
+  pCutoff = 0.05,
+  # Remove the one really negative gene for better plotting
+  xlim = c(-3, 17), 
+  pointSize = 1,
+  labSize = 4
+)
 
 plot_DEGvolcano
 ```
@@ -330,7 +314,6 @@ Save results table and plot:
 write.csv(res, file="5XFAD_DEresults_12mo_males.csv", row.names=FALSE)
 
 ggsave("VolcanoPlot.png", width = 8, height = 6, units = "in")
-
 ```
 
 ------------------------------------------------------------------------
